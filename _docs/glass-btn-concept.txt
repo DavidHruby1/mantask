@@ -1,0 +1,113 @@
+/* Demo background */
+.demo-bg {
+    min-height: 320px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    position: relative;
+    overflow: hidden;
+
+    background: linear-gradient(135deg, #0b1220, #111b2e 55%, #0b1220);
+}
+
+/* Color blobs behind the button so backdrop blur is obvious */
+.demo-bg::before {
+    content: "";
+    position: absolute;
+    inset: -140px;
+    pointer-events: none;
+
+    background:
+        radial-gradient(circle at 25% 35%, rgba(130, 255, 240, 0.55), transparent 38%),
+        radial-gradient(circle at 75% 65%, rgba(110, 160, 255, 0.55), transparent 42%),
+        radial-gradient(circle at 55% 20%, rgba(255, 255, 255, 0.14), transparent 35%);
+
+    transform: scale(1.08);
+}
+
+/* Glass button (see-through) */
+button.glass-white {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 12px 20px;
+    border-radius: 999px;
+
+    /* Slight white edge only */
+    border: 1px solid rgba(255, 255, 255, 0.35);
+
+    /* Bubbles + reflections INSIDE the glass */
+    background:
+        radial-gradient(circle at 22% 38%,
+            rgba(255, 255, 255, 0.18) 0%,
+            rgba(255, 255, 255, 0.08) 18%,
+            transparent 40%),
+        radial-gradient(circle at 58% 64%,
+            rgba(255, 255, 255, 0.14) 0%,
+            rgba(255, 255, 255, 0.06) 22%,
+            transparent 46%),
+        radial-gradient(circle at 82% 30%,
+            rgba(255, 255, 255, 0.12) 0%,
+            rgba(255, 255, 255, 0.05) 20%,
+            transparent 44%),
+        rgba(255, 255, 255, 0.06);
+
+    /* The actual glass blur */
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    backdrop-filter: blur(18px) saturate(160%);
+
+    /* 3D shading */
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.45),
+        inset 0 -8px 14px rgba(0, 0, 0, 0.20),
+        0 8px 22px rgba(0, 0, 0, 0.28);
+
+    color: rgba(255, 255, 255, 0.95);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+
+    cursor: pointer;
+
+    /* Keep it above the background blobs */
+    position: relative;
+    z-index: 1;
+
+    /* No hover transitions */
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+/* Reflection streak (subtle) */
+button.glass-white::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+
+    background: linear-gradient(
+        120deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.10) 18%,
+        rgba(255, 255, 255, 0.04) 28%,
+        transparent 45%
+    );
+
+    opacity: 0.55;
+    mix-blend-mode: screen;
+}
+
+/* Press only */
+button.glass-white:active {
+    transform: translateY(2px);
+    box-shadow:
+        inset 0 2px 8px rgba(0, 0, 0, 0.32),
+        0 4px 12px rgba(0, 0, 0, 0.22);
+}
+
+/* Icon */
+button.glass-white .icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
