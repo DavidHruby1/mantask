@@ -1,14 +1,14 @@
-import enum
+from enum import StrEnum, IntEnum
 
 
-class TaskStatus(enum.StrEnum):
+class TaskStatus(StrEnum):
     TODO = "todo"
     IN_PROGRESS = "in_progress"
     REVIEW = "review"
     DONE = "done"
 
 
-class UserRole(enum.StrEnum):
+class UserRole(StrEnum):
     OWNER = "owner"
     ADMIN = "admin"
     MEMBER = "member"
@@ -16,14 +16,14 @@ class UserRole(enum.StrEnum):
     GUEST = "guest"
 
 
-class TaskPriority(enum.StrEnum):
+class TaskPriority(StrEnum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
     URGENT = "urgent"
 
 
-class TaskEffort(enum.IntEnum):
+class TaskEffort(IntEnum):
     XS = 1
     S = 2
     M = 3
