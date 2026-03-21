@@ -19,7 +19,7 @@ from backend.app.core.db import Base
 
 
 class Team(Base):
-    __tablename__ = "team"
+    __tablename__ = "teams"
 
     __table_args__ = (
         CheckConstraint("btrim(name) <> ''", name="team_name_not_blank"),

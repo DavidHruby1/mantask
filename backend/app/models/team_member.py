@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
 
 class TeamMember(Base):
-    __tablename__ = "team_member"
+    __tablename__ = "team_members"
 
     __table_args__ = (
         UniqueConstraint("team_id", "user_id", name="uq_team_member_team_user"),

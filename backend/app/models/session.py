@@ -19,7 +19,7 @@ from backend.app.core.db import Base
 
 
 class Session(Base):
-    __tablename__ = "session"
+    __tablename__ = "sessions"
 
     __table_args__ = (
         CheckConstraint("expires_at > created_at", name="check_expires_at"),

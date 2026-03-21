@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 
 
 class Task(Base):
-    __tablename__ = "task"
+    __tablename__ = "tasks"
 
     __table_args__ = (
         CheckConstraint("position >= 1", name="task_position"),

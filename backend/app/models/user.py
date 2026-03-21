@@ -19,7 +19,7 @@ from backend.app.core.db import Base
 
 
 class User(Base):
-    __tablename__ = "app_user"
+    __tablename__ = "app_users"
 
     __table_args__ = (
         CheckConstraint("btrim(username) <> ''", name="user_username_not_blank"),
