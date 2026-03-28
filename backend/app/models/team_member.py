@@ -37,12 +37,12 @@ class TeamMember(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     team_id: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("team.id", ondelete="RESTRICT"),
+        ForeignKey("teams.id", ondelete="RESTRICT"),
         nullable=False,
     )
     user_id: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("app_user.id", ondelete="RESTRICT"),
+        ForeignKey("app_users.id", ondelete="RESTRICT"),
         nullable=False,
     )
     role: Mapped[UserRole] = mapped_column(

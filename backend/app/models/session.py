@@ -29,7 +29,7 @@ class Session(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("app_user.id", ondelete="RESTRICT"),
+        ForeignKey("app_users.id", ondelete="RESTRICT"),
         nullable=False
     )
     token_hash: Mapped[str] = mapped_column(

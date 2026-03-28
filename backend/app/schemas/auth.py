@@ -17,5 +17,4 @@ class LoginInput(BaseModel):
     
 
 class LoginResult(BaseModel):
-    success: bool
-    redirect_to: str
+    pass

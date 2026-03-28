@@ -56,20 +56,20 @@ class Task(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     team_id: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("team.id", ondelete="RESTRICT"),
+        ForeignKey("teams.id", ondelete="RESTRICT"),
         nullable=False
     )
     creator_member_id: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("team_member.id", ondelete="RESTRICT"),
+        ForeignKey("team_members.id", ondelete="RESTRICT"),
     )
     assignee_member_id: Mapped[int | None] = mapped_column(
         Integer,
-        ForeignKey("team_member.id", ondelete="RESTRICT"),
+        ForeignKey("team_members.id", ondelete="RESTRICT"),
     )
     reviewer_member_id: Mapped[int | None] = mapped_column(
         Integer,
-        ForeignKey("team_member.id", ondelete="RESTRICT"),
+        ForeignKey("team_members.id", ondelete="RESTRICT"),
     )
 
     layer: Mapped[str | None] = mapped_column(Text)

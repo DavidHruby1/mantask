@@ -58,4 +58,4 @@ class BootstrapSetupInput(BaseModel):
 
 
 class BootstrapSetupResult(BaseModel):
-    redirect_to: str
+    pass
