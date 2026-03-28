@@ -37,6 +37,11 @@ class Session(Base):
         nullable=False, 
         unique=True
     )
+    current_team_id: Mapped[int | None] = mapped_column( # backend will always set team
+        Integer,
+        ForeignKey("teams.id", ondelete="RESTRICT"),
+        nullable=False
+    )    
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), 
         nullable=False, 
