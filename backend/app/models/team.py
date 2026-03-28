@@ -7,6 +7,7 @@ from sqlalchemy import (
     Text,
     DateTime,
     CheckConstraint,
+    func,
     text
 )
 from sqlalchemy.orm import (
@@ -31,6 +32,12 @@ class Team(Base):
         DateTime(timezone=True),
         nullable=False,
         server_default=text("now()")
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=text("now()"),
+        onupdate=func.now()
     )
     is_active: Mapped[bool] = mapped_column(
         Boolean,
