@@ -24,7 +24,7 @@ __pycache__/
 *.pyd
 *.db
 *.sqlite3
-.pyrightconfig.json
+pyrightconfig.json
 
 # virtual environments
 venv/
