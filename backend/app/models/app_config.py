@@ -26,7 +26,7 @@ class AppConfig(Base):
         SmallInteger, 
         primary_key=True,
         server_default=text("1"))
-    name: Mapped[str] = mapped_column(Text, nullable=False)
+    organization_name: Mapped[str] = mapped_column(Text, nullable=False)
     in_progress_limit: Mapped[int] = mapped_column(
         Integer, 
         nullable=False,

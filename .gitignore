@@ -24,6 +24,7 @@ __pycache__/
 *.pyd
 *.db
 *.sqlite3
+.pyrightconfig.json
 
 # virtual environments
 venv/
@@ -69,3 +70,10 @@ coverage/
 
 _docs/
 repomix-output.xml
+
+# =========================
+# AI 
+# =========================
+
+.opencode
+AGENTS.md

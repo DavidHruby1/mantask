@@ -58,4 +58,4 @@ class BootstrapSetupInput(BaseModel):
 
 
 class BootstrapSetupResult(BaseModel):
-    pass
+    authenticated: bool
