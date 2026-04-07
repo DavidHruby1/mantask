@@ -17,4 +17,4 @@ class LoginInput(BaseModel):
     
 
 class LoginResult(BaseModel):
-    pass
+    authenticated: bool
