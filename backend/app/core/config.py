@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = Field(
         default="postgresql+psycopg://postgres:postgres@localhost:5432/mantask"
     )
+    BOOTSTRAP_SECRET: str | None = None
     SECRET_KEY: str = Field(
         default="change-me-in-production"
     )
