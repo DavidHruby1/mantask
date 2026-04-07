@@ -8,7 +8,10 @@ from fastapi import (
 )
 
 from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import (
+    IntegrityError,
+    SQLAlchemyError
+)
 from sqlalchemy.orm import Session
 
 from backend.app.core.config import settings
@@ -42,15 +45,15 @@ def bootstrap_setup(
         raise HTTPException(status_code=403, detail="Invalid bootstrap secret")
 
     try:
-        user, team = perform_bootstrap(db, input_data)
-        raw_token = create_auth_session(db, user_id=user.id, team_id=team.id)
+        user = perform_bootstrap(db, input_data)
+        raw_token = create_auth_session(db, user_id=user.id)
         db.commit()
     except IntegrityError:
         db.rollback()
         raise HTTPException(status_code=409, detail="Bootstrap data conflicts with existing records")
-    except Exception:
+    except SQLAlchemyError:
         db.rollback()
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail="Unable to complete the request right now. Please try again")
 
     response.set_cookie(
         key=settings.SESSION_COOKIE_NAME,
@@ -58,7 +61,8 @@ def bootstrap_setup(
         httponly=True,
         secure=not settings.DEBUG,
         samesite="lax",
-        max_age=60 * 60 * 24 * settings.SESSION_EXPIRE_DAYS,
+        expires=60 * 60 * 24 * settings.SESSION_EXPIRE_DAYS,
+        max_age=60 * 60 * 24 * settings.SESSION_EXPIRE_DAYS_MAX,
         path="/"
     )
 
