@@ -12,16 +12,13 @@ PASSWORD_REGEX = re.compile(r'^[A-Za-z0-9\-_:!@#$%^&*()\[\]{};<>?/\\|~\."+\',`]+
 NAME_REGEX = re.compile(r"^[a-zA-Z0-9\-_: ]+$")
 
 
-class BootstrapStatus(BaseModel):
-    is_bootstrapped: bool
-
-
-class BootstrapSetupInput(BaseModel):
+class BootstrapSetup(BaseModel):
     username: str = Field(..., min_length=3, max_length=50) # normalized_username will be on the backend
     email: EmailStr
     password: str = Field(..., min_length=8, max_length=128)
     organization_name: str = Field(..., min_length=1, max_length=100)
     team_name: str = Field(..., min_length=1, max_length=100)
+    bootstrap_secret: str = Field(..., min_length=32, max_length=256)
 
     @field_validator("username")
     @classmethod
@@ -57,5 +54,5 @@ class BootstrapSetupInput(BaseModel):
         return name.strip()
 
 
-class BootstrapSetupResult(BaseModel):
-    authenticated: bool
+class BootstrapResult(BaseModel):
+    bootstrapped: bool

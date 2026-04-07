@@ -18,8 +18,8 @@ from sqlalchemy.orm import (
 from backend.app.core.db import Base
 
 
-class Session(Base):
-    __tablename__ = "sessions"
+class AuthSession(Base):
+    __tablename__ = "user_sessions"
 
     __table_args__ = (
         CheckConstraint("expires_at > created_at", name="check_expires_at"),

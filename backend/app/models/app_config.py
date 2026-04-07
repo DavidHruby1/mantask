@@ -19,7 +19,7 @@ class AppConfig(Base):
     __table_args__ = (
         CheckConstraint("id = 1", name="app_config_singleton"),
         CheckConstraint("in_progress_limit > 0", name="app_config_in_progress_limit"),
-        CheckConstraint("btrim(name) <> ''", name="app_config_name_not_blank"),
+        CheckConstraint("btrim(organization_name) <> ''", name="app_config_name_not_blank"),
     )
 
     id: Mapped[int] = mapped_column(

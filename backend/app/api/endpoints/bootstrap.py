@@ -1,72 +1,65 @@
+import secrets
+
 from fastapi import (
     APIRouter,
     Depends,
+    HTTPException,
+    Response
 )
+
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from backend.app.core.config import settings
+from backend.app.core.db import get_db
 from backend.app.models.app_config import AppConfig
 from backend.app.schemas.bootstrap import (
-    BootstrapSetupInput,
-    BootstrapSetupResult,
-    BootstrapStatus
+    BootstrapSetup,
+    BootstrapResult
 )
-from backend.app.core.db import get_db
+from backend.app.services.bootstrap import perform_bootstrap
+from backend.app.services.auth import create_auth_session
 
 
 router = APIRouter(prefix="/bootstrap", tags=["bootstrap"])
 
 
-@router.get("/status", response_model=BootstrapStatus)
-def get_bootstrap_status(db: Session = Depends(get_db)) -> BootstrapStatus:
-    """
-    Check if the application has been bootstrapped (if config singleton exists).
-    """
-    is_app_bootstrapped = db.scalar(select(AppConfig.id).limit(1)) is not None
-    return BootstrapStatus(is_bootstrapped=is_app_bootstrapped)
-
-
-@router.post("/setup", response_model=BootstrapSetupResult)
+@router.post("/setup", response_model=BootstrapResult)
 def bootstrap_setup(
-    input_data: BootstrapSetupInput,
-    db: Session = Depends(get_db),
-) -> BootstrapSetupResult:
-    """
-    Perform the bootstrap setup by creating the initial user, organization and team.
-    This endpoint should only be accessible if the application is not yet bootstrapped.
-    """
-    return BootstrapSetupResult(authenticated=True)
+    input_data: BootstrapSetup,
+    response: Response,
+    db: Session = Depends(get_db)
+) -> BootstrapResult:
+    is_app_bootstrapped = db.scalar(select(AppConfig.id).limit(1)) is not None
+    if is_app_bootstrapped:
+        raise HTTPException(status_code=409, detail="App already bootstrapped")
 
+    if not settings.BOOTSTRAP_SECRET:
+        raise HTTPException(status_code=403, detail="Bootstrap is not configured")
 
+    if not secrets.compare_digest(input_data.bootstrap_secret, settings.BOOTSTRAP_SECRET):
+        raise HTTPException(status_code=403, detail="Invalid bootstrap secret")
 
-"""
-BOOTSTRAP FLOW
-1. GET /bootstrap/status
-2. If is_bootstrapped == true:
-   - frontend should go to normal auth/app flow
-   - if user already has session, GET /dashboard
-   - if not, go to login
-3. If is_bootstrapped == false:
-   - show bootstrap form
-   - submit POST /bootstrap/setup
-POST /bootstrap/setup:
-1. Validate payload via BootstrapSetupInput
-2. Backend checks app is still not bootstrapped
-3. Call services/bootstrap.py
-4. In service:
-   - wrap transaction in try/except
-   - create AppConfig
-   - create User
-   - create Team
-   - create TeamMember
-   - create Session
-   - commit
-5. If another request won the race first:
-   - DB constraint fails
-   - catch IntegrityError
-   - rollback
-   - return 409 already bootstrapped
-6. If success:
-   - endpoint sets auth cookie from created session token
-   - return authenticated=True
-"""
+    try:
+        user, team = perform_bootstrap(db, input_data)
+        raw_token = create_auth_session(db, user_id=user.id, team_id=team.id)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Bootstrap data conflicts with existing records")
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+    response.set_cookie(
+        key=settings.SESSION_COOKIE_NAME,
+        value=raw_token,
+        httponly=True,
+        secure=not settings.DEBUG,
+        samesite="lax",
+        max_age=60 * 60 * 24 * settings.SESSION_EXPIRE_DAYS,
+        path="/"
+    )
+
+    return BootstrapResult(bootstrapped=True)

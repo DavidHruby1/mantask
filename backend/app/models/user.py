@@ -65,4 +65,4 @@ class User(Base):
     )
 
     team_members = relationship("TeamMember", back_populates="user")
-    sessions = relationship("Session", back_populates="user")
+    sessions = relationship("AuthSession", back_populates="user")
