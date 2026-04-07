@@ -20,7 +20,8 @@ class Settings(BaseSettings):
         default="change-me-in-production"
     )
     SESSION_COOKIE_NAME: str = "session_token"
-    SESSION_EXPIRE_DAYS: int = 30
+    SESSION_EXPIRE_DAYS: int = 7
+    SESSION_EXPIRE_DAYS_MAX: int = 30
     DEFAULT_TIMEZONE: str = "UTC"
 
 
