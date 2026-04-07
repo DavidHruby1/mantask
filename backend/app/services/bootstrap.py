@@ -3,7 +3,6 @@ from argon2 import PasswordHasher
 from sqlalchemy.orm import Session
 
 from backend.app.models.app_config import AppConfig
-from backend.app.models.auth_session import AuthSession
 from backend.app.models.enums import UserRole
 from backend.app.models.team import Team
 from backend.app.models.team_member import TeamMember
@@ -17,7 +16,7 @@ ph = PasswordHasher()
 def perform_bootstrap(
     db: Session,
     input_data: BootstrapSetup
-) -> tuple[User, Team]:
+) -> User:
     db.add(AppConfig(organization_name=input_data.organization_name))
 
     normalized_username: str = input_data.username.strip().lower()
@@ -43,4 +42,4 @@ def perform_bootstrap(
     )
     db.add(team_member)
 
-    return user, team
+    return user
