@@ -35,7 +35,7 @@ class User(Base):
         nullable=False,
         unique=True
     )
-    email: Mapped[str] = mapped_column( # Email has to be converted to lowercase on backend
+    email: Mapped[str] = mapped_column(
         Text, 
         nullable=False, 
         unique=True
@@ -58,11 +58,6 @@ class User(Base):
         onupdate=func.now()
     )
     profile_picture_path: Mapped[str | None] = mapped_column(Text)
-    timezone: Mapped[str] = mapped_column(
-        Text,
-        nullable=False,
-        server_default=text("'UTC'")
-    )
 
     team_members = relationship("TeamMember", back_populates="user")
     sessions = relationship("AuthSession", back_populates="user")
