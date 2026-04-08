@@ -18,3 +18,11 @@ class LoginInput(BaseModel):
 
 class LoginResult(BaseModel):
     authenticated: bool
+
+
+class ChangePasswordResult(BaseModel):
+    changed: bool
+
+
+class ResetPasswordResult(BaseModel):
+    reset: bool
