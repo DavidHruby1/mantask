@@ -16,12 +16,9 @@ class Settings(BaseSettings):
         default="postgresql+psycopg://postgres:postgres@localhost:5432/mantask"
     )
     BOOTSTRAP_SECRET: str | None = None
-    SECRET_KEY: str = Field(
-        default="change-me-in-production"
-    )
+    SECRET_KEY: str = Field(default="change-me-in-production")
     SESSION_COOKIE_NAME: str = "session_token"
     SESSION_EXPIRE_DAYS: int = 7
-    SESSION_EXPIRE_DAYS_MAX: int = 30
     DEFAULT_TIMEZONE: str = "UTC"
 
 

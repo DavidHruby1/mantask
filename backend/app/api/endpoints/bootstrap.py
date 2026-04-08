@@ -30,8 +30,8 @@ router = APIRouter(prefix="/bootstrap", tags=["bootstrap"])
 
 @router.post("/setup", response_model=BootstrapResult)
 def bootstrap_setup(
-    input_data: BootstrapSetup,
-    response: Response,
+    input_data: BootstrapSetup, 
+    response: Response, 
     db: Session = Depends(get_db)
 ) -> BootstrapResult:
     is_app_bootstrapped = db.scalar(select(AppConfig.id).limit(1)) is not None
@@ -62,7 +62,6 @@ def bootstrap_setup(
         secure=not settings.DEBUG,
         samesite="lax",
         expires=60 * 60 * 24 * settings.SESSION_EXPIRE_DAYS,
-        max_age=60 * 60 * 24 * settings.SESSION_EXPIRE_DAYS_MAX,
         path="/"
     )
 
