@@ -10,6 +10,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+.ruff_cache/
 
 # Vite
 .vite/
@@ -75,5 +76,5 @@ repomix-output.xml
 # AI 
 # =========================
 
-.opencode
+.opencode/
 AGENTS.md
