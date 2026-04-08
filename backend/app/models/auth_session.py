@@ -6,7 +6,6 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     Text,
-    func,
     text
 )
 from sqlalchemy.orm import (
@@ -42,18 +41,12 @@ class AuthSession(Base):
         nullable=False, 
         server_default=text("now()")
     )
-    last_seen_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), 
-        nullable=False,
-        server_default=text("now()"),
-        onupdate=func.now() 
-    )
     expires_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), 
         nullable=False,
-        server_default=text("now() + INTERVAL '30 days'")
+        server_default=text("now() + INTERVAL '7 days'")
     )
-    revoked_at: Mapped[datetime | None] = mapped_column( # If user is_active is False, then revoked_at will be set to now()
+    revoked_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True
     )
