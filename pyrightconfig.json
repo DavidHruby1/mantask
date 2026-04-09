@@ -1,6 +1,0 @@
-{
-    "include": ["backend", "alembic"],
-    "extraPaths": ["."],
-    "typeCheckingMode": "basic"
-}
-
