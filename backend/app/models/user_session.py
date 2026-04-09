@@ -17,7 +17,7 @@ from sqlalchemy.orm import (
 from backend.app.core.db import Base
 
 
-class AuthSession(Base):
+class UserSession(Base):
     __tablename__ = "user_sessions"
 
     __table_args__ = (

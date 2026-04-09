@@ -13,10 +13,7 @@ from backend.app.schemas.bootstrap import BootstrapSetup
 ph = PasswordHasher()
 
 
-def perform_bootstrap(
-    db: Session,
-    input_data: BootstrapSetup
-) -> User:
+def bootstrap_application(db: Session, input_data: BootstrapSetup) -> User:
     db.add(AppConfig(organization_name=input_data.organization_name))
 
     normalized_username: str = input_data.username.strip().lower()
@@ -25,8 +22,8 @@ def perform_bootstrap(
         username=input_data.username,
         username_normalized=normalized_username,
         email=input_data.email,
-        password_hash=hashed_password
-    ) 
+        password_hash=hashed_password,
+    )
     db.add(user)
 
     team = Team(name=input_data.team_name)
@@ -36,8 +33,8 @@ def perform_bootstrap(
     db.flush()
 
     team_member = TeamMember(
-        user_id=user.id,
-        team_id=team.id,
+        user_id=user.id, 
+        team_id=team.id, 
         role=UserRole.OWNER
     )
     db.add(team_member)

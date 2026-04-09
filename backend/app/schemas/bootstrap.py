@@ -13,7 +13,7 @@ NAME_REGEX = re.compile(r"^[a-zA-Z0-9\-_: ]+$")
 
 
 class BootstrapSetup(BaseModel):
-    username: str = Field(..., min_length=3, max_length=50) # normalized_username will be on the backend
+    username: str = Field(..., min_length=3, max_length=50)
     email: EmailStr
     password: str = Field(..., min_length=8, max_length=128)
     organization_name: str = Field(..., min_length=1, max_length=100)
