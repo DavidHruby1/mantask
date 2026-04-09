@@ -1,7 +1,7 @@
 from datetime import (
     datetime,
     timedelta,
-    timezone,
+    timezone
 )
 
 import hashlib
@@ -29,23 +29,25 @@ def generate_session_token() -> str:
     return secrets.token_urlsafe(32)
 
 
-def hash_session_token(token: str) -> str:
-    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+def hash_session_token(session_token: str) -> str:
+    return hashlib.sha256(session_token.encode("utf-8")).hexdigest()
 
 
 def create_user_session(db: Session, user_id: int) -> str:
-    raw_token = generate_session_token()
-    token_hash = hash_session_token(raw_token)
+    session_token = generate_session_token()
+    session_token_hash = hash_session_token(session_token)
     expires_at = datetime.now(timezone.utc) + timedelta(
         days=settings.SESSION_EXPIRE_DAYS
     )
 
     auth_session = UserSession(
-        user_id=user_id, token_hash=token_hash, expires_at=expires_at
+        user_id=user_id, 
+        session_token_hash=session_token_hash, 
+        expires_at=expires_at
     )
     db.add(auth_session)
 
-    return raw_token
+    return session_token
 
 
 def get_user_by_email(db: Session, email: str) -> User | None:
@@ -78,9 +80,11 @@ def authenticate_user(db: Session, email: str, password: str) -> User | None:
     return user
 
 
-def get_user_session_by_token(db: Session, raw_token: str) -> UserSession | None:
-    token_hash = hash_session_token(raw_token)
-    session = db.scalar(select(UserSession).filter_by(token_hash=token_hash))
+def get_user_session_by_token(db: Session, session_token: str) -> UserSession | None:
+    session_token_hash = hash_session_token(session_token)
+    session = db.scalar(
+        select(UserSession).filter_by(session_token_hash=session_token_hash)
+    )
     if not session:
         return None
 

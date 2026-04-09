@@ -1,11 +1,11 @@
 from datetime import datetime
 
 from sqlalchemy import (
-    CheckConstraint,
-    DateTime,
-    ForeignKey,
-    Integer,
-    Text,
+    CheckConstraint, 
+    DateTime, 
+    ForeignKey, 
+    Integer, 
+    Text, 
     text
 )
 from sqlalchemy.orm import (
@@ -27,11 +27,11 @@ class UserSession(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(
-        Integer,
-        ForeignKey("app_users.id", ondelete="RESTRICT"),
+        Integer, 
+        ForeignKey("app_users.id", ondelete="RESTRICT"), 
         nullable=False
     )
-    token_hash: Mapped[str] = mapped_column(
+    session_token_hash: Mapped[str] = mapped_column(
         Text, 
         nullable=False, 
         unique=True
@@ -42,12 +42,12 @@ class UserSession(Base):
         server_default=text("now()")
     )
     expires_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), 
+        DateTime(timezone=True),
         nullable=False,
     )
     revoked_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True),
+        DateTime(timezone=True), 
         nullable=True
     )
-    
+
     user = relationship("User", back_populates="sessions")
