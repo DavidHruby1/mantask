@@ -22,7 +22,7 @@ class UserSession(Base):
 
     __table_args__ = (
         CheckConstraint("expires_at > created_at", name="check_expires_at"),
-        CheckConstraint("btrim(token_hash) <> ''", name="session_token_hash_not_blank"),
+        CheckConstraint("btrim(session_token_hash) <> ''", name="session_token_hash_not_blank"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)

@@ -48,7 +48,9 @@ class Task(Base):
             name="task_review_timestamp_only_after_review",
         ),
         CheckConstraint(
-            "(should_review = FALSE) OR (reviewer_member_id IS NOT NULL)",
+            "(should_review = TRUE AND reviewer_member_id IS NOT NULL)"
+            "OR"
+            "(should_review = FALSE AND reviewer_member_id IS NULL)",
             name="should_review_must_have_reviewer",
         ), 
     )
@@ -101,11 +103,7 @@ class Task(Base):
         IntEnumType(TaskEffort),
         nullable=True
     )
-    should_review: Mapped[bool] = mapped_column(
-        Boolean,
-        nullable=False,
-        server_default=text("true")
-    )
+    should_review: Mapped[bool] = mapped_column(Boolean, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,

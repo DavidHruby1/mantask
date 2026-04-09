@@ -1,3 +1,4 @@
+from typing import Self
 from datetime import (
     date,
     datetime
@@ -8,6 +9,7 @@ from pydantic import (
     ConfigDict,
     Field,
     field_validator,
+    model_validator
 )
 
 from backend.app.models.enums import TaskEffort, TaskPriority, TaskStatus
@@ -49,6 +51,14 @@ class TaskCreate(BaseModel):
             raise ValueError("Dates cannot be in the past")
         return date_value
 
+    @model_validator(mode="after")
+    def validate_review(self) -> Self:
+        if self.should_review and self.reviewer_member_id is None:
+            raise ValueError("Review must have a reviewer")
+        if not self.should_review and self.reviewer_member_id is not None:
+            raise ValueError("Review cannot not have a reviewer")
+        return self
+
 
 class TaskUpdate(BaseModel):
     assignee_member_id: int | None = None 
@@ -61,7 +71,7 @@ class TaskUpdate(BaseModel):
     review_date: date | None = None
     due_date: date | None = None
     effort: TaskEffort | None = None
-    should_review: bool | None = None
+    should_review: bool | None = None # Validate in services/
 
     @field_validator("title")
     @classmethod
