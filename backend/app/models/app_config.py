@@ -1,14 +1,14 @@
+from datetime import datetime
+
 from sqlalchemy import (
     Integer,
     SmallInteger,
+    DateTime,
     CheckConstraint,
-    Text,
+    String,
     text,
 )
-from sqlalchemy.orm import (
-    Mapped,
-    mapped_column,
-)
+from sqlalchemy.orm import Mapped, mapped_column
 
 from backend.app.core.db import Base
 
@@ -27,7 +27,12 @@ class AppConfig(Base):
         primary_key=True,
         server_default=text("1")
     )
-    organization_name: Mapped[str] = mapped_column(Text, nullable=False)
+    organization_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    initialized_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), 
+        nullable=False, 
+        server_default=text("now()")
+    )
     in_progress_limit: Mapped[int] = mapped_column(
         Integer, 
         nullable=False,

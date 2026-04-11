@@ -1,27 +1,15 @@
-import os
 from logging.config import fileConfig
 
 from alembic import context
-from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
 
+from backend.app.core.config import settings
 from backend.app.core.db import Base
-from backend.app.models.app_config import AppConfig
-from backend.app.models.user_session import UserSession
-from backend.app.models.task import Task
-from backend.app.models.team import Team
-from backend.app.models.team_member import TeamMember
-from backend.app.models.user import User
+import backend.app.models  # noqa: F401
 
 config = context.config
 
-load_dotenv()
-
-database_url = os.getenv("DATABASE_URL")
-if not database_url:
-    raise RuntimeError("DATABASE_URL is not set")
-
-config.set_main_option("sqlalchemy.url", database_url)
+config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)

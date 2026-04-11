@@ -26,13 +26,10 @@ def bootstrap_setup(
     if is_app_bootstrapped:
         raise HTTPException(status_code=409, detail="App already bootstrapped")
 
-    if not settings.BOOTSTRAP_SECRET:
-        raise HTTPException(status_code=403, detail="Bootstrap is not configured")
-
-    if not secrets.compare_digest(
+    if not settings.BOOTSTRAP_SECRET or not secrets.compare_digest(
         input_data.bootstrap_secret, settings.BOOTSTRAP_SECRET
     ):
-        raise HTTPException(status_code=403, detail="Invalid bootstrap secret")
+        raise HTTPException(status_code=403, detail="Invalid bootstrap")
 
     try:
         user = bootstrap_application(db, input_data)
