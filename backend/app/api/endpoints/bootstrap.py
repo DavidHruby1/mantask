@@ -1,24 +1,14 @@
 import secrets
 
-from fastapi import (
-    APIRouter, 
-    HTTPException, 
-    Response
-)
+from fastapi import APIRouter, HTTPException, Response
 
 from sqlalchemy import select
-from sqlalchemy.exc import (
-    IntegrityError, 
-    SQLAlchemyError
-)
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from backend.app.core.config import settings
-from backend.app.api.security import DbSession
+from backend.app.api.dependencies import DbSessionDep
 from backend.app.models.app_config import AppConfig
-from backend.app.schemas.bootstrap import (
-    BootstrapSetup, 
-    BootstrapResult
-)
+from backend.app.schemas.bootstrap import BootstrapSetup, BootstrapResult
 from backend.app.services.bootstrap import bootstrap_application
 from backend.app.services.auth import create_user_session
 
@@ -28,8 +18,8 @@ router = APIRouter(prefix="/bootstrap", tags=["bootstrap"])
 
 @router.post("/setup", response_model=BootstrapResult)
 def bootstrap_setup(
-    db: DbSession,
-    input_data: BootstrapSetup,
+    db: DbSessionDep, 
+    input_data: BootstrapSetup, 
     response: Response
 ) -> BootstrapResult:
     is_app_bootstrapped = db.scalar(select(AppConfig.id).limit(1)) is not None

@@ -1,16 +1,12 @@
-from datetime import (
-    datetime,
-    timedelta,
-    timezone
-)
+from datetime import datetime, timedelta, timezone
 
 import hashlib
 import secrets
 from argon2 import (
-    PasswordHasher,
-    VerifyMismatchError,
-    VerificationError,
-    InvalidHashError,
+    PasswordHasher, 
+    VerifyMismatchError, 
+    VerificationError, 
+    InvalidHashError
 )
 
 from sqlalchemy import select

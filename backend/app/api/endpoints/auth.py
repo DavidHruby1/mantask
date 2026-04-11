@@ -1,25 +1,15 @@
-from typing import Annotated
 from datetime import datetime, timezone
 
-from fastapi import (
-    APIRouter, 
-    Depends, 
-    Response, 
-    HTTPException
-)
+from fastapi import APIRouter, Response, HTTPException
 from sqlalchemy.exc import SQLAlchemyError
 
-from backend.app.api.security import (
-    get_current_session, 
-    SessionToken, 
-    DbSession
+from backend.app.api.dependencies import (
+    SessionTokenDep,
+    DbSessionDep,
+    CurrentSessionDep,
 )
 from backend.app.core.config import settings
-from backend.app.models.user_session import UserSession
-from backend.app.schemas.auth import (
-    LoginInput,
-    LoginResult,
-)
+from backend.app.schemas.auth import LoginInput, LoginResult
 from backend.app.services.auth import (
     authenticate_user,
     create_user_session,
@@ -33,7 +23,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/login", response_model=LoginResult)
 def login(
-    db: DbSession,
+    db: DbSessionDep, 
     input_data: LoginInput, 
     response: Response
 ) -> LoginResult:
@@ -65,16 +55,14 @@ def login(
 
 
 @router.get("/me", response_model=LoginResult)
-def auth_user(
-    _session: Annotated[UserSession, Depends(get_current_session)],
-) -> LoginResult:
+def auth_user(_sesison: CurrentSessionDep) -> LoginResult:
     return LoginResult(authenticated=True)
 
 
 @router.post("/logout", response_model=LoginResult)
 def logout(
-    db: DbSession,
-    session_token: SessionToken, 
+    db: DbSessionDep, 
+    session_token: SessionTokenDep, 
     response: Response
 ) -> LoginResult:
     if not session_token:
