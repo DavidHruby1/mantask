@@ -18,6 +18,11 @@ class UserRole(StrEnum):
     GUEST = "guest"
 
 
+class TeamType(StrEnum):
+    PRIVATE = "private"
+    TEAM = "team"
+
+
 class TaskPriority(StrEnum):
     LOW = "low"
     MEDIUM = "medium"

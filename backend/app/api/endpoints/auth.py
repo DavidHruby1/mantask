@@ -15,6 +15,7 @@ from backend.app.services.auth import (
     create_user_session,
     get_user_session_by_token,
     is_user_session_valid,
+    resolve_active_team_id,
 )
 
 
@@ -51,12 +52,16 @@ def login(
         path="/",
     )
 
-    return LoginResult(authenticated=True)
+    active_team_id = resolve_active_team_id(db, user)
+    return LoginResult(authenticated=True, active_team_id=active_team_id)
 
 
 @router.get("/me", response_model=LoginResult)
-def auth_user(_sesison: CurrentSessionDep) -> LoginResult:
-    return LoginResult(authenticated=True)
+def auth_user(
+    db: DbSessionDep, session: CurrentSessionDep
+) -> LoginResult:
+    active_team_id = resolve_active_team_id(db, session.user)
+    return LoginResult(authenticated=True, active_team_id=active_team_id)
 
 
 @router.post("/logout", response_model=LoginResult)

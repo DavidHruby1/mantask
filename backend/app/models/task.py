@@ -14,11 +14,7 @@ from sqlalchemy import (
     func,
     text,
 )
-from sqlalchemy.orm import (
-    Mapped,
-    mapped_column,
-    relationship
-)
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.app.core.db import Base
 from backend.app.models.enums import TaskStatus, TaskPriority, TaskEffort, IntEnumType

@@ -20,6 +20,7 @@ class LoginInput(BaseModel):
 
 class LoginResult(BaseModel):
     authenticated: bool
+    active_team_id: int | None = None
 
 
 class RegisterInput(BaseModel):
