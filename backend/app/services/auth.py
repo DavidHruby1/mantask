@@ -13,8 +13,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.core.config import settings
-from backend.app.models.user_session import UserSession
+from backend.app.models.enums import TeamType
+from backend.app.models.team import Team
+from backend.app.models.team_member import TeamMember
 from backend.app.models.user import User
+from backend.app.models.user_session import UserSession
 
 
 ph = PasswordHasher()
@@ -85,6 +88,35 @@ def get_user_session_by_token(db: Session, session_token: str) -> UserSession | 
         return None
 
     return session
+
+
+def resolve_active_team_id(db: Session, user: User) -> int | None:
+    team_id = user.last_active_team_id
+    if team_id is not None:
+        team = db.get(Team, team_id)
+        if team and team.is_active:
+            membership = db.scalar(
+                select(TeamMember).where(
+                    TeamMember.team_id == team.id,
+                    TeamMember.user_id == user.id,
+                )
+            )
+            if membership is not None:
+                return team.id
+
+    private_team = db.scalar(
+        select(Team).where(
+            Team.type == TeamType.PRIVATE,
+            Team.private_owner_user_id == user.id,
+            Team.is_active == True,
+        )
+    )
+    if private_team is not None:
+        if user.last_active_team_id != private_team.id:
+            user.last_active_team_id = private_team.id
+        return private_team.id
+
+    return None
 
 
 def is_user_session_valid(session: UserSession) -> bool:

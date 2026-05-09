@@ -3,7 +3,7 @@ from argon2 import PasswordHasher
 from sqlalchemy.orm import Session
 
 from backend.app.models.app_config import AppConfig
-from backend.app.models.enums import UserRole
+from backend.app.models.enums import TeamType, UserRole
 from backend.app.models.team import Team
 from backend.app.models.team_member import TeamMember
 from backend.app.models.user import User
@@ -26,17 +26,34 @@ def bootstrap_application(db: Session, input_data: BootstrapSetup) -> User:
     )
     db.add(user)
 
-    team = Team(name=input_data.team_name)
-    db.add(team)
-
-    # Flush both user and team to enable team_member creation
     db.flush()
 
-    team_member = TeamMember(
-        user_id=user.id, 
-        team_id=team.id, 
-        role=UserRole.OWNER
+    private_team = Team(
+        name="Private",
+        type=TeamType.PRIVATE,
+        private_owner_user_id=user.id,
     )
-    db.add(team_member)
+    db.add(private_team)
+
+    shared_team = Team(name=input_data.team_name)
+    db.add(shared_team)
+
+    db.flush()
+
+    private_team_member = TeamMember(
+        user_id=user.id,
+        team_id=private_team.id,
+        role=UserRole.OWNER,
+    )
+    db.add(private_team_member)
+
+    shared_team_member = TeamMember(
+        user_id=user.id,
+        team_id=shared_team.id,
+        role=UserRole.OWNER,
+    )
+    db.add(shared_team_member)
+
+    user.last_active_team_id = private_team.id
 
     return user
