@@ -12,9 +12,7 @@ class Settings(BaseSettings):
     )
     APP_NAME: str = "Mantask"
     DEBUG: bool = True
-    DATABASE_URL: str = Field(
-        default="postgresql+psycopg://postgres:postgres@localhost:5432/mantask"
-    )
+    DATABASE_URL: str
     BOOTSTRAP_SECRET: str | None = None
     SECRET_KEY: str = Field(default="change-me-in-production")
     SESSION_COOKIE_NAME: str = "session_token"
