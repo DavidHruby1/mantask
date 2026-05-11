@@ -1,1 +1,28 @@
 @import "tailwindcss";
+
+@theme {
+  --color-primary-black: #000000;
+  --color-secondary-black: #0B1120;
+  --color-accent-black: #1A2233;
+  --color-atmosphere: #2D3B4E;
+
+  --color-white-base: rgba(235, 237, 242, 1);
+  --color-white-text: rgba(235, 237, 242, 0.9);
+  --color-white-muted: rgba(235, 237, 242, 0.6);
+  --color-white-surface: rgba(235, 237, 242, 0.08);
+  --color-white-border: rgba(235, 237, 242, 0.12);
+}
+
+@utility bg-body {
+  background: linear-gradient(
+    to top,
+    var(--color-primary-black),
+    var(--color-secondary-black),
+    var(--color-accent-black)
+  );
+  background-attachment: fixed;
+}
+
+body {
+  @apply bg-body;
+}
