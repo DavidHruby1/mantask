@@ -21,7 +21,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          'bg-white-base text-primary-black hover:bg-white-base/90 focus-visible:ring-white-base',
+          'btn-glass rounded-full focus-visible:ring-white-base',
         secondary:
           'bg-white-surface text-white-base hover:bg-white-surface/80 focus-visible:ring-white-base',
         ghost:
