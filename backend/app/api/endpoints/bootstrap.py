@@ -2,18 +2,22 @@ import secrets
 
 from fastapi import APIRouter, HTTPException, Response
 
-from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
-from backend.app.core.config import settings
 from backend.app.api.dependencies import DbSessionDep
-from backend.app.models.app_config import AppConfig
-from backend.app.schemas.bootstrap import BootstrapSetup, BootstrapResult
-from backend.app.services.bootstrap import bootstrap_application
+from backend.app.schemas.bootstrap import BootstrapSetup, BootstrapResult, BootstrapStatus
 from backend.app.services.auth import LoginService
+from backend.app.core.config import settings
+from backend.app.services.bootstrap import bootstrap_application
+from backend.app.repositories.bootstraps import is_bootstrapped
 
 
 router = APIRouter(prefix="/bootstrap", tags=["bootstrap"])
+
+
+@router.get("/status", response_model=BootstrapStatus)
+def bootstrap_status(db: DbSessionDep) -> BootstrapStatus:
+    return BootstrapStatus(bootstrapped=is_bootstrapped(db))
 
 
 @router.post("/setup", response_model=BootstrapResult)
@@ -22,7 +26,7 @@ def bootstrap_setup(
     input_data: BootstrapSetup, 
     response: Response
 ) -> BootstrapResult:
-    is_app_bootstrapped = db.scalar(select(AppConfig.id).limit(1)) is not None
+    is_app_bootstrapped = is_bootstrapped(db)
     if is_app_bootstrapped:
         raise HTTPException(status_code=409, detail="App already bootstrapped")
 
@@ -31,9 +35,11 @@ def bootstrap_setup(
     ):
         raise HTTPException(status_code=403, detail="Invalid bootstrap")
 
+    login_service = LoginService(db)
+
     try:
         user = bootstrap_application(db, input_data)
-        session_token = LoginService(db).create_session(user_id=user.id)
+        session_token = login_service.create_session(user_id=user.id)
         db.commit()
     except IntegrityError:
         db.rollback()

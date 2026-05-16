@@ -7,6 +7,23 @@ from backend.app.models.user import User
 from backend.app.models.user_session import UserSession
 
 
+def create_user(
+    db: Session,
+    username: str,
+    username_normalized: str,
+    email: str,
+    password_hash: str,
+) -> User:
+    user = User(
+        username=username,
+        username_normalized=username_normalized,
+        email=email,
+        password_hash=password_hash,
+    )
+    db.add(user)
+    return user
+
+
 def get_user_by_email(db: Session, email: str) -> User | None:
     user = db.scalar(select(User).filter_by(email=email))
     if not user:
