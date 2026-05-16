@@ -14,6 +14,7 @@ import Button from '@/components/ui/Button.vue'
       <Button variant="ghost" size="sm">Cancel</Button>
       <Button variant="primary" size="md" disabled>Disabled</Button>
     </div>
+
   </div>
 </template>
 
@@ -132,4 +133,5 @@ import Button from '@/components/ui/Button.vue'
     opacity: 1;
   }
 }
+
 </style>

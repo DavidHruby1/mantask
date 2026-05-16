@@ -5,3 +5,7 @@ const props = defineProps<{
     class?: string
 }>()
 </script>
+
+<template>
+
+</tempalte>
