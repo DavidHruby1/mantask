@@ -85,13 +85,11 @@ def logout(
         return LoginResult(authenticated=False)
 
     session_auth_service = SessionAuthService(db)
-    revoked = session_auth_service.revoke_session_by_token(session_token)
-    if not revoked:
-        response.delete_cookie(settings.SESSION_COOKIE_NAME)
-        return LoginResult(authenticated=False)
 
     try:
-        db.commit()
+        revoked = session_auth_service.revoke_session_by_token(session_token)
+        if revoked:
+            db.commit()
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=500, detail="Unable to log out")

@@ -82,10 +82,14 @@ class SessionAuthService:
         return user_session
 
     def revoke_session_by_token(self, session_token: str) -> bool:
-        session = self.get_valid_session_by_token(session_token)
+        session_token_hash = hash_session_token(session_token)
+        session = get_user_session_by_token_hash(self.db, session_token_hash)
+
         if session is None:
             return False
-        session.revoked_at = datetime.now(timezone.utc)
+        if session.revoked_at is None:
+            session.revoked_at = datetime.now(timezone.utc)
+
         return True
 
     def _is_valid_session(self, session: UserSession) -> bool:
