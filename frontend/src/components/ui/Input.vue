@@ -25,7 +25,9 @@ const inputVariants = cva(
     placeholder:text-white-placeholder placeholder:font-normal
     disabled:pointer-events-none disabled:opacity-50
     focus-visible:bg-dark-surface-focus focus-visible:border-white-surface-focus
-    focus-visible:placeholder:text-white-placeholder-focus`,
+    focus-visible:placeholder:text-white-placeholder-focus
+    transition-[border-color,background] duration-100 ease-in-out
+    `,
     {
         variants: {
             variant: {
