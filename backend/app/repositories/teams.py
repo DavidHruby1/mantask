@@ -1,0 +1,42 @@
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from backend.app.models.team import Team
+from backend.app.models.enums import TeamType
+from backend.app.models.user import User
+from backend.app.models.team_member import TeamMember
+
+
+def get_active_team_id(db: Session, user: User) -> int | None:
+    team_id = user.last_active_team_id
+    if team_id is None:
+        return None
+
+    team = db.get(Team, team_id)
+
+    if team and team.is_active:
+        membership = db.scalar(
+            select(TeamMember).where(
+                TeamMember.team_id == team.id,
+                TeamMember.user_id == user.id,
+            )
+        )
+        if membership is not None:
+            return team.id
+
+    return None
+
+
+def get_private_team_id(db: Session, user: User) -> int | None:
+    private_team = db.scalar(
+        select(Team).where(
+            Team.type == TeamType.PRIVATE,
+            Team.private_owner_user_id == user.id,
+            Team.is_active,
+        )
+    )
+
+    if private_team is not None:
+        return private_team.id
+
+    return None

@@ -1,5 +1,3 @@
-from datetime import datetime, timezone
-
 from fastapi import APIRouter, Response, HTTPException
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -11,11 +9,9 @@ from backend.app.api.dependencies import (
 from backend.app.core.config import settings
 from backend.app.schemas.auth import LoginInput, LoginResult
 from backend.app.services.auth import (
-    authenticate_user,
-    create_user_session,
-    get_user_session_by_token,
-    is_user_session_valid,
-    resolve_active_team_id,
+    LoginService,
+    SessionAuthService,
+    ensure_active_team_id,
 )
 
 
@@ -28,12 +24,14 @@ def login(
     input_data: LoginInput, 
     response: Response
 ) -> LoginResult:
-    user = authenticate_user(db, input_data.email, input_data.password)
+    login_service = LoginService(db)
+    user = login_service.authenticate_user(input_data.email, input_data.password)
     if not user:
         raise HTTPException(status_code=401, detail="Authentication failed")
 
     try:
-        session_token = create_user_session(db, user_id=user.id)
+        session_token = login_service.create_session(user_id=user.id)
+        active_team_id = ensure_active_team_id(db, user)
         db.commit()
     except SQLAlchemyError:
         db.rollback()
@@ -52,15 +50,27 @@ def login(
         path="/",
     )
 
-    active_team_id = resolve_active_team_id(db, user)
-    return LoginResult(authenticated=True, active_team_id=active_team_id)
+    return LoginResult(
+        authenticated=True,
+        active_team_id=active_team_id,
+        session_token=session_token,
+    )
 
 
 @router.get("/me", response_model=LoginResult)
 def auth_user(
     db: DbSessionDep, session: CurrentSessionDep
 ) -> LoginResult:
-    active_team_id = resolve_active_team_id(db, session.user)
+    try:
+        active_team_id = ensure_active_team_id(db, session.user)
+        db.commit()
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to complete the request right now. Please try again.",
+        )
+
     return LoginResult(authenticated=True, active_team_id=active_team_id)
 
 
@@ -74,15 +84,12 @@ def logout(
         response.delete_cookie(settings.SESSION_COOKIE_NAME)
         return LoginResult(authenticated=False)
 
-    session = get_user_session_by_token(db, session_token)
-    if not session or not is_user_session_valid(session):
-        response.delete_cookie(settings.SESSION_COOKIE_NAME)
-        return LoginResult(authenticated=False)
+    session_auth_service = SessionAuthService(db)
 
-    now = datetime.now(timezone.utc)
     try:
-        session.revoked_at = now
-        db.commit()
+        revoked = session_auth_service.revoke_session_by_token(session_token)
+        if revoked:
+            db.commit()
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=500, detail="Unable to log out")

@@ -9,121 +9,110 @@ from argon2 import (
     InvalidHashError
 )
 
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.core.config import settings
-from backend.app.models.enums import TeamType
-from backend.app.models.team import Team
-from backend.app.models.team_member import TeamMember
 from backend.app.models.user import User
 from backend.app.models.user_session import UserSession
 
+from backend.app.repositories.teams import get_active_team_id, get_private_team_id
+from backend.app.repositories.users import get_user_by_email
+from backend.app.repositories.users import (
+    create_user_session_record,
+    get_user_session_by_token_hash,
+)
+
+
+DUMMY_PASSWORD_HASH = "$argon2id$v=19$m=65536,t=3,p=4$Q2k2U05wOTdoZkVEMTZUUA$qyASxedh9bH8/a6Xr8Hg9fXR9zlqwvUb89LgqnLr4HY"
+SESSION_TOKEN_BYTES = 32
+
 
 ph = PasswordHasher()
-DUMMY_PASSWORD_HASH = "$argon2id$v=19$m=65536,t=3,p=4$Q2k2U05wOTdoZkVEMTZUUA$qyASxedh9bH8/a6Xr8Hg9fXR9zlqwvUb89LgqnLr4HY"
 
 
-def generate_session_token() -> str:
-    return secrets.token_urlsafe(32)
+class LoginService:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def create_session(self, user_id: int) -> str:
+        session_token = secrets.token_urlsafe(SESSION_TOKEN_BYTES)
+        session_token_hash = hash_session_token(session_token)
+        expires_at = datetime.now(timezone.utc) + timedelta(
+            days=settings.SESSION_EXPIRE_DAYS
+        )
+        create_user_session_record(
+            self.db, user_id, session_token_hash, expires_at
+        )
+        return session_token
+
+    def authenticate_user(self, email: str, password: str) -> User | None:
+        user = get_user_by_email(self.db, email)
+        password_hash = user.password_hash if user else DUMMY_PASSWORD_HASH
+        password_ok = self._verify_password(password, password_hash)
+
+        if not user:
+            return None
+        if not user.is_active:
+            return None
+        if not password_ok:
+            return None
+
+        return user
+
+    def _verify_password(self, password: str, password_hash: str) -> bool:
+        try:
+            return ph.verify(password_hash, password)
+        except (VerifyMismatchError, VerificationError, InvalidHashError):
+            return False
+
+
+class SessionAuthService:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get_valid_session_by_token(self, session_token: str) -> UserSession | None:
+        session_token_hash = hash_session_token(session_token)
+        user_session = get_user_session_by_token_hash(self.db, session_token_hash)
+
+        if user_session is None:
+            return None
+        if not self._is_valid_session(user_session):
+            return None
+
+        return user_session
+
+    def revoke_session_by_token(self, session_token: str) -> bool:
+        session_token_hash = hash_session_token(session_token)
+        session = get_user_session_by_token_hash(self.db, session_token_hash)
+
+        if session is None:
+            return False
+        if session.revoked_at is None:
+            session.revoked_at = datetime.now(timezone.utc)
+
+        return True
+
+    def _is_valid_session(self, session: UserSession) -> bool:
+        now = datetime.now(timezone.utc)
+
+        if session.revoked_at:
+            return False
+        if session.expires_at <= now:
+            return False
+
+        return True
+
+
+def ensure_active_team_id(db: Session, user: User) -> int | None:
+    active_team_id = get_active_team_id(db, user)
+    if active_team_id is None:
+        active_team_id = get_private_team_id(db, user)
+
+    if user.last_active_team_id != active_team_id:
+        user.last_active_team_id = active_team_id
+
+    return active_team_id
 
 
 def hash_session_token(session_token: str) -> str:
     return hashlib.sha256(session_token.encode("utf-8")).hexdigest()
-
-
-def create_user_session(db: Session, user_id: int) -> str:
-    session_token = generate_session_token()
-    session_token_hash = hash_session_token(session_token)
-    expires_at = datetime.now(timezone.utc) + timedelta(
-        days=settings.SESSION_EXPIRE_DAYS
-    )
-
-    auth_session = UserSession(
-        user_id=user_id, 
-        session_token_hash=session_token_hash, 
-        expires_at=expires_at
-    )
-    db.add(auth_session)
-
-    return session_token
-
-
-def get_user_by_email(db: Session, email: str) -> User | None:
-    user = db.scalar(select(User).filter_by(email=email))
-    if not user:
-        return None
-
-    return user
-
-
-def verify_password(password: str, password_hash: str) -> bool:
-    try:
-        return ph.verify(password_hash, password)
-    except (VerifyMismatchError, VerificationError, InvalidHashError):
-        return False
-
-
-def authenticate_user(db: Session, email: str, password: str) -> User | None:
-    user = get_user_by_email(db, email)
-    password_hash = user.password_hash if user else DUMMY_PASSWORD_HASH
-    password_ok = verify_password(password, password_hash)
-
-    if not user:
-        return None
-    if not user.is_active:
-        return None
-    if not password_ok:
-        return None
-
-    return user
-
-
-def get_user_session_by_token(db: Session, session_token: str) -> UserSession | None:
-    session_token_hash = hash_session_token(session_token)
-    session = db.scalar(
-        select(UserSession).filter_by(session_token_hash=session_token_hash)
-    )
-    if not session:
-        return None
-
-    return session
-
-
-def resolve_active_team_id(db: Session, user: User) -> int | None:
-    team_id = user.last_active_team_id
-    if team_id is not None:
-        team = db.get(Team, team_id)
-        if team and team.is_active:
-            membership = db.scalar(
-                select(TeamMember).where(
-                    TeamMember.team_id == team.id,
-                    TeamMember.user_id == user.id,
-                )
-            )
-            if membership is not None:
-                return team.id
-
-    private_team = db.scalar(
-        select(Team).where(
-            Team.type == TeamType.PRIVATE,
-            Team.private_owner_user_id == user.id,
-            Team.is_active == True,
-        )
-    )
-    if private_team is not None:
-        if user.last_active_team_id != private_team.id:
-            user.last_active_team_id = private_team.id
-        return private_team.id
-
-    return None
-
-
-def is_user_session_valid(session: UserSession) -> bool:
-    now = datetime.now(timezone.utc)
-    if session.revoked_at:
-        return False
-    if session.expires_at <= now:
-        return False
-
-    return True
