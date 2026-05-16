@@ -4,7 +4,7 @@ import { cn } from '@/utils/cn'
 
 type TextProps = {
     color?: 'primary' | 'secondary';
-    size: 'sm' | 'md' | 'lg';
+    size: 'xs' | 'sm' | 'md' | 'lg';
 }
 
 const props = withDefaults(defineProps<TextProps>(), {
@@ -13,17 +13,18 @@ const props = withDefaults(defineProps<TextProps>(), {
 })
 
 const textVariants = cva(
-    `text-white-text font-sans font-normal leading-6 tracking-normal antialiased`,
+    `text-white-text font-sans font-normal tracking-normal antialiased`,
     {
         variants: {
             color: {
                 primary: '',
-                secondary: '',
+                secondary: 'text-white-muted',
             },
             size: {
-                sm: '',
-                md: '',
-                lg: '',
+                xs: 'text-[13px] leading-[18px]',
+                sm: 'text-sm leading-5',
+                md: 'text-base leading-6',
+                lg: 'text-lg leading-7',
             },
         },
     },

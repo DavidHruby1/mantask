@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import Button from '@/components/ui/Button.vue'
+import Container from '@/components/ui/Container.vue'
+import Link from '@/components/ui/Link.vue'
 import Input from '@/components/ui/Input.vue'
 import Text from '@/components/ui/Text.vue'
 import Heading from '@/components/ui/Heading.vue'
@@ -7,30 +9,72 @@ import Form from '@/components/ui/Form.vue'
 </script>
 
 <template>
-    <div class="login-page">
+    <Container>
         <div class="light-aura"></div>
         <div class="light-beam"></div>
         <div class="light-source"></div>
 
-        <div class="flex flex-col items-center gap-4 relative z-10">
-            <Input size="md" type="email" placeholder="Email address" />
-            <Input size="md" type="password" placeholder="Password" />
-            <Button variant="glass" size="lg">Get Started</Button>
-        </div>
+        <Form
+            variant="transparent"
+        >
+            <Heading
+                class="mb-5"
+                variant="h3"
+            >
+                Sign in to Mantask
+            </Heading>
 
-    </div>
+            <Input
+                id="email"
+                size="md"
+                type="email"
+                placeholder="Email address"
+            />
+            <Input
+                id="password"
+                size="md"
+                type="password"
+                placeholder="Password"
+            />
+
+            <div class="flex w-full justify-end">
+                <Link
+                    class="mb-2 -mt-2"
+                    href="/"
+                    color="primary"
+                    size="xs"
+                >
+                    Forgot password?
+                </Link>
+            </div>
+
+            <Button
+                variant="glass"
+                size="lg"
+            >
+                Login
+            </Button>
+
+            <Text
+                class="mt-2"
+                color="secondary"
+                size="xs"
+            >
+                Don't have an account?
+                <Link
+                    href="/"
+                    color="primary"
+                    size="xs"
+                >
+                    Request an invite
+                </Link>
+            </Text>
+        </Form>
+
+    </Container>
 </template>
 
 <style scoped>
-.login-page {
-    position: relative;
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-}
-
 .light-aura {
     position: absolute;
     top: -60px;

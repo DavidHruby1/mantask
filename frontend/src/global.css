@@ -8,6 +8,7 @@
     --color-atmosphere: #2D3B4E;
     --color-dark-surface: rgba(255, 255, 255, 0.04);
     --color-dark-surface-focus: rgba(255, 255, 255, 0.06);
+    --color-dark-muted: rgba(255, 255, 255, 0.32);
 
     --color-white-base: rgba(235, 237, 242, 1);
     --color-white-text: rgba(235, 237, 242, 0.8);
