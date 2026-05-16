@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Button from '@/components/ui/Button.vue'
+import Input from '@/components/ui/Input.vue'
 </script>
 
 <template>
@@ -9,10 +10,9 @@ import Button from '@/components/ui/Button.vue'
     <div class="light-source"></div>
 
     <div class="flex flex-col items-center gap-4 relative z-10">
-      <Button variant="primary" size="lg">Get Started</Button>
-      <Button variant="secondary" size="md">Learn More</Button>
-      <Button variant="ghost" size="sm">Cancel</Button>
-      <Button variant="primary" size="md" disabled>Disabled</Button>
+      <Input size="md" type="email" placeholder="Email address" />
+      <Input size="md" type="email" placeholder="Email address" />
+      <Button variant="glass" size="lg">Get Started</Button>
     </div>
 
   </div>

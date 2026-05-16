@@ -3,13 +3,12 @@ import { cva } from 'class-variance-authority'
 import { cn } from '@/utils/cn'
 
 type ButtonProps = {
-    variant: 'primary' | 'secondary' | 'ghost';
+    variant?: 'glass' | 'ghost';
     size: 'sm' | 'md' | 'lg';
     disabled?: boolean;
 }
 
 const props = withDefaults(defineProps<ButtonProps>(), {
-    variant: 'primary',
     size: 'md',
     disabled: false,
 })
@@ -18,17 +17,12 @@ const buttonVariants = cva(
     `inline-flex items-center justify-center
     rounded-lg font-medium
     transition-all duration-200
-    focus-visible:ring-2 focus-visible:ring-offset-2
-    focus-visible:ring-offset-secondary-black focus:outline-none
     disabled:pointer-events-none disabled:opacity-50`,
     {
         variants: {
             variant: {
-                primary:
+                glass:
                     'btn-glass rounded-full focus-visible:ring-white-base',
-                secondary:
-                    `bg-white-surface text-white-base
-                    hover:bg-white-surface/80 focus-visible:ring-white-base`,
                 ghost:
                     `text-white-muted focus-visible:ring-white-base
                     hover:text-white-base hover:bg-white-surface`,
@@ -49,7 +43,7 @@ const buttonVariants = cva(
             variant: props.variant,
             size: props.size
         }))"
-        :disabled="disabled"
+        :disabled="props.disabled"
     >
         <slot />
     </button>
@@ -155,5 +149,25 @@ const buttonVariants = cva(
 .btn-glass:active::after {
     opacity: 0.4;
     background: radial-gradient(circle at 50% 50%, rgba(200, 220, 255, 0.12) 0%, transparent 70%);
+}
+
+.btn-glass:focus-visible {
+    outline: none;
+    color: rgba(255,255,255,0.95);
+    border-color: rgba(200, 220, 255, 0.28);
+    -webkit-backdrop-filter: blur(30px) saturate(190%);
+    backdrop-filter: blur(30px) saturate(190%);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.16),
+        inset 0 -5px 12px rgba(0,0,0,0.28),
+        0 8px 28px rgba(0,0,0,0.32),
+        0 0 0 1px rgba(255,255,255,0.06),
+        0 0 0 3px rgba(148, 163, 184, 0.22),
+        0 0 24px rgba(148, 163, 184, 0.18);
+}
+
+.btn-glass:focus-visible::after {
+    opacity: 1;
+    background: radial-gradient(circle at 50% 50%, rgba(200, 220, 255, 0.16) 0%, transparent 72%);
 }
 </style>

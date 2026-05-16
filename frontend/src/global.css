@@ -4,13 +4,18 @@
     --color-primary-black: #000000;
     --color-secondary-black: #040404;
     --color-accent-black: #060606;
+    --color-input-black: #101211;
     --color-atmosphere: #2D3B4E;
+    --color-dark-surface: rgba(255, 255, 255, 0.04);
+    --color-dark-surface-focus: rgba(255, 255, 255, 0.06);
 
     --color-white-base: rgba(235, 237, 242, 1);
-    --color-white-text: rgba(235, 237, 242, 0.9);
+    --color-white-text: rgba(235, 237, 242, 0.8);
     --color-white-muted: rgba(235, 237, 242, 0.6);
-    --color-white-surface: rgba(235, 237, 242, 0.08);
-    --color-white-border: rgba(235, 237, 242, 0.12);
+    --color-white-surface: rgba(235, 237, 242, 0.10);
+    --color-white-surface-focus: rgba(235, 237, 242, 0.16);
+    --color-white-placeholder: rgba(235, 237, 242, 0.18);
+    --color-white-placeholder-focus: rgba(235, 237, 242, 0.24);
 }
 
 @utility bg-body {
