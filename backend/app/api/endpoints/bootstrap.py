@@ -10,7 +10,7 @@ from backend.app.api.dependencies import DbSessionDep
 from backend.app.models.app_config import AppConfig
 from backend.app.schemas.bootstrap import BootstrapSetup, BootstrapResult
 from backend.app.services.bootstrap import bootstrap_application
-from backend.app.services.auth import create_user_session
+from backend.app.services.auth import LoginService
 
 
 router = APIRouter(prefix="/bootstrap", tags=["bootstrap"])
@@ -33,7 +33,7 @@ def bootstrap_setup(
 
     try:
         user = bootstrap_application(db, input_data)
-        session_token = create_user_session(db, user_id=user.id)
+        session_token = LoginService(db).create_session(user_id=user.id)
         db.commit()
     except IntegrityError:
         db.rollback()

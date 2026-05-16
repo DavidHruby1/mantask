@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from backend.app.core.db import get_db
 from backend.app.models.user_session import UserSession
 from backend.app.core.config import settings
-from backend.app.services.auth import get_user_session_by_token, is_user_session_valid
+from backend.app.services.auth import SessionAuthService
 
 
 DbSessionDep = Annotated[Session, Depends(get_db)]
@@ -21,8 +21,10 @@ def get_current_session(
     if not session_token:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
-    session = get_user_session_by_token(db, session_token)
-    if not session or not is_user_session_valid(session):
+    session_auth_service = SessionAuthService(db)
+    session = session_auth_service.get_valid_session_by_token(session_token)
+
+    if session is None:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
     return session
