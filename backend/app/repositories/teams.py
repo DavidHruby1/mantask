@@ -66,8 +66,29 @@ def get_private_team_id(db: Session, user: User) -> int | None:
             Team.is_active,
         )
     )
+    return private_team.id if private_team is not None else None
 
-    if private_team is not None:
-        return private_team.id
 
-    return None
+def get_team_by_id(db: Session, team_id: int) -> Team | None:
+    team = db.get(Team, team_id)
+    return team
+
+
+def get_team_member(db: Session, team_id: int, user_id: int) -> TeamMember | None:
+    team_member = db.scalar(
+        select(TeamMember).where(
+            TeamMember.team_id == team_id,
+            TeamMember.user_id == user_id,
+        ).limit(1)
+    )
+    return team_member
+
+
+def get_team_member_by_id(db: Session, team_id: int, member_id: int) -> TeamMember | None:
+    team_member = db.scalar(
+        select(TeamMember).where(
+            TeamMember.team_id == team_id,
+            TeamMember.id == member_id,
+        ).limit(1)
+    )
+    return team_member

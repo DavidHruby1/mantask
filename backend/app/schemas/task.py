@@ -104,6 +104,10 @@ class TaskMove(BaseModel):
     anchor_task_id: int | None = None
 
 
+class TaskDelete(BaseModel):
+    id: int
+
+
 class TaskRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -131,3 +135,15 @@ class TaskRead(BaseModel):
     returned_count: int
     reopened_count: int
     blocked_count: int
+
+
+class TaskListQuery(BaseModel):
+    team_id: int | None = None
+    statuses: list[TaskStatus] | None = None
+    assignee_member_id: int | None = None
+
+
+class TaskFilters(BaseModel):
+    team_id: int
+    statuses: list[TaskStatus] | None = None
+    assignee_member_id: int | None = None
