@@ -7,15 +7,14 @@ from backend.app.repositories.teams import (
     get_team_member,
     get_team_member_by_id,
 )
-from backend.app.repositories.tasks import find_tasks
-from backend.app.schemas.task import TaskFilters, TaskListQuery, TaskRead
+from backend.app.schemas.task import TaskListQuery
 
 
-def get_tasks_for_user(
+def validate_task_list_access(
     db: Session,
     session: UserSession,
     query: TaskListQuery,
-) -> list[TaskRead]:
+) -> int:
     team_id = query.team_id
     if team_id is None:
         if not session.user.last_active_team_id:
@@ -36,10 +35,4 @@ def get_tasks_for_user(
         if assignee_member is None:
             raise HTTPException(status_code=400, detail="Invalid assignee_member_id")
 
-    filters = TaskFilters(
-        team_id=team_id,
-        statuses=query.statuses,
-        assignee_member_id=assignee_member_id,
-    )
-    tasks = find_tasks(db, filters)
-    return [TaskRead.model_validate(task) for task in tasks]
+    return team_id

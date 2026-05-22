@@ -143,7 +143,6 @@ class TaskListQuery(BaseModel):
     assignee_member_id: int | None = None
 
 
-class TaskFilters(BaseModel):
-    team_id: int
-    statuses: list[TaskStatus] | None = None
-    assignee_member_id: int | None = None
+class TaskBulkDeleteQuery(BaseModel):
+    team_id: int | None = None
+    status: TaskStatus
