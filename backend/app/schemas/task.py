@@ -137,12 +137,19 @@ class TaskRead(BaseModel):
     blocked_count: int
 
 
-class TaskListQuery(BaseModel):
-    team_id: int | None = None
+class TaskFilterFields(BaseModel):
     statuses: list[TaskStatus] | None = None
     assignee_member_id: int | None = None
+
+
+class TaskListQuery(TaskFilterFields):
+    team_id: int | None = None
 
 
 class TaskBulkDeleteQuery(BaseModel):
     team_id: int | None = None
     status: TaskStatus
+
+
+class TaskFilters(TaskFilterFields):
+    team_id: int

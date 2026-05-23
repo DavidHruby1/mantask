@@ -5,7 +5,7 @@ from fastapi import APIRouter, Query
 from backend.app.api.dependencies import DbSessionDep, CurrentSessionDep
 from backend.app.schemas.task import TaskBulkDeleteQuery, TaskListQuery, TaskRead
 from backend.app.repositories.tasks import find_tasks
-from backend.app.services.tasks import validate_task_list_access
+from backend.app.services.tasks import build_task_filters
 
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
@@ -17,13 +17,8 @@ def get_tasks(
     session: CurrentSessionDep,
     query: Annotated[TaskListQuery, Query()],
 ) -> list[TaskRead]:
-    team_id = validate_task_list_access(db, session, query)
-    tasks = find_tasks(
-        db,
-        team_id=team_id,
-        statuses=query.statuses,
-        assignee_member_id=query.assignee_member_id,
-    )
+    filters = build_task_filters(db, session, query)
+    tasks = find_tasks(db, filters)
     return [TaskRead.model_validate(task) for task in tasks]
 
 
