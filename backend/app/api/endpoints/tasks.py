@@ -4,7 +4,8 @@ from fastapi import APIRouter, Query
 
 from backend.app.api.dependencies import DbSessionDep, CurrentSessionDep
 from backend.app.schemas.task import TaskListQuery, TaskRead
-from backend.app.services.tasks import get_tasks_for_user
+from backend.app.repositories.tasks import find_tasks
+from backend.app.services.tasks import resolve_task_list_filters
 
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
@@ -16,4 +17,47 @@ def get_tasks(
     session: CurrentSessionDep,
     query: Annotated[TaskListQuery, Query()],
 ) -> list[TaskRead]:
-    return get_tasks_for_user(db, session, query)
+    filters = resolve_task_list_filters(db, session, query)
+    tasks = find_tasks(db, filters)
+    return [TaskRead.model_validate(task) for task in tasks]
+
+
+@router.get("/{task_id}", response_model=TaskRead)
+def get_task(
+    db: DbSessionDep,
+    session: CurrentSessionDep,
+    task_id: int,
+) -> TaskRead:
+    pass
+
+
+@router.post("/", response_model=TaskRead)
+def create_task():
+    pass
+
+
+@router.patch("/{task_id}", response_model=TaskRead)
+def update_task(
+    db: DbSessionDep,
+    session: CurrentSessionDep,
+    task_id: int,
+):
+    pass
+
+
+# Both deletes will return status code 204, nothing else
+@router.delete("/")
+def delete_column_tasks(
+    db: DbSessionDep,
+    session: CurrentSessionDep,
+):
+    pass
+
+
+@router.delete("/{task_id}")
+def delete_task(
+    db: DbSessionDep,
+    session: CurrentSessionDep,
+    task_id: int,
+):
+    pass

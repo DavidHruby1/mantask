@@ -8,7 +8,7 @@ from backend.app.schemas.task import TaskFilters
 def find_tasks(db: Session, filters: TaskFilters) -> list[Task]:
     stmt = select(Task).where(Task.team_id == filters.team_id)
 
-    if filters.statuses:
+    if filters.statuses is not None:
         stmt = stmt.where(Task.status.in_(filters.statuses))
     if filters.assignee_member_id is not None:
         stmt = stmt.where(Task.assignee_member_id == filters.assignee_member_id)

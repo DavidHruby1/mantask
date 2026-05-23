@@ -10,6 +10,11 @@ class TaskStatus(StrEnum):
     DONE = "done"
 
 
+class TaskView(StrEnum):
+    KANBAN = "kanban"
+    LIST = "list"
+
+
 class UserRole(StrEnum):
     OWNER = "owner"
     ADMIN = "admin"
