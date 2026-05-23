@@ -3,9 +3,9 @@ from typing import Annotated
 from fastapi import APIRouter, Query
 
 from backend.app.api.dependencies import DbSessionDep, CurrentSessionDep
-from backend.app.schemas.task import TaskBulkDeleteQuery, TaskListQuery, TaskRead
+from backend.app.schemas.task import TaskListQuery, TaskRead
 from backend.app.repositories.tasks import find_tasks
-from backend.app.services.tasks import build_task_filters
+from backend.app.services.tasks import resolve_task_list_filters
 
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
@@ -17,7 +17,7 @@ def get_tasks(
     session: CurrentSessionDep,
     query: Annotated[TaskListQuery, Query()],
 ) -> list[TaskRead]:
-    filters = build_task_filters(db, session, query)
+    filters = resolve_task_list_filters(db, session, query)
     tasks = find_tasks(db, filters)
     return [TaskRead.model_validate(task) for task in tasks]
 
@@ -50,7 +50,6 @@ def update_task(
 def delete_column_tasks(
     db: DbSessionDep,
     session: CurrentSessionDep,
-    query: Annotated[TaskBulkDeleteQuery, Query()],
 ):
     pass
 
