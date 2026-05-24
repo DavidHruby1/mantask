@@ -47,3 +47,16 @@ def resolve_task_list_filters(
         statuses=query.statuses,
         assignee_member_id=query.assignee_member_id,
     )
+
+
+def can_view_task(db: Session, team_id: int, user_id: int) -> bool:
+    team_member = get_team_member(db, team_id, user_id)
+    if team_member is None:
+        return False
+
+    team = get_team_by_id(db, team_id)
+    if not team.is_active:
+        return False
+
+    return True
+    
