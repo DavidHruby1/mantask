@@ -1,11 +1,11 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, HTTPException
 
 from backend.app.api.dependencies import DbSessionDep, CurrentSessionDep
 from backend.app.schemas.task import TaskListQuery, TaskRead
-from backend.app.repositories.tasks import find_tasks
-from backend.app.services.tasks import resolve_task_list_filters
+from backend.app.repositories.tasks import find_tasks, get_task_by_id
+from backend.app.services.tasks import resolve_task_list_filters, can_view_task
 
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
@@ -28,7 +28,15 @@ def get_task(
     session: CurrentSessionDep,
     task_id: int,
 ) -> TaskRead:
-    pass
+    task = get_task_by_id(db, task_id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    task_team_id = task.team_id
+    if not can_view_task(db, task_team_id, session.user_id):
+        raise HTTPException(status_code=403, detail="You cannot view this task")
+     
+    return TaskRead.model_validate(task)
 
 
 @router.post("/", response_model=TaskRead)

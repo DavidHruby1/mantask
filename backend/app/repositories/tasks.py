@@ -15,3 +15,7 @@ def find_tasks(db: Session, filters: TaskFilters) -> list[Task]:
 
     stmt = stmt.order_by(Task.status, Task.position, Task.id)
     return list(db.scalars(stmt).all())
+
+
+def get_task_by_id(db: Session, task_id: int) -> Task | None:
+    return db.get(Task, task_id)
