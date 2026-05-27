@@ -11,6 +11,7 @@ from sqlalchemy import (
     Integer,
     Enum,
     Text,
+    UniqueConstraint,
     func,
     text,
 )
@@ -28,7 +29,8 @@ class Task(Base):
     __tablename__ = "tasks"
 
     __table_args__ = (
-        CheckConstraint("position >= 1", name="task_position"),
+        UniqueConstraint("team_id", "status", "position", name="uq_task_team_status_position"),
+        CheckConstraint("position >= 0", name="task_position"),
         CheckConstraint("layer IS NULL OR btrim(layer) <> ''", name="task_layer_not_blank"),
         CheckConstraint("btrim(title) <> ''", name="task_title_not_blank"),
         CheckConstraint("returned_count >= 0", name="task_returned_count_non_negative"),
@@ -81,7 +83,6 @@ class Task(Base):
             validate_strings=True
         ),
         nullable=False,
-        server_default=text("'todo'")
     )
     priority: Mapped[TaskPriority | None] = mapped_column(
         Enum(
@@ -93,12 +94,9 @@ class Task(Base):
         nullable=True
     )
     position: Mapped[int] = mapped_column(Integer, nullable=False)
-    review_date: Mapped[date | None] = mapped_column(Date)
-    due_date: Mapped[date | None] = mapped_column(Date)
-    effort: Mapped[TaskEffort | None] = mapped_column(
-        IntEnumType(TaskEffort),
-        nullable=True
-    )
+    review_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    due_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    effort: Mapped[TaskEffort | None] = mapped_column(IntEnumType(TaskEffort), nullable=True)
     should_review: Mapped[bool] = mapped_column(Boolean, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
