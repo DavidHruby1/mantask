@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import exists, select
 from sqlalchemy.orm import Session
 
 from backend.app.models.team import Team
@@ -38,22 +38,15 @@ def create_team_member(
     return team_member
 
 
-def get_active_team_id(db: Session, user: User) -> int | None:
+def get_last_active_team_id(db: Session, user: User) -> int | None:
     team_id = user.last_active_team_id
     if team_id is None:
         return None
 
     team = db.get(Team, team_id)
 
-    if team and team.is_active:
-        membership = db.scalar(
-            select(TeamMember).where(
-                TeamMember.team_id == team.id,
-                TeamMember.user_id == user.id,
-            )
-        )
-        if membership is not None:
-            return team.id
+    if team and team.is_active and is_team_member(db, team.id, user.id):
+        return team.id
 
     return None
 
@@ -82,6 +75,19 @@ def get_team_member(db: Session, team_id: int, user_id: int) -> TeamMember | Non
         ).limit(1)
     )
     return team_member
+
+
+def is_team_member(db: Session, team_id: int, user_id: int) -> bool:
+    return bool(
+        db.scalar(
+            select(
+                exists().where(
+                    TeamMember.team_id == team_id,
+                    TeamMember.user_id == user_id,
+                )
+            )
+        )
+    )
 
 
 def get_team_member_by_id(db: Session, team_id: int, member_id: int) -> TeamMember | None:

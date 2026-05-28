@@ -3,9 +3,11 @@ from typing import Annotated
 from fastapi import APIRouter, Query, HTTPException
 
 from backend.app.api.dependencies import DbSessionDep, CurrentSessionDep
-from backend.app.schemas.task import TaskListQuery, TaskRead
-from backend.app.repositories.tasks import find_tasks, get_task_by_id
-from backend.app.services.tasks import resolve_task_list_filters, can_view_task
+from backend.app.repositories.teams import get_last_active_team_id, get_team_member
+from backend.app.schemas.task import TaskListQuery, TaskRead, TaskCreate
+from backend.app.models.enums import TaskStatus
+from backend.app.repositories.tasks import find_tasks, get_task_by_id, is_in_progress_free
+from backend.app.services.tasks import resolve_task_list_filters, can_view_task, create_task
 
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
@@ -40,8 +42,29 @@ def get_task(
 
 
 @router.post("/", response_model=TaskRead)
-def create_task():
-    pass
+def post_task(
+    db: DbSessionDep,
+    session: CurrentSessionDep,
+    payload: TaskCreate
+):
+    # TODO: Task doesn't have to have assignee, it can be picked up by anyone if nobody is assigned
+    # TODO: Should I prevent duplicate titles of tasks?
+    user = session.user
+    active_team_id = get_last_active_team_id(db, user)
+    if active_team_id is None:
+        raise HTTPException(status_code=409, detail="No active team selected")
+
+    team_member = get_team_member(db, active_team_id, user.id)    
+    if team_member is None:
+        raise HTTPException(status_code=409, detail="You are not a member of this team")
+
+    if payload.status == TaskStatus.IN_PROGRESS and not is_in_progress_free(db, active_team_id):
+        raise HTTPException(status_code=409, detail="IN_PROGRESS limit reached")
+
+    task = create_task(db, active_team_id, team_member.id, payload)
+    db.commit()
+    db.refresh(task)
+    return TaskRead.model_validate(task)
 
 
 @router.patch("/{task_id}", response_model=TaskRead)
@@ -53,15 +76,7 @@ def update_task(
     pass
 
 
-# Both deletes will return status code 204, nothing else
-@router.delete("/")
-def delete_column_tasks(
-    db: DbSessionDep,
-    session: CurrentSessionDep,
-):
-    pass
-
-
+# Delete will return status code 204, nothing else
 @router.delete("/{task_id}")
 def delete_task(
     db: DbSessionDep,

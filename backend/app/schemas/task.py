@@ -26,7 +26,8 @@ class TaskCreate(BaseModel):
     review_date: date | None = None
     due_date: date | None = None
     effort: TaskEffort | None = None
-    should_review: bool = False 
+    should_review: bool = True
+    status: TaskStatus = TaskStatus.TODO
 
     @field_validator("title")
     @classmethod
@@ -50,6 +51,15 @@ class TaskCreate(BaseModel):
         if date_value is not None and date_value < date.today():
             raise ValueError("Dates cannot be in the past")
         return date_value
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, status: TaskStatus) -> TaskStatus:
+        if status not in TaskStatus:
+            raise ValueError("Invalid status")
+        if status not in [TaskStatus.TODO, TaskStatus.IN_PROGRESS]:
+            raise ValueError("Status must be TODO or IN_PROGRESS")
+        return status
 
     @model_validator(mode="after")
     def validate_review(self) -> Self:
@@ -126,7 +136,7 @@ class TaskRead(BaseModel):
     effort: TaskEffort | None = None
     should_review: bool
     status: TaskStatus
-    position: int
+    position: int = Field(..., ge=0)
     created_at: datetime
     updated_at: datetime
     started_working_at: datetime | None = None
