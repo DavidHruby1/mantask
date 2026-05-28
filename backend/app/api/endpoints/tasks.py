@@ -47,10 +47,8 @@ def post_task(
     session: CurrentSessionDep,
     payload: TaskCreate
 ):
-# TODO:
-# Task doesn't have to have assignee, it can be picked up by anyone if nobody is assigned
-# UNRESOLVED:
-# Should I prevent duplicate titles of tasks?
+    # TODO: Task doesn't have to have assignee, it can be picked up by anyone if nobody is assigned
+    # TODO: Should I prevent duplicate titles of tasks?
     user = session.user
     active_team_id = get_last_active_team_id(db, user)
     if active_team_id is None:

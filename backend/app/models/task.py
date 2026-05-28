@@ -30,7 +30,7 @@ class Task(Base):
 
     __table_args__ = (
         UniqueConstraint("team_id", "status", "position", name="uq_task_team_status_position"),
-        CheckConstraint("position >= 0", name="task_position"),
+        CheckConstraint("position >= 1", name="task_position"),
         CheckConstraint("layer IS NULL OR btrim(layer) <> ''", name="task_layer_not_blank"),
         CheckConstraint("btrim(title) <> ''", name="task_title_not_blank"),
         CheckConstraint("returned_count >= 0", name="task_returned_count_non_negative"),

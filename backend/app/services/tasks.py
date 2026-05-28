@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
@@ -9,7 +11,7 @@ from backend.app.repositories.teams import (
 )
 from backend.app.repositories.tasks import insert_task, get_last_task_position
 from backend.app.schemas.task import TaskFilters, TaskListQuery
-from backend.app.models.enums import TaskView
+from backend.app.models.enums import TaskView, TaskStatus
 
 
 def resolve_task_list_filters(
@@ -85,9 +87,20 @@ def create_task(db, team_id, creator_member_id, payload):
     last_task_position = get_last_task_position(db, filters)
 
     if last_task_position is None:
-        position = 0
+        position = 1
     else:
         position = last_task_position + 1
 
-    task = insert_task(db, team_id, creator_member_id, payload, position)
+    started_working_at = None
+    if payload.status == TaskStatus.IN_PROGRESS:
+        started_working_at = datetime.now(tz=timezone.utc)
+
+    task = insert_task(
+        db,
+        team_id, 
+        creator_member_id, 
+        payload, 
+        position, 
+        started_working_at
+    )
     return task

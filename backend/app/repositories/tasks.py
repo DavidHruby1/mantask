@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -28,7 +30,7 @@ def get_last_task_position(db: Session, filters: TaskFilters) -> int | None:
     stmt = (
         select(Task)
         .where(Task.team_id == filters.team_id)
-        .where(Task.status.in_(filters.statuses))
+        .where(Task.status.in_(statuses))
         .order_by(Task.position.desc())
         .limit(1)
     )
@@ -54,13 +56,15 @@ def insert_task(
     team_id: int,
     creator_member_id: int,
     payload: TaskCreate,
-    position: int
+    position: int,
+    started_working_at: datetime | None
 ) -> Task:
     task = Task(
         **payload.model_dump(),
         team_id=team_id,
         creator_member_id=creator_member_id,
-        position=position
+        position=position,
+        started_working_at=started_working_at
     )
 
     db.add(task)
