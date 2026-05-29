@@ -10,7 +10,8 @@ from backend.app.repositories.teams import (
     is_team_member,
 )
 from backend.app.repositories.tasks import insert_task, get_last_task_position
-from backend.app.schemas.task import TaskFilters, TaskListQuery
+from backend.app.schemas.task import TaskFilters, TaskListQuery, TaskCreate, TaskUpdate
+from backend.app.models.task import Task
 from backend.app.models.enums import TaskView, TaskStatus
 
 
@@ -64,19 +65,24 @@ def can_view_task(db: Session, team_id: int, user_id: int) -> bool:
     return True
     
 
-def create_task(db, team_id, creator_member_id, payload):
+def create_task(
+    db: Session,
+    team_id: int, 
+    creator_member_id: int, 
+    payload: TaskCreate
+) -> Task | None:
     if get_team_member_by_id(db, team_id, creator_member_id) is None:
-        raise HTTPException(status_code=400, detail="Invalid creator_member_id")
+        return None
 
     if payload.assignee_member_id is not None:
         assignee_member = get_team_member_by_id(db, team_id, payload.assignee_member_id)
         if assignee_member is None:
-            raise HTTPException(status_code=400, detail="Invalid assignee_member_id")
+            return None
 
     if payload.reviewer_member_id is not None:
         reviewer_member = get_team_member_by_id(db, team_id, payload.reviewer_member_id)
         if reviewer_member is None:
-            raise HTTPException(status_code=400, detail="Invalid reviewer_member_id")
+            return None
 
     filters = TaskFilters(
         team_id=team_id, 
@@ -104,3 +110,7 @@ def create_task(db, team_id, creator_member_id, payload):
         started_working_at
     )
     return task
+
+
+def update_task(db: Session, payload: TaskUpdate) -> Task | None:
+    pass
