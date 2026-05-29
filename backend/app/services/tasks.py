@@ -10,19 +10,16 @@ from backend.app.repositories.teams import (
     is_team_member,
 )
 from backend.app.repositories.tasks import insert_task, get_last_task_position
-from backend.app.schemas.task import TaskFilters, TaskListQuery, TaskCreate, TaskUpdate
+from backend.app.schemas.task import TaskFilters, TaskQuery, TaskCreate, TaskUpdate
 from backend.app.models.task import Task
-from backend.app.models.enums import TaskView, TaskStatus
+from backend.app.models.enums import TaskStatus
 
 
-def resolve_task_list_filters(
+def resolve_task_filters(
     db: Session,
     session: UserSession,
-    query: TaskListQuery,
+    query: TaskQuery,
 ) -> TaskFilters:
-    if query.view == TaskView.KANBAN and query.statuses is not None:
-        raise HTTPException(status_code=400, detail="Invalid statuses for kanban view")
-
     team_id = query.team_id
     if team_id is None:
         if not session.user.last_active_team_id:

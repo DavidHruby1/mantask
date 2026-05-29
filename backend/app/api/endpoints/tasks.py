@@ -5,12 +5,12 @@ from sqlalchemy.exc import IntegrityError
 
 from backend.app.api.dependencies import DbSessionDep, CurrentSessionDep
 from backend.app.repositories.teams import get_last_active_team_id, get_team_member
-from backend.app.schemas.task import TaskListQuery, TaskRead, TaskCreate, TaskUpdate
+from backend.app.schemas.task import TaskQuery, TaskRead, TaskCreate, TaskUpdate
 from backend.app.models.enums import TaskStatus
 from backend.app.repositories.tasks import find_tasks, get_task_by_id, is_in_progress_free
 from backend.app.services.tasks import (
-    resolve_task_list_filters, 
-    can_view_task, 
+    resolve_task_filters,
+    can_view_task,
     create_task,
     update_task,
 )
@@ -23,9 +23,9 @@ router = APIRouter(prefix="/tasks", tags=["tasks"])
 def get_tasks(
     db: DbSessionDep,
     session: CurrentSessionDep,
-    query: Annotated[TaskListQuery, Query()],
+    query: Annotated[TaskQuery, Query()],
 ) -> list[TaskRead]:
-    filters = resolve_task_list_filters(db, session, query)
+    filters = resolve_task_filters(db, session, query)
     tasks = find_tasks(db, filters)
     return [TaskRead.model_validate(task) for task in tasks]
 

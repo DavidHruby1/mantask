@@ -12,7 +12,7 @@ from pydantic import (
     model_validator
 )
 
-from backend.app.models.enums import TaskEffort, TaskPriority, TaskStatus, TaskView
+from backend.app.models.enums import TaskEffort, TaskPriority, TaskStatus
 
 
 class TaskCreate(BaseModel):
@@ -157,9 +157,8 @@ class TaskFilterFields(BaseModel):
         return statuses or None
 
 
-class TaskListQuery(TaskFilterFields):
+class TaskQuery(TaskFilterFields):
     team_id: int | None = None
-    view: TaskView
 
 
 class TaskFilters(TaskFilterFields):
