@@ -72,3 +72,10 @@ def insert_task(
 
     db.add(task)
     return task
+
+
+def update_task(task: Task, updates: dict[str, object]) -> Task:
+    for field, value in updates.items():
+        setattr(task, field, value)
+
+    return task

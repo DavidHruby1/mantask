@@ -90,9 +90,6 @@ def patch_task(
     task_id: int,
     payload: TaskUpdate
 ) -> TaskRead:
-# TODO: get task by id, if not exist error
-# TODO: verify user can update task
-# TODO: verify if the change is valid
 # TODO: store in database
 # TODO: later add also role based access control
     task = get_task_by_id(db, task_id)
@@ -103,7 +100,7 @@ def patch_task(
     if not can_view_task(db, task_team_id, session.user_id):
         raise HTTPException(status_code=403, detail="You cannot view this task")
      
-    updated_task = update_task(db, payload)
+    updated_task = update_task(db, task, payload)
     if not updated_task:
         raise HTTPException(status_code=400, detail="Invalid payload")
 
@@ -112,9 +109,7 @@ def patch_task(
         db.refresh(updated_task)
     except IntegrityError:
         db.rollback()
-        raise HTTPException(
-            status_code=409, detail="Bootstrap data conflicts with existing records"
-        )
+        raise HTTPException(status_code=409, detail="Task update conflicts with existing records")
 
     return TaskRead.model_validate(updated_task)
 

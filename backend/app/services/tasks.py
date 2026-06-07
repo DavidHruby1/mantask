@@ -9,7 +9,11 @@ from backend.app.repositories.teams import (
     get_team_member_by_id,
     is_team_member,
 )
-from backend.app.repositories.tasks import insert_task, get_last_task_position
+from backend.app.repositories.tasks import (
+    insert_task,
+    get_last_task_position,
+    update_task as update_task_repository,
+)
 from backend.app.schemas.task import TaskFilters, TaskQuery, TaskCreate, TaskUpdate
 from backend.app.models.task import Task
 from backend.app.models.enums import TaskStatus
@@ -109,5 +113,28 @@ def create_task(
     return task
 
 
-def update_task(db: Session, payload: TaskUpdate) -> Task | None:
-    pass
+def update_task(db: Session, task: Task, payload: TaskUpdate) -> Task | None:
+    updates = payload.model_dump(exclude_unset=True)
+
+    assignee_member_id = updates.get("assignee_member_id")
+    if assignee_member_id is not None:
+        assignee_member = get_team_member_by_id(db, task.team_id, assignee_member_id)
+        if assignee_member is None:
+            return None
+
+    reviewer_member_id = updates.get("reviewer_member_id", task.reviewer_member_id)
+    if reviewer_member_id is not None:
+        reviewer_member = get_team_member_by_id(db, task.team_id, reviewer_member_id)
+        if reviewer_member is None:
+            return None
+
+    should_review = updates.get("should_review", task.should_review)
+    if should_review is None:
+        return None
+
+    if should_review and reviewer_member_id is None:
+        return None
+    if not should_review and reviewer_member_id is not None:
+        return None
+
+    return update_task_repository(task, updates)
