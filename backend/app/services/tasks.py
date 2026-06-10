@@ -9,19 +9,21 @@ from backend.app.repositories.teams import (
     get_team_member_by_id,
     is_team_member,
 )
-from backend.app.repositories.tasks import insert_task, get_last_task_position
-from backend.app.schemas.task import TaskFilters, TaskListQuery
-from backend.app.models.enums import TaskView, TaskStatus
+from backend.app.repositories.tasks import (
+    insert_task,
+    get_last_task_position,
+    update_task as update_task_repository,
+)
+from backend.app.schemas.task import TaskFilters, TaskQuery, TaskCreate, TaskUpdate
+from backend.app.models.task import Task
+from backend.app.models.enums import TaskStatus
 
 
-def resolve_task_list_filters(
+def resolve_task_filters(
     db: Session,
     session: UserSession,
-    query: TaskListQuery,
+    query: TaskQuery,
 ) -> TaskFilters:
-    if query.view == TaskView.KANBAN and query.statuses is not None:
-        raise HTTPException(status_code=400, detail="Invalid statuses for kanban view")
-
     team_id = query.team_id
     if team_id is None:
         if not session.user.last_active_team_id:
@@ -64,19 +66,24 @@ def can_view_task(db: Session, team_id: int, user_id: int) -> bool:
     return True
     
 
-def create_task(db, team_id, creator_member_id, payload):
+def create_task(
+    db: Session,
+    team_id: int, 
+    creator_member_id: int, 
+    payload: TaskCreate
+) -> Task | None:
     if get_team_member_by_id(db, team_id, creator_member_id) is None:
-        raise HTTPException(status_code=400, detail="Invalid creator_member_id")
+        return None
 
     if payload.assignee_member_id is not None:
         assignee_member = get_team_member_by_id(db, team_id, payload.assignee_member_id)
         if assignee_member is None:
-            raise HTTPException(status_code=400, detail="Invalid assignee_member_id")
+            return None
 
     if payload.reviewer_member_id is not None:
         reviewer_member = get_team_member_by_id(db, team_id, payload.reviewer_member_id)
         if reviewer_member is None:
-            raise HTTPException(status_code=400, detail="Invalid reviewer_member_id")
+            return None
 
     filters = TaskFilters(
         team_id=team_id, 
@@ -104,3 +111,30 @@ def create_task(db, team_id, creator_member_id, payload):
         started_working_at
     )
     return task
+
+
+def update_task(db: Session, task: Task, payload: TaskUpdate) -> Task | None:
+    updates = payload.model_dump(exclude_unset=True)
+
+    assignee_member_id = updates.get("assignee_member_id")
+    if assignee_member_id is not None:
+        assignee_member = get_team_member_by_id(db, task.team_id, assignee_member_id)
+        if assignee_member is None:
+            return None
+
+    reviewer_member_id = updates.get("reviewer_member_id", task.reviewer_member_id)
+    if reviewer_member_id is not None:
+        reviewer_member = get_team_member_by_id(db, task.team_id, reviewer_member_id)
+        if reviewer_member is None:
+            return None
+
+    should_review = updates.get("should_review", task.should_review)
+    if should_review is None:
+        return None
+
+    if should_review and reviewer_member_id is None:
+        return None
+    if not should_review and reviewer_member_id is not None:
+        return None
+
+    return update_task_repository(task, updates)

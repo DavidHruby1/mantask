@@ -58,7 +58,7 @@ def insert_task(
     payload: TaskCreate,
     position: int,
     started_working_at: datetime | None
-) -> Task:
+) -> Task | None:
     task = Task(
         **payload.model_dump(),
         team_id=team_id,
@@ -66,6 +66,16 @@ def insert_task(
         position=position,
         started_working_at=started_working_at
     )
+    
+    if not task:
+        return None
 
     db.add(task)
+    return task
+
+
+def update_task(task: Task, updates: dict[str, object]) -> Task:
+    for field, value in updates.items():
+        setattr(task, field, value)
+
     return task
