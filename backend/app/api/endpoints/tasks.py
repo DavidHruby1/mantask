@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Query, HTTPException
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from backend.app.api.dependencies import DbSessionDep, CurrentSessionDep
 from backend.app.repositories.teams import get_last_active_team_id, get_team_member
@@ -115,10 +115,32 @@ def patch_task(
 
 
 # Delete will return status code 204, nothing else
-@router.delete("/{task_id}")
+@router.delete("/{task_id}", status_code=204)
 def delete_task(
     db: DbSessionDep,
     session: CurrentSessionDep,
     task_id: int,
-):
-    pass
+) -> None:
+    task = get_task_by_id(db, task_id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    task_team_id = task.team_id
+    if not can_view_task(db, task_team_id, session.user_id):
+        raise HTTPException(status_code=403, detail="You cannot view this task")
+     
+    db.delete(task)
+    try: 
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail="Task cannot be deleted because it is still referenced by other records",
+        )
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to delete task right now. Please try again."
+        )
