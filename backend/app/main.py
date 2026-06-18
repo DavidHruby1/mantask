@@ -1,8 +1,10 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from backend.app.api.endpoints import auth, bootstrap, tasks
 from backend.app.core.config import settings
+from backend.app.error import AppError
 
 
 api_router = APIRouter(prefix="/api")
@@ -11,6 +13,11 @@ api_router.include_router(bootstrap.router)
 api_router.include_router(tasks.router)
 
 app = FastAPI(title=settings.APP_NAME)
+
+
+@app.exception_handler(AppError)
+async def app_error_handler(_: Request, exc: AppError) -> JSONResponse:
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
 app.add_middleware(
     CORSMiddleware,
