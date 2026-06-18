@@ -1,9 +1,18 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, Query
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from backend.app.api.dependencies import DbSessionDep, CurrentSessionDep
+from backend.app.error import (
+    ApiConflictError,
+    ApiInternalServerError,
+    InvalidTaskError,
+    NoActiveTeamSelectedError,
+    TaskAccessDeniedError,
+    TaskNotFoundError,
+    TeamMembershipError,
+)
 from backend.app.repositories.teams import get_last_active_team_id, get_team_member
 from backend.app.schemas.task import TaskQuery, TaskRead, TaskCreate, TaskUpdate
 from backend.app.models.enums import TaskStatus
@@ -38,12 +47,12 @@ def get_task(
 ) -> TaskRead:
     task = get_task_by_id(db, task_id)
     if task is None:
-        raise HTTPException(status_code=404, detail="Task not found")
+        raise TaskNotFoundError()
 
     task_team_id = task.team_id
     if not can_view_task(db, task_team_id, session.user_id):
-        raise HTTPException(status_code=403, detail="You cannot view this task")
-     
+        raise TaskAccessDeniedError()
+
     return TaskRead.model_validate(task)
 
 
@@ -58,27 +67,25 @@ def post_task(
     user = session.user
     active_team_id = get_last_active_team_id(db, user)
     if active_team_id is None:
-        raise HTTPException(status_code=409, detail="No active team selected")
+        raise NoActiveTeamSelectedError()
 
     team_member = get_team_member(db, active_team_id, user.id)    
     if team_member is None:
-        raise HTTPException(status_code=409, detail="You are not a member of this team")
+        raise TeamMembershipError()
 
     if payload.status == TaskStatus.IN_PROGRESS and not is_in_progress_free(db, active_team_id):
-        raise HTTPException(status_code=409, detail="IN_PROGRESS limit reached")
+        raise ApiConflictError("IN_PROGRESS limit reached")
 
     created_task = create_task(db, active_team_id, team_member.id, payload)
     if not created_task:
-        raise HTTPException(status_code=400, detail="Invalid payload")
+        raise InvalidTaskError()
 
     try: 
         db.commit()
         db.refresh(created_task)
     except IntegrityError:
         db.rollback()
-        raise HTTPException(
-            status_code=409, detail="Bootstrap data conflicts with existing records"
-        )
+        raise ApiConflictError("Bootstrap data conflicts with existing records")
 
     return TaskRead.model_validate(created_task)
 
@@ -94,22 +101,22 @@ def patch_task(
 # TODO: later add also role based access control
     task = get_task_by_id(db, task_id)
     if task is None:
-        raise HTTPException(status_code=404, detail="Task not found")
+        raise TaskNotFoundError()
 
     task_team_id = task.team_id
     if not can_view_task(db, task_team_id, session.user_id):
-        raise HTTPException(status_code=403, detail="You cannot view this task")
-     
+        raise TaskAccessDeniedError()
+
     updated_task = update_task(db, task, payload)
     if not updated_task:
-        raise HTTPException(status_code=400, detail="Invalid payload")
+        raise InvalidTaskError()
 
     try: 
         db.commit()
         db.refresh(updated_task)
     except IntegrityError:
         db.rollback()
-        raise HTTPException(status_code=409, detail="Task update conflicts with existing records")
+        raise ApiConflictError("Task update conflicts with existing records")
 
     return TaskRead.model_validate(updated_task)
 
@@ -123,24 +130,18 @@ def delete_task(
 ) -> None:
     task = get_task_by_id(db, task_id)
     if task is None:
-        raise HTTPException(status_code=404, detail="Task not found")
+        raise TaskNotFoundError()
 
     task_team_id = task.team_id
     if not can_view_task(db, task_team_id, session.user_id):
-        raise HTTPException(status_code=403, detail="You cannot view this task")
-     
+        raise TaskAccessDeniedError()
+
     db.delete(task)
     try: 
         db.commit()
     except IntegrityError:
         db.rollback()
-        raise HTTPException(
-            status_code=409,
-            detail="Task cannot be deleted because it is still referenced by other records",
-        )
+        raise ApiConflictError("Task cannot be deleted because it is still referenced by other records")
     except SQLAlchemyError:
         db.rollback()
-        raise HTTPException(
-            status_code=500,
-            detail="Unable to delete task right now. Please try again."
-        )
+        raise ApiInternalServerError("Unable to delete task right now. Please try again.")

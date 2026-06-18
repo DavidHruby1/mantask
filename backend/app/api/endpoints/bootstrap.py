@@ -1,10 +1,16 @@
 import secrets
 
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, Response
 
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from backend.app.api.dependencies import DbSessionDep
+from backend.app.error import (
+    AppAlreadyBootstrappedError,
+    ApiConflictError,
+    ApiInternalServerError,
+    InvalidBootstrapSecretError,
+)
 from backend.app.schemas.bootstrap import BootstrapSetup, BootstrapResult, BootstrapStatus
 from backend.app.services.auth import LoginService
 from backend.app.core.config import settings
@@ -28,12 +34,12 @@ def bootstrap_setup(
 ) -> BootstrapResult:
     is_app_bootstrapped = is_bootstrapped(db)
     if is_app_bootstrapped:
-        raise HTTPException(status_code=409, detail="App already bootstrapped")
+        raise AppAlreadyBootstrappedError()
 
     if not settings.BOOTSTRAP_SECRET or not secrets.compare_digest(
         input_data.bootstrap_secret, settings.BOOTSTRAP_SECRET
     ):
-        raise HTTPException(status_code=403, detail="Invalid bootstrap")
+        raise InvalidBootstrapSecretError()
 
     login_service = LoginService(db)
 
@@ -43,15 +49,10 @@ def bootstrap_setup(
         db.commit()
     except IntegrityError:
         db.rollback()
-        raise HTTPException(
-            status_code=409, detail="Bootstrap data conflicts with existing records"
-        )
+        raise ApiConflictError("Bootstrap data conflicts with existing records")
     except SQLAlchemyError:
         db.rollback()
-        raise HTTPException(
-            status_code=500,
-            detail="Unable to complete the request right now. Please try again",
-        )
+        raise ApiInternalServerError("Unable to complete the request right now. Please try again")
 
     response.set_cookie(
         key=settings.SESSION_COOKIE_NAME,
