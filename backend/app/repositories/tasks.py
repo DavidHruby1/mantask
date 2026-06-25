@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session
 
 from backend.app.models.task import Task
 from backend.app.models.enums import TaskStatus
-from backend.app.models.app_config import AppConfig
 from backend.app.schemas.task import TaskFilters, TaskCreate
 
 
@@ -57,7 +56,7 @@ def insert_task(
     payload: TaskCreate,
     position: int,
     started_working_at: datetime | None
-) -> Task | None:
+) -> Task:
     task = Task(
         **payload.model_dump(),
         team_id=team_id,
@@ -66,9 +65,6 @@ def insert_task(
         started_working_at=started_working_at
     )
     
-    if not task:
-        return None
-
     db.add(task)
     return task
 

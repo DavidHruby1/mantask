@@ -3,20 +3,13 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from backend.app.models.user_session import UserSession
-from backend.app.error import (
-    ApiInternalServerError,
-    ApiConflictError,
-    InvalidTaskError,
-    NoActiveTeamSelectedError,
-    TeamInactiveError,
-    TeamNotFoundError,
-    TeamMembershipError
-)
+
+from backend.app.repositories.bootstraps import get_in_progress_limit
 from backend.app.repositories.teams import (
-    get_in_progress_limit,
     get_team_by_id,
     get_team_member_by_id,
     is_team_member,
+    get_team_member
 )
 from backend.app.repositories.tasks import (
     find_tasks,
@@ -32,10 +25,19 @@ from backend.app.models.enums import TaskStatus
 from backend.app.models.team import Team
 from backend.app.models.user import User
 
-from backend.app.error import TaskNotFoundError, TaskAccessDeniedError
+from backend.app.error import (
+    ApiInternalServerError,
+    ApiConflictError,
+    InvalidTaskError,
+    NoActiveTeamSelectedError,
+    TeamInactiveError,
+    TeamNotFoundError,
+    TeamMembershipError,
+    TaskNotFoundError,
+    TaskAccessDeniedError
+)
 
 
-# What is better? To check if not is, or to check if is None?
 class TaskService:
     def get_all_tasks(
         self,
@@ -50,35 +52,39 @@ class TaskService:
     def create_task(
         self,
         db: Session,
-        team_id: int, 
-        creator_member_id: int, 
+        active_team_id: int, 
+        user_id: int,
         payload: TaskCreate
-    ) -> Task | None:
-        can_create_in_progress_task = self._ensure_can_create_in_progress_task(db, team_id)
-        if payload.status == TaskStatus.IN_PROGRESS and not can_create_in_progress_task:
-            raise ApiConflictError("IN_PROGRESS limit reached")
+    ) -> Task:
+        if payload.status == TaskStatus.IN_PROGRESS:
+            can_create_in_progress_task = self._can_create_in_progress_task(db, active_team_id)
+            if not can_create_in_progress_task:
+                raise ApiConflictError("IN_PROGRESS limit reached")
 
-        if get_team_member_by_id(db, team_id, creator_member_id) is None:
+        # Ensure the creator is a member of the active team.
+        creator_member = get_team_member(db, active_team_id, user_id)    
+        if creator_member is None:
             raise TeamMembershipError()
+        creator_member_id = creator_member.id
 
         if payload.assignee_member_id is not None:
-            assignee_member = get_team_member_by_id(db, team_id, payload.assignee_member_id)
+            assignee_member = get_team_member_by_id(db, active_team_id, payload.assignee_member_id)
             if assignee_member is None:
                 raise TeamMembershipError("Invalid assignee")
 
         if payload.reviewer_member_id is not None:
-            reviewer_member = get_team_member_by_id(db, team_id, payload.reviewer_member_id)
+            reviewer_member = get_team_member_by_id(db, active_team_id, payload.reviewer_member_id)
             if reviewer_member is None:
                 raise TeamMembershipError("Invalid reviewer")
 
         filters = TaskFilters(
-            team_id=team_id, 
+            team_id=active_team_id, 
             statuses=[payload.status],
             assignee_member_id=None
         )
 
+        # Calculate position of the new task
         last_task_position = get_last_task_position(db, filters)
-
         position = 1
         if last_task_position is not None:
             position = last_task_position + 1
@@ -89,7 +95,7 @@ class TaskService:
 
         task = insert_task(
             db,
-            team_id, 
+            active_team_id, 
             creator_member_id, 
             payload, 
             position, 
@@ -195,7 +201,7 @@ class TaskService:
             assignee_member_id=query.assignee_member_id,
         )
 
-    def _ensure_can_create_in_progress_task(self, db: Session, team_id: int) -> bool:
+    def _can_create_in_progress_task(self, db: Session, team_id: int) -> bool:
         team = get_team_by_id(db, team_id)
         if not team:
             raise TeamNotFoundError()

@@ -7,7 +7,6 @@ from backend.app.api.dependencies import DbSessionDep, CurrentSessionDep
 from backend.app.error import (
     ApiConflictError,
     ApiInternalServerError,
-    InvalidTaskError,
     TeamMembershipError,
 )
 from backend.app.repositories.teams import get_team_member
@@ -49,13 +48,10 @@ def post_task(
     # TODO: Task doesn't have to have assignee, it can be picked up by anyone if nobody is assigned
     # TODO: Should I prevent duplicate titles of tasks?
     user = session.user
+    user_id = user.id
+
     active_team_id = task_service.get_last_active_team_id(db, user)
-
-    team_member = get_team_member(db, active_team_id, user.id)    
-    if team_member is None:
-        raise TeamMembershipError()
-
-    created_task = task_service.create_task(db, active_team_id, team_member.id, payload)
+    created_task = task_service.create_task(db, active_team_id, user_id, payload)
 
     try: 
         db.commit()
@@ -74,15 +70,12 @@ def patch_task(
     task_id: int,
     payload: TaskUpdate
 ) -> TaskRead:
-# TODO: store in database
-# TODO: later add also role based access control
+# TODO: Store in database
+# TODO: Later add also role based access control
     user_id = session.user_id
-    task = task_service.get_accessible_task(db, task_id, user_id)
 
-    # This should not raise error here but in service
-    updated_task = update_task(db, task, payload)
-    if not updated_task:
-        raise InvalidTaskError()
+    task = task_service.get_accessible_task(db, task_id, user_id)
+    updated_task = task_service.update_task(db, task, payload)
 
     try: 
         db.commit()

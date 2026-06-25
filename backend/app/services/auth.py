@@ -11,11 +11,13 @@ from argon2 import (
 
 from sqlalchemy.orm import Session
 
+from backend.app.services.tasks import TaskService
+
 from backend.app.core.config import settings
 from backend.app.models.user import User
 from backend.app.models.user_session import UserSession
 
-from backend.app.repositories.teams import get_last_active_team_id, get_private_team_id
+from backend.app.repositories.teams import get_private_team_id
 from backend.app.repositories.users import get_user_by_email
 from backend.app.repositories.users import (
     create_user_session_record,
@@ -100,7 +102,8 @@ class SessionAuthService:
 
 
 def ensure_active_team_id(db: Session, user: User) -> int | None:
-    active_team_id = get_last_active_team_id(db, user)
+    task_service = TaskService()
+    active_team_id = task_service.get_last_active_team_id(db, user)
     if active_team_id is None:
         active_team_id = get_private_team_id(db, user)
 

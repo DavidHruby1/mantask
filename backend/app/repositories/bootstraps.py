@@ -12,3 +12,9 @@ def create_app_config(db: Session, organization_name: str) -> AppConfig:
 
 def is_bootstrapped(db: Session) -> bool:
     return db.scalar(select(AppConfig.id).limit(1)) is not None
+
+
+def get_in_progress_limit(db: Session) -> int | None:
+    app_config = db.get(AppConfig, 1)
+    in_progress_limit = app_config.in_progress_limit if app_config is not None else None
+    return in_progress_limit 

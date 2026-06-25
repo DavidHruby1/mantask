@@ -86,8 +86,3 @@ def get_team_member_by_id(db: Session, team_id: int, member_id: int) -> TeamMemb
         ).limit(1)
     )
     return team_member
-
-def get_in_progress_limit(db: Session) -> int | None:
-    app_config = db.get(AppConfig, 1)
-    in_progress_limit = app_config.in_progress_limit if app_config is not None else None
-    return in_progress_limit 
