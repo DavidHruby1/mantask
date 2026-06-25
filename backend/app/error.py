@@ -39,7 +39,7 @@ class TaskNotFoundError(AppError):
 
 class TaskAccessDeniedError(AppError):
     status_code = 403
-    detail = "You cannot view this task"
+    detail = "You cannot access this task"
 
 
 class TeamMembershipError(AppError):
@@ -60,6 +60,11 @@ class AppAlreadyBootstrappedError(AppError):
 class InvalidBootstrapSecretError(AppError):
     status_code = 403
     detail = "Invalid bootstrap"
+
+
+class InvalidSessionError(AppError):
+    status_code = 403
+    detail = "Invalid session"
 
 
 class ApiConflictError(AppError):

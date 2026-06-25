@@ -7,25 +7,14 @@ from backend.app.api.dependencies import DbSessionDep, CurrentSessionDep
 from backend.app.error import (
     ApiConflictError,
     ApiInternalServerError,
-    InvalidTaskError,
-    NoActiveTeamSelectedError,
-    TaskAccessDeniedError,
-    TaskNotFoundError,
-    TeamMembershipError,
 )
-from backend.app.repositories.teams import get_last_active_team_id, get_team_member
 from backend.app.schemas.task import TaskQuery, TaskRead, TaskCreate, TaskUpdate
-from backend.app.models.enums import TaskStatus
-from backend.app.repositories.tasks import find_tasks, get_task_by_id, is_in_progress_free
-from backend.app.services.tasks import (
-    resolve_task_filters,
-    can_view_task,
-    create_task,
-    update_task,
-)
+from backend.app.services.auth import get_last_active_team_id
+from backend.app.services.tasks import TaskService
 
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
+task_service = TaskService()
 
 
 @router.get("/", response_model=list[TaskRead])
@@ -34,8 +23,7 @@ def get_tasks(
     session: CurrentSessionDep,
     query: Annotated[TaskQuery, Query()],
 ) -> list[TaskRead]:
-    filters = resolve_task_filters(db, session, query)
-    tasks = find_tasks(db, filters)
+    tasks = task_service.get_all_tasks(db, session, query)
     return [TaskRead.model_validate(task) for task in tasks]
 
 
@@ -45,14 +33,8 @@ def get_task(
     session: CurrentSessionDep,
     task_id: int,
 ) -> TaskRead:
-    task = get_task_by_id(db, task_id)
-    if task is None:
-        raise TaskNotFoundError()
-
-    task_team_id = task.team_id
-    if not can_view_task(db, task_team_id, session.user_id):
-        raise TaskAccessDeniedError()
-
+    user_id = session.user_id
+    task = task_service.get_accessible_task(db, task_id, user_id)    
     return TaskRead.model_validate(task)
 
 
@@ -65,20 +47,10 @@ def post_task(
     # TODO: Task doesn't have to have assignee, it can be picked up by anyone if nobody is assigned
     # TODO: Should I prevent duplicate titles of tasks?
     user = session.user
+    user_id = user.id
+
     active_team_id = get_last_active_team_id(db, user)
-    if active_team_id is None:
-        raise NoActiveTeamSelectedError()
-
-    team_member = get_team_member(db, active_team_id, user.id)    
-    if team_member is None:
-        raise TeamMembershipError()
-
-    if payload.status == TaskStatus.IN_PROGRESS and not is_in_progress_free(db, active_team_id):
-        raise ApiConflictError("IN_PROGRESS limit reached")
-
-    created_task = create_task(db, active_team_id, team_member.id, payload)
-    if not created_task:
-        raise InvalidTaskError()
+    created_task = task_service.create_task(db, active_team_id, user_id, payload)
 
     try: 
         db.commit()
@@ -97,19 +69,12 @@ def patch_task(
     task_id: int,
     payload: TaskUpdate
 ) -> TaskRead:
-# TODO: store in database
-# TODO: later add also role based access control
-    task = get_task_by_id(db, task_id)
-    if task is None:
-        raise TaskNotFoundError()
+    # TODO: Store in database
+    # TODO: Later add also role based access control
+    user_id = session.user_id
 
-    task_team_id = task.team_id
-    if not can_view_task(db, task_team_id, session.user_id):
-        raise TaskAccessDeniedError()
-
-    updated_task = update_task(db, task, payload)
-    if not updated_task:
-        raise InvalidTaskError()
+    task = task_service.get_accessible_task(db, task_id, user_id)
+    updated_task = task_service.update_task(db, task, payload)
 
     try: 
         db.commit()
@@ -121,20 +86,14 @@ def patch_task(
     return TaskRead.model_validate(updated_task)
 
 
-# Delete will return status code 204, nothing else
 @router.delete("/{task_id}", status_code=204)
 def delete_task(
     db: DbSessionDep,
     session: CurrentSessionDep,
     task_id: int,
 ) -> None:
-    task = get_task_by_id(db, task_id)
-    if task is None:
-        raise TaskNotFoundError()
-
-    task_team_id = task.team_id
-    if not can_view_task(db, task_team_id, session.user_id):
-        raise TaskAccessDeniedError()
+    user_id = session.user_id
+    task = task_service.get_accessible_task(db, task_id, user_id)
 
     db.delete(task)
     try: 

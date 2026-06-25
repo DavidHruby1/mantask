@@ -1,11 +1,10 @@
 from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
 from backend.app.models.task import Task
 from backend.app.models.enums import TaskStatus
-from backend.app.models.app_config import AppConfig
 from backend.app.schemas.task import TaskFilters, TaskCreate
 
 
@@ -25,6 +24,16 @@ def get_task_by_id(db: Session, task_id: int) -> Task | None:
     return db.get(Task, task_id)
 
 
+def count_team_tasks_by_status(db: Session, team_id: int, status: TaskStatus) -> int:
+    stmt = (
+        select(func.count())
+        .select_from(Task)
+        .where(Task.team_id == team_id)
+        .where(Task.status == status)
+    )
+    return db.scalar(stmt) or 0
+
+
 def get_last_task_position(db: Session, filters: TaskFilters) -> int | None:
     statuses = filters.statuses if filters.statuses is not None else [TaskStatus.TODO]
     stmt = (
@@ -38,19 +47,6 @@ def get_last_task_position(db: Session, filters: TaskFilters) -> int | None:
     return task.position if task is not None else None
 
 
-def is_in_progress_free(db: Session, team_id: int) -> bool:
-    stmt = select(Task).where(Task.team_id == team_id).where(Task.status == TaskStatus.IN_PROGRESS)
-    in_progress_tasks = len(list(db.scalars(stmt).all()))
-
-    app_config = db.get(AppConfig, 1)
-    in_progress_limit = app_config.in_progress_limit if app_config is not None else None
-
-    if in_progress_limit is None:
-        return True
-
-    return in_progress_tasks < in_progress_limit
-
-
 def insert_task(
     db: Session,
     team_id: int,
@@ -58,7 +54,7 @@ def insert_task(
     payload: TaskCreate,
     position: int,
     started_working_at: datetime | None
-) -> Task | None:
+) -> Task:
     task = Task(
         **payload.model_dump(),
         team_id=team_id,
@@ -67,9 +63,6 @@ def insert_task(
         started_working_at=started_working_at
     )
     
-    if not task:
-        return None
-
     db.add(task)
     return task
 

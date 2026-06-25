@@ -12,10 +12,20 @@ from argon2 import (
 from sqlalchemy.orm import Session
 
 from backend.app.core.config import settings
+from backend.app.models.team import Team
 from backend.app.models.user import User
 from backend.app.models.user_session import UserSession
 
-from backend.app.repositories.teams import get_last_active_team_id, get_private_team_id
+from backend.app.error import (
+    AuthenticationFailedError,
+    InvalidSessionError,
+    NoActiveTeamSelectedError,
+    TeamNotFoundError,
+)
+from backend.app.repositories.teams import (
+    get_private_team_id,
+    is_team_member,
+)
 from backend.app.repositories.users import get_user_by_email
 from backend.app.repositories.users import (
     create_user_session_record,
@@ -45,17 +55,13 @@ class LoginService:
         )
         return session_token
 
-    def authenticate_user(self, email: str, password: str) -> User | None:
+    def authenticate_user(self, email: str, password: str) -> User:
         user = get_user_by_email(self.db, email)
         password_hash = user.password_hash if user else DUMMY_PASSWORD_HASH
         password_ok = self._verify_password(password, password_hash)
 
-        if not user:
-            return None
-        if not user.is_active:
-            return None
-        if not password_ok:
-            return None
+        if (not user or not user.is_active or not password_ok):
+            raise AuthenticationFailedError()
 
         return user
 
@@ -74,10 +80,8 @@ class SessionAuthService:
         session_token_hash = hash_session_token(session_token)
         user_session = get_user_session_by_token_hash(self.db, session_token_hash)
 
-        if user_session is None:
-            return None
-        if not self._is_valid_session(user_session):
-            return None
+        if user_session is None or not self._is_valid_session(user_session):
+            raise InvalidSessionError()
 
         return user_session
 
@@ -104,14 +108,29 @@ class SessionAuthService:
 
 
 def ensure_active_team_id(db: Session, user: User) -> int | None:
-    active_team_id = get_last_active_team_id(db, user)
-    if active_team_id is None:
+    try:
+        active_team_id = get_last_active_team_id(db, user)
+    except NoActiveTeamSelectedError:
         active_team_id = get_private_team_id(db, user)
 
     if user.last_active_team_id != active_team_id:
         user.last_active_team_id = active_team_id
 
     return active_team_id
+
+
+def get_last_active_team_id(db: Session, user: User) -> int:
+    user_id = user.id
+    team_id = user.last_active_team_id
+    if team_id is None:
+        raise TeamNotFoundError()
+
+    team = db.get(Team, team_id)
+
+    if team and team.is_active and is_team_member(db, team_id, user_id):
+        return team.id
+
+    raise NoActiveTeamSelectedError()
 
 
 def hash_session_token(session_token: str) -> str:

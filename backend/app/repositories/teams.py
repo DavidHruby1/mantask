@@ -38,19 +38,6 @@ def create_team_member(
     return team_member
 
 
-def get_last_active_team_id(db: Session, user: User) -> int | None:
-    team_id = user.last_active_team_id
-    if team_id is None:
-        return None
-
-    team = db.get(Team, team_id)
-
-    if team and team.is_active and is_team_member(db, team.id, user.id):
-        return team.id
-
-    return None
-
-
 def get_private_team_id(db: Session, user: User) -> int | None:
     private_team = db.scalar(
         select(Team).where(
