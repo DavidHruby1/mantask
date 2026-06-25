@@ -27,8 +27,6 @@ def login(
 ) -> LoginResult:
     login_service = LoginService(db)
     user = login_service.authenticate_user(input_data.email, input_data.password)
-    if not user:
-        raise AuthenticationFailedError()
 
     try:
         session_token = login_service.create_session(user_id=user.id)
@@ -38,6 +36,7 @@ def login(
         db.rollback()
         raise ApiInternalServerError("Unable to complete the request right now. Please try again.")
 
+    # if gets reused more times than current, move it to function
     response.set_cookie(
         key=settings.SESSION_COOKIE_NAME,
         value=session_token,

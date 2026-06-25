@@ -121,7 +121,6 @@ def patch_task(
     return TaskRead.model_validate(updated_task)
 
 
-# Delete will return status code 204, nothing else
 @router.delete("/{task_id}", status_code=204)
 def delete_task(
     db: DbSessionDep,

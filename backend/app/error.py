@@ -62,6 +62,11 @@ class InvalidBootstrapSecretError(AppError):
     detail = "Invalid bootstrap"
 
 
+class InvalidSessionError(AppError):
+    status_code = 403
+    detail = "Invalid session"
+
+
 class ApiConflictError(AppError):
     status_code = 409
     detail = "Conflict"

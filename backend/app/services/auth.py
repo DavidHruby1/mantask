@@ -22,6 +22,8 @@ from backend.app.repositories.users import (
     get_user_session_by_token_hash,
 )
 
+from backend.app.error import AuthenticationFailedError, InvalidSessionError
+
 
 DUMMY_PASSWORD_HASH = "$argon2id$v=19$m=65536,t=3,p=4$Q2k2U05wOTdoZkVEMTZUUA$qyASxedh9bH8/a6Xr8Hg9fXR9zlqwvUb89LgqnLr4HY"
 SESSION_TOKEN_BYTES = 32
@@ -45,17 +47,13 @@ class LoginService:
         )
         return session_token
 
-    def authenticate_user(self, email: str, password: str) -> User | None:
+    def authenticate_user(self, email: str, password: str) -> User:
         user = get_user_by_email(self.db, email)
         password_hash = user.password_hash if user else DUMMY_PASSWORD_HASH
         password_ok = self._verify_password(password, password_hash)
 
-        if not user:
-            return None
-        if not user.is_active:
-            return None
-        if not password_ok:
-            return None
+        if (not user or not user.is_active or not password_ok):
+            raise AuthenticationFailedError
 
         return user
 
@@ -74,10 +72,8 @@ class SessionAuthService:
         session_token_hash = hash_session_token(session_token)
         user_session = get_user_session_by_token_hash(self.db, session_token_hash)
 
-        if user_session is None:
-            return None
-        if not self._is_valid_session(user_session):
-            return None
+        if user_session is None or not self._is_valid_session(user_session):
+            raise InvalidSessionError
 
         return user_session
 
