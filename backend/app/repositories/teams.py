@@ -1,6 +1,7 @@
 from sqlalchemy import exists, select
 from sqlalchemy.orm import Session
 
+from backend.app.models.app_config import AppConfig
 from backend.app.models.team import Team
 from backend.app.models.enums import TeamType, UserRole
 from backend.app.models.user import User
@@ -36,19 +37,6 @@ def create_team_member(
     )
     db.add(team_member)
     return team_member
-
-
-def get_last_active_team_id(db: Session, user: User) -> int | None:
-    team_id = user.last_active_team_id
-    if team_id is None:
-        return None
-
-    team = db.get(Team, team_id)
-
-    if team and team.is_active and is_team_member(db, team.id, user.id):
-        return team.id
-
-    return None
 
 
 def get_private_team_id(db: Session, user: User) -> int | None:
@@ -98,3 +86,8 @@ def get_team_member_by_id(db: Session, team_id: int, member_id: int) -> TeamMemb
         ).limit(1)
     )
     return team_member
+
+def get_in_progress_limit(db: Session) -> int | None:
+    app_config = db.get(AppConfig, 1)
+    in_progress_limit = app_config.in_progress_limit if app_config is not None else None
+    return in_progress_limit 

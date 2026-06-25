@@ -69,5 +69,5 @@ class Team(Base):
         server_default=text("TRUE")
     )
 
-    members = relationship("TeamMember", back_populates="team")
-    tasks = relationship("Task", back_populates="team")
+    members: Mapped[List["TeamMember"]] = relationship("TeamMember", back_populates="team")
+    tasks: Mapped[List["Task"]] = relationship("Task", back_populates="team")

@@ -8,22 +8,11 @@ from backend.app.error import (
     ApiConflictError,
     ApiInternalServerError,
     InvalidTaskError,
-    NoActiveTeamSelectedError,
-    TaskAccessDeniedError,
-    TaskNotFoundError,
     TeamMembershipError,
 )
-from backend.app.repositories.teams import get_last_active_team_id, get_team_member
+from backend.app.repositories.teams import get_team_member
 from backend.app.schemas.task import TaskQuery, TaskRead, TaskCreate, TaskUpdate
-from backend.app.models.enums import TaskStatus
-from backend.app.repositories.tasks import find_tasks, get_task_by_id, is_in_progress_free
-from backend.app.services.tasks import (
-    TaskService
-    resolve_task_filters,
-    can_view_task,
-    create_task,
-    update_task,
-)
+from backend.app.services.tasks import TaskService
 
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
@@ -36,8 +25,7 @@ def get_tasks(
     session: CurrentSessionDep,
     query: Annotated[TaskQuery, Query()],
 ) -> list[TaskRead]:
-    filters = task_service.resolve_task_filters(db, session, query)
-    tasks = find_tasks(db, filters)
+    tasks = task_service.get_all_tasks(db, session, query)
     return [TaskRead.model_validate(task) for task in tasks]
 
 
@@ -61,21 +49,13 @@ def post_task(
     # TODO: Task doesn't have to have assignee, it can be picked up by anyone if nobody is assigned
     # TODO: Should I prevent duplicate titles of tasks?
     user = session.user
-    active_team_id = get_last_active_team_id(db, user)
-    if active_team_id is None:
-        raise NoActiveTeamSelectedError()
+    active_team_id = task_service.get_last_active_team_id(db, user)
 
     team_member = get_team_member(db, active_team_id, user.id)    
     if team_member is None:
         raise TeamMembershipError()
 
-    if payload.status == TaskStatus.IN_PROGRESS and not is_in_progress_free(db, active_team_id):
-        raise ApiConflictError("IN_PROGRESS limit reached")
-
-    # This should not raise error here but in service
-    created_task = create_task(db, active_team_id, team_member.id, payload)
-    if not created_task:
-        raise InvalidTaskError()
+    created_task = task_service.create_task(db, active_team_id, team_member.id, payload)
 
     try: 
         db.commit()

@@ -25,6 +25,18 @@ def get_task_by_id(db: Session, task_id: int) -> Task | None:
     return db.get(Task, task_id)
 
 
+def get_all_team_tasks(db: Session, team_id: int) -> list[Task]:
+    return list(db.scalars(select(Task).where(Task.team_id == team_id)).all())
+
+
+def get_all_team_tasks_by_status(db: Session, team_id: int, status: TaskStatus) -> list[Task]:
+    return list(db.scalars(
+        select(Task)
+        .where(Task.team_id == team_id)
+        .where(Task.status == status)
+    ).all())
+
+
 def get_last_task_position(db: Session, filters: TaskFilters) -> int | None:
     statuses = filters.statuses if filters.statuses is not None else [TaskStatus.TODO]
     stmt = (
@@ -36,19 +48,6 @@ def get_last_task_position(db: Session, filters: TaskFilters) -> int | None:
     )
     task = db.scalar(stmt)
     return task.position if task is not None else None
-
-
-def is_in_progress_free(db: Session, team_id: int) -> bool:
-    stmt = select(Task).where(Task.team_id == team_id).where(Task.status == TaskStatus.IN_PROGRESS)
-    in_progress_tasks = len(list(db.scalars(stmt).all()))
-
-    app_config = db.get(AppConfig, 1)
-    in_progress_limit = app_config.in_progress_limit if app_config is not None else None
-
-    if in_progress_limit is None:
-        return True
-
-    return in_progress_tasks < in_progress_limit
 
 
 def insert_task(
