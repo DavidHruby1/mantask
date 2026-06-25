@@ -11,20 +11,26 @@ from argon2 import (
 
 from sqlalchemy.orm import Session
 
-from backend.app.services.tasks import TaskService
-
 from backend.app.core.config import settings
+from backend.app.models.team import Team
 from backend.app.models.user import User
 from backend.app.models.user_session import UserSession
 
-from backend.app.repositories.teams import get_private_team_id
+from backend.app.error import (
+    AuthenticationFailedError,
+    InvalidSessionError,
+    NoActiveTeamSelectedError,
+    TeamNotFoundError,
+)
+from backend.app.repositories.teams import (
+    get_private_team_id,
+    is_team_member,
+)
 from backend.app.repositories.users import get_user_by_email
 from backend.app.repositories.users import (
     create_user_session_record,
     get_user_session_by_token_hash,
 )
-
-from backend.app.error import AuthenticationFailedError, InvalidSessionError
 
 
 DUMMY_PASSWORD_HASH = "$argon2id$v=19$m=65536,t=3,p=4$Q2k2U05wOTdoZkVEMTZUUA$qyASxedh9bH8/a6Xr8Hg9fXR9zlqwvUb89LgqnLr4HY"
@@ -102,15 +108,29 @@ class SessionAuthService:
 
 
 def ensure_active_team_id(db: Session, user: User) -> int | None:
-    task_service = TaskService()
-    active_team_id = task_service.get_last_active_team_id(db, user)
-    if active_team_id is None:
+    try:
+        active_team_id = get_last_active_team_id(db, user)
+    except NoActiveTeamSelectedError:
         active_team_id = get_private_team_id(db, user)
 
     if user.last_active_team_id != active_team_id:
         user.last_active_team_id = active_team_id
 
     return active_team_id
+
+
+def get_last_active_team_id(db: Session, user: User) -> int:
+    user_id = user.id
+    team_id = user.last_active_team_id
+    if team_id is None:
+        raise TeamNotFoundError()
+
+    team = db.get(Team, team_id)
+
+    if team and team.is_active and is_team_member(db, team_id, user_id):
+        return team.id
+
+    raise NoActiveTeamSelectedError()
 
 
 def hash_session_token(session_token: str) -> str:

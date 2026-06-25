@@ -7,10 +7,9 @@ from backend.app.api.dependencies import DbSessionDep, CurrentSessionDep
 from backend.app.error import (
     ApiConflictError,
     ApiInternalServerError,
-    TeamMembershipError,
 )
-from backend.app.repositories.teams import get_team_member
 from backend.app.schemas.task import TaskQuery, TaskRead, TaskCreate, TaskUpdate
+from backend.app.services.auth import get_last_active_team_id
 from backend.app.services.tasks import TaskService
 
 
@@ -50,7 +49,7 @@ def post_task(
     user = session.user
     user_id = user.id
 
-    active_team_id = task_service.get_last_active_team_id(db, user)
+    active_team_id = get_last_active_team_id(db, user)
     created_task = task_service.create_task(db, active_team_id, user_id, payload)
 
     try: 
@@ -70,8 +69,8 @@ def patch_task(
     task_id: int,
     payload: TaskUpdate
 ) -> TaskRead:
-# TODO: Store in database
-# TODO: Later add also role based access control
+    # TODO: Store in database
+    # TODO: Later add also role based access control
     user_id = session.user_id
 
     task = task_service.get_accessible_task(db, task_id, user_id)

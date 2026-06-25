@@ -22,8 +22,6 @@ from backend.app.repositories.tasks import (
 from backend.app.schemas.task import TaskFilters, TaskQuery, TaskCreate, TaskUpdate
 from backend.app.models.task import Task
 from backend.app.models.enums import TaskStatus
-from backend.app.models.team import Team
-from backend.app.models.user import User
 
 from backend.app.error import (
     ApiInternalServerError,
@@ -108,7 +106,7 @@ class TaskService:
         db: Session,
         task: Task,
         payload: TaskUpdate
-    ) -> Task | None:
+    ) -> Task:
         updates = payload.model_dump(exclude_unset=True)
 
         if "assignee_member_id" in updates:
@@ -153,19 +151,6 @@ class TaskService:
             raise TeamInactiveError()
 
         return task 
-
-    def get_last_active_team_id(self, db: Session, user: User) -> int:
-        user_id = user.id
-        team_id = user.last_active_team_id
-        if team_id is None:
-            raise TeamNotFoundError()
-
-        team = db.get(Team, team_id)
-
-        if team and team.is_active and is_team_member(db, team_id, user_id):
-            return team.id
-
-        raise NoActiveTeamSelectedError()
 
     def _resolve_task_filters(
         self,
