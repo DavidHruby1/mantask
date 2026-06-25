@@ -14,7 +14,7 @@ from backend.app.repositories.teams import (
 from backend.app.repositories.tasks import (
     find_tasks,
     get_task_by_id,
-    get_all_team_tasks_by_status,
+    count_team_tasks_by_status,
     insert_task,
     get_last_task_position,
     update_task as update_task_repository,
@@ -44,8 +44,7 @@ class TaskService:
         query: TaskQuery
     ) -> list[Task]:
         filters = self._resolve_task_filters(db, session, query)
-        tasks = find_tasks(db, filters)
-        return tasks
+        return find_tasks(db, filters)
 
     def create_task(
         self,
@@ -81,7 +80,6 @@ class TaskService:
             assignee_member_id=None
         )
 
-        # Calculate position of the new task
         last_task_position = get_last_task_position(db, filters)
         position = 1
         if last_task_position is not None:
@@ -91,7 +89,7 @@ class TaskService:
         if payload.status == TaskStatus.IN_PROGRESS:
             started_working_at = datetime.now(tz=timezone.utc)
 
-        task = insert_task(
+        return insert_task(
             db,
             active_team_id, 
             creator_member_id, 
@@ -99,7 +97,6 @@ class TaskService:
             position, 
             started_working_at
         )
-        return task
 
     def update_task(
         self,
@@ -119,7 +116,6 @@ class TaskService:
         if "reviewer_member_id" in updates:
             reviewer_member_id = updates["reviewer_member_id"]
             if reviewer_member_id is not None:
-                # Validates if the new reviewer_member_id is correct and valid
                 reviewer_member = get_team_member_by_id(db, task.team_id, reviewer_member_id)
                 if reviewer_member is None:
                     raise InvalidTaskError("Invalid reviewer_member_id")
@@ -198,6 +194,6 @@ class TaskService:
             raise ApiInternalServerError("App configuration is missing")
 
         status = TaskStatus.IN_PROGRESS
-        in_progress_tasks_count: int = len(get_all_team_tasks_by_status(db, team_id, status))
+        in_progress_tasks_count: int = count_team_tasks_by_status(db, team_id, status)
 
         return in_progress_tasks_count < in_progress_limit

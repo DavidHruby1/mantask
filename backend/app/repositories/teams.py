@@ -1,7 +1,6 @@
 from sqlalchemy import exists, select
 from sqlalchemy.orm import Session
 
-from backend.app.models.app_config import AppConfig
 from backend.app.models.team import Team
 from backend.app.models.enums import TeamType, UserRole
 from backend.app.models.user import User

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
 from backend.app.models.task import Task
@@ -24,16 +24,14 @@ def get_task_by_id(db: Session, task_id: int) -> Task | None:
     return db.get(Task, task_id)
 
 
-def get_all_team_tasks(db: Session, team_id: int) -> list[Task]:
-    return list(db.scalars(select(Task).where(Task.team_id == team_id)).all())
-
-
-def get_all_team_tasks_by_status(db: Session, team_id: int, status: TaskStatus) -> list[Task]:
-    return list(db.scalars(
-        select(Task)
+def count_team_tasks_by_status(db: Session, team_id: int, status: TaskStatus) -> int:
+    stmt = (
+        select(func.count())
+        .select_from(Task)
         .where(Task.team_id == team_id)
         .where(Task.status == status)
-    ).all())
+    )
+    return db.scalar(stmt) or 0
 
 
 def get_last_task_position(db: Session, filters: TaskFilters) -> int | None:
