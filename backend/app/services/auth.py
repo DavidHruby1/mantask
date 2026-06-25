@@ -53,7 +53,7 @@ class LoginService:
         password_ok = self._verify_password(password, password_hash)
 
         if (not user or not user.is_active or not password_ok):
-            raise AuthenticationFailedError
+            raise AuthenticationFailedError()
 
         return user
 
@@ -73,7 +73,7 @@ class SessionAuthService:
         user_session = get_user_session_by_token_hash(self.db, session_token_hash)
 
         if user_session is None or not self._is_valid_session(user_session):
-            raise InvalidSessionError
+            raise InvalidSessionError()
 
         return user_session
 

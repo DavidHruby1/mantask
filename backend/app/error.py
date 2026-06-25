@@ -39,7 +39,7 @@ class TaskNotFoundError(AppError):
 
 class TaskAccessDeniedError(AppError):
     status_code = 403
-    detail = "You cannot view this task"
+    detail = "You cannot access this task"
 
 
 class TeamMembershipError(AppError):

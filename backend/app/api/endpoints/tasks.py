@@ -18,6 +18,7 @@ from backend.app.schemas.task import TaskQuery, TaskRead, TaskCreate, TaskUpdate
 from backend.app.models.enums import TaskStatus
 from backend.app.repositories.tasks import find_tasks, get_task_by_id, is_in_progress_free
 from backend.app.services.tasks import (
+    TaskService
     resolve_task_filters,
     can_view_task,
     create_task,
@@ -26,6 +27,7 @@ from backend.app.services.tasks import (
 
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
+task_service = TaskService()
 
 
 @router.get("/", response_model=list[TaskRead])
@@ -34,7 +36,7 @@ def get_tasks(
     session: CurrentSessionDep,
     query: Annotated[TaskQuery, Query()],
 ) -> list[TaskRead]:
-    filters = resolve_task_filters(db, session, query)
+    filters = task_service.resolve_task_filters(db, session, query)
     tasks = find_tasks(db, filters)
     return [TaskRead.model_validate(task) for task in tasks]
 
@@ -45,14 +47,8 @@ def get_task(
     session: CurrentSessionDep,
     task_id: int,
 ) -> TaskRead:
-    task = get_task_by_id(db, task_id)
-    if task is None:
-        raise TaskNotFoundError()
-
-    task_team_id = task.team_id
-    if not can_view_task(db, task_team_id, session.user_id):
-        raise TaskAccessDeniedError()
-
+    user_id = session.user_id
+    task = task_service.get_accessible_task(db, task_id, user_id)    
     return TaskRead.model_validate(task)
 
 
@@ -76,6 +72,7 @@ def post_task(
     if payload.status == TaskStatus.IN_PROGRESS and not is_in_progress_free(db, active_team_id):
         raise ApiConflictError("IN_PROGRESS limit reached")
 
+    # This should not raise error here but in service
     created_task = create_task(db, active_team_id, team_member.id, payload)
     if not created_task:
         raise InvalidTaskError()
@@ -99,14 +96,10 @@ def patch_task(
 ) -> TaskRead:
 # TODO: store in database
 # TODO: later add also role based access control
-    task = get_task_by_id(db, task_id)
-    if task is None:
-        raise TaskNotFoundError()
+    user_id = session.user_id
+    task = task_service.get_accessible_task(db, task_id, user_id)
 
-    task_team_id = task.team_id
-    if not can_view_task(db, task_team_id, session.user_id):
-        raise TaskAccessDeniedError()
-
+    # This should not raise error here but in service
     updated_task = update_task(db, task, payload)
     if not updated_task:
         raise InvalidTaskError()
@@ -127,13 +120,8 @@ def delete_task(
     session: CurrentSessionDep,
     task_id: int,
 ) -> None:
-    task = get_task_by_id(db, task_id)
-    if task is None:
-        raise TaskNotFoundError()
-
-    task_team_id = task.team_id
-    if not can_view_task(db, task_team_id, session.user_id):
-        raise TaskAccessDeniedError()
+    user_id = session.user_id
+    task = task_service.get_accessible_task(db, task_id, user_id)
 
     db.delete(task)
     try: 
