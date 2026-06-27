@@ -3,7 +3,7 @@ import { cva } from 'class-variance-authority'
 import { cn } from '@/utils/cn'
 
 type FormProps = {
-    variant?: 'transparent';
+    variant?: 'transparent' | 'card';
     loading?: boolean;
     novalidate?: boolean;
 }
@@ -23,6 +23,7 @@ const formVariants = cva(
         variants: {
             variant: {
                 transparent: 'bg-transparent max-w-[340px] w-full',
+                card: 'box-content max-w-[340px] w-full rounded-[24px] border border-white-surface bg-secondary-black p-10 [&>button]:mt-2',
             },
         },
     },
