@@ -10,7 +10,8 @@ defineOptions({
 const attrs = useAttrs()
 
 const forwardedAttrs = computed(() => {
-    const { class: _class, ...rest } = attrs
+    const rest = { ...attrs }
+    delete rest.class
     return rest
 })
 
@@ -20,10 +21,7 @@ const containerVariants = cva(
 </script>
 
 <template>
-    <div
-        v-bind="forwardedAttrs"
-        :class="cn(containerVariants(), attrs.class as string)"
-    >
+    <div v-bind="forwardedAttrs" :class="cn(containerVariants(), attrs.class as string)">
         <slot />
     </div>
 </template>
