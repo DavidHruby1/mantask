@@ -37,40 +37,41 @@ from backend.app.error import (
 
 
 class TaskService:
+    def __init__(self, db: Session):
+        self.db = db
+
     def get_all_tasks(
         self,
-        db: Session,
         session: UserSession,
         query: TaskQuery
     ) -> list[Task]:
-        filters = self._resolve_task_filters(db, session, query)
-        return find_tasks(db, filters)
+        filters = self._resolve_task_filters(session, query)
+        return find_tasks(self.db, filters)
 
     def create_task(
         self,
-        db: Session,
         active_team_id: int, 
         user_id: int,
         payload: TaskCreate
     ) -> Task:
         if payload.status == TaskStatus.IN_PROGRESS:
-            can_create_in_progress_task = self._can_create_in_progress_task(db, active_team_id)
+            can_create_in_progress_task = self._can_create_in_progress_task(active_team_id)
             if not can_create_in_progress_task:
                 raise ApiConflictError("IN_PROGRESS limit reached")
 
         # Ensure the creator is a member of the active team.
-        creator_member = get_team_member(db, active_team_id, user_id)    
+        creator_member = get_team_member(self.db, active_team_id, user_id)    
         if creator_member is None:
             raise TeamMembershipError()
         creator_member_id = creator_member.id
 
         if payload.assignee_member_id is not None:
-            assignee_member = get_team_member_by_id(db, active_team_id, payload.assignee_member_id)
+            assignee_member = get_team_member_by_id(self.db, active_team_id, payload.assignee_member_id)
             if assignee_member is None:
                 raise TeamMembershipError("Invalid assignee")
 
         if payload.reviewer_member_id is not None:
-            reviewer_member = get_team_member_by_id(db, active_team_id, payload.reviewer_member_id)
+            reviewer_member = get_team_member_by_id(self.db, active_team_id, payload.reviewer_member_id)
             if reviewer_member is None:
                 raise TeamMembershipError("Invalid reviewer")
 
@@ -80,7 +81,7 @@ class TaskService:
             assignee_member_id=None
         )
 
-        last_task_position = get_last_task_position(db, filters)
+        last_task_position = get_last_task_position(self.db, filters)
         position = 1
         if last_task_position is not None:
             position = last_task_position + 1
@@ -90,7 +91,7 @@ class TaskService:
             started_working_at = datetime.now(tz=timezone.utc)
 
         return insert_task(
-            db,
+            self.db,
             active_team_id, 
             creator_member_id, 
             payload, 
@@ -100,7 +101,6 @@ class TaskService:
 
     def update_task(
         self,
-        db: Session,
         task: Task,
         payload: TaskUpdate
     ) -> Task:
@@ -109,14 +109,14 @@ class TaskService:
         if "assignee_member_id" in updates:
             assignee_member_id = updates["assignee_member_id"]
             if assignee_member_id is not None:
-                assignee_member = get_team_member_by_id(db, task.team_id, assignee_member_id)
+                assignee_member = get_team_member_by_id(self.db, task.team_id, assignee_member_id)
                 if assignee_member is None:
                     raise InvalidTaskError("Invalid assignee_member_id")
 
         if "reviewer_member_id" in updates:
             reviewer_member_id = updates["reviewer_member_id"]
             if reviewer_member_id is not None:
-                reviewer_member = get_team_member_by_id(db, task.team_id, reviewer_member_id)
+                reviewer_member = get_team_member_by_id(self.db, task.team_id, reviewer_member_id)
                 if reviewer_member is None:
                     raise InvalidTaskError("Invalid reviewer_member_id")
         else:
@@ -131,16 +131,16 @@ class TaskService:
 
         return update_task_repository(task, updates)
 
-    def get_accessible_task(self, db: Session, task_id: int, user_id: int) -> Task:
-        task = get_task_by_id(db, task_id)                  
+    def get_accessible_task(self, task_id: int, user_id: int) -> Task:
+        task = get_task_by_id(self.db, task_id)                  
         if not task:
             raise TaskNotFoundError()
 
         team_id = task.team_id
-        if not is_team_member(db, team_id, user_id):
+        if not is_team_member(self.db, team_id, user_id):
             raise TeamMembershipError()
 
-        team = get_team_by_id(db, team_id)
+        team = get_team_by_id(self.db, team_id)
         if team is None:
             raise TeamNotFoundError()
         if not team.is_active:
@@ -150,7 +150,6 @@ class TaskService:
 
     def _resolve_task_filters(
         self,
-        db: Session,
         session: UserSession,
         query: TaskQuery,
     ) -> TaskFilters:
@@ -162,17 +161,17 @@ class TaskService:
                 raise NoActiveTeamSelectedError()
             team_id = session.user.last_active_team_id
 
-        team = get_team_by_id(db, team_id)
+        team = get_team_by_id(self.db, team_id)
         if (
             team is None or
             not team.is_active or
-            not is_team_member(db, team_id, user_id)
+            not is_team_member(self.db, team_id, user_id)
         ):
             raise TaskAccessDeniedError()
 
         assignee_member_id = query.assignee_member_id
         if assignee_member_id is not None:
-            assignee_member = get_team_member_by_id(db, team_id, assignee_member_id)
+            assignee_member = get_team_member_by_id(self.db, team_id, assignee_member_id)
             if assignee_member is None:
                 raise InvalidTaskError("Invalid assignee_member_id")
 
@@ -182,18 +181,18 @@ class TaskService:
             assignee_member_id=query.assignee_member_id,
         )
 
-    def _can_create_in_progress_task(self, db: Session, team_id: int) -> bool:
-        team = get_team_by_id(db, team_id)
+    def _can_create_in_progress_task(self, team_id: int) -> bool:
+        team = get_team_by_id(self.db, team_id)
         if not team:
             raise TeamNotFoundError()
         if not team.is_active:
             raise TeamInactiveError()
 
-        in_progress_limit: int | None = get_in_progress_limit(db)
+        in_progress_limit: int | None = get_in_progress_limit(self.db)
         if in_progress_limit is None:
             raise ApiInternalServerError("App configuration is missing")
 
         status = TaskStatus.IN_PROGRESS
-        in_progress_tasks_count: int = count_team_tasks_by_status(db, team_id, status)
+        in_progress_tasks_count: int = count_team_tasks_by_status(self.db, team_id, status)
 
         return in_progress_tasks_count < in_progress_limit

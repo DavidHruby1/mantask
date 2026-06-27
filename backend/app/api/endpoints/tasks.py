@@ -14,7 +14,6 @@ from backend.app.services.tasks import TaskService
 
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
-task_service = TaskService()
 
 
 @router.get("/", response_model=list[TaskRead])
@@ -23,7 +22,8 @@ def get_tasks(
     session: CurrentSessionDep,
     query: Annotated[TaskQuery, Query()],
 ) -> list[TaskRead]:
-    tasks = task_service.get_all_tasks(db, session, query)
+    task_service = TaskService(db)
+    tasks = task_service.get_all_tasks(session, query)
     return [TaskRead.model_validate(task) for task in tasks]
 
 
@@ -34,7 +34,8 @@ def get_task(
     task_id: int,
 ) -> TaskRead:
     user_id = session.user_id
-    task = task_service.get_accessible_task(db, task_id, user_id)    
+    task_service = TaskService(db)
+    task = task_service.get_accessible_task(task_id, user_id)    
     return TaskRead.model_validate(task)
 
 
@@ -50,7 +51,8 @@ def post_task(
     user_id = user.id
 
     active_team_id = get_last_active_team_id(db, user)
-    created_task = task_service.create_task(db, active_team_id, user_id, payload)
+    task_service = TaskService(db)
+    created_task = task_service.create_task(active_team_id, user_id, payload)
 
     try: 
         db.commit()
@@ -73,8 +75,9 @@ def patch_task(
     # TODO: Later add also role based access control
     user_id = session.user_id
 
-    task = task_service.get_accessible_task(db, task_id, user_id)
-    updated_task = task_service.update_task(db, task, payload)
+    task_service = TaskService(db)
+    task = task_service.get_accessible_task(task_id, user_id)
+    updated_task = task_service.update_task(task, payload)
 
     try: 
         db.commit()
@@ -93,7 +96,8 @@ def delete_task(
     task_id: int,
 ) -> None:
     user_id = session.user_id
-    task = task_service.get_accessible_task(db, task_id, user_id)
+    task_service = TaskService(db)
+    task = task_service.get_accessible_task(task_id, user_id)
 
     db.delete(task)
     try: 
