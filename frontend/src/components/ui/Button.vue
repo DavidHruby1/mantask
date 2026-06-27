@@ -55,8 +55,8 @@ const buttonVariants = cva(
     position: relative;
     z-index: 1;
     gap: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    border-top-color: rgba(255, 255, 255, 0.13);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-top-color: rgba(255, 255, 255, 0.20);
     background:
         radial-gradient(circle at 22% 38%, rgba(255,255,255,0.06) 0%, transparent 40%),
         radial-gradient(circle at 70% 62%, rgba(255,255,255,0.04) 0%, transparent 45%),
@@ -64,7 +64,7 @@ const buttonVariants = cva(
     -webkit-backdrop-filter: blur(24px) saturate(160%);
     backdrop-filter: blur(24px) saturate(160%);
     box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.1),
+        inset 0 1px 0 rgba(255,255,255,0.15),
         inset 0 -5px 12px rgba(0,0,0,0.4),
         0 4px 18px 2px rgba(0,0,0,0.25);
     color: rgba(255,255,255,0.72);
@@ -109,14 +109,14 @@ const buttonVariants = cva(
 
 .btn-glass:hover {
     color: rgba(255, 255, 255, 0.9);
-    border-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.28);
     -webkit-backdrop-filter: blur(32px) saturate(200%);
     backdrop-filter: blur(32px) saturate(200%);
     box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.16),
+        inset 0 1px 0 rgba(255,255,255,0.22),
         inset 0 -5px 12px rgba(0,0,0,0.3),
         0 8px 28px rgba(0,0,0,0.3),
-        0 0 0 1px rgba(255,255,255,0.08);
+        0 0 0 1px rgba(255,255,255,0.12);
 }
 
 .btn-glass:hover::after {
