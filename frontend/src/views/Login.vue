@@ -84,8 +84,8 @@ import Form from '@/components/ui/Form.vue'
     height: 60vh;
     background: radial-gradient(
         ellipse 48% 80% at 50% 0%,
-        rgba(31, 41, 55, 0.38) 0%,
-        rgba(31, 41, 55, 0.12) 55%,
+        rgba(31, 41, 55, 0.50) 0%,
+        rgba(31, 41, 55, 0.20) 55%,
         transparent 80%
     );
     filter: blur(55px);
@@ -154,7 +154,7 @@ import Form from '@/components/ui/Form.vue'
     height: 90px;
     background: radial-gradient(
         circle,
-        rgba(31, 41, 55, 0.7) 0%,
+        rgba(31, 41, 55, 0.85) 0%,
         transparent 70%
     );
     filter: blur(26px);
