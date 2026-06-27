@@ -10,8 +10,8 @@ from backend.app.core.config import settings
 from backend.app.error import AuthenticationFailedError, ApiInternalServerError
 from backend.app.schemas.auth import LoginInput, LoginResult
 from backend.app.services.auth import (
-    LoginService,
-    SessionAuthService,
+    login_service,
+    session_auth_service,
     ensure_active_team_id,
 )
 
@@ -25,11 +25,10 @@ def login(
     input_data: LoginInput, 
     response: Response
 ) -> LoginResult:
-    login_service = LoginService(db)
-    user = login_service.authenticate_user(input_data.email, input_data.password)
+    user = login_service.authenticate_user(db, input_data.email, input_data.password)
 
     try:
-        session_token = login_service.create_session(user_id=user.id)
+        session_token = login_service.create_session(db, user_id=user.id)
         active_team_id = ensure_active_team_id(db, user)
         db.commit()
     except SQLAlchemyError:
@@ -78,10 +77,8 @@ def logout(
         response.delete_cookie(settings.SESSION_COOKIE_NAME)
         return LoginResult(authenticated=False)
 
-    session_auth_service = SessionAuthService(db)
-
     try:
-        revoked = session_auth_service.revoke_session_by_token(session_token)
+        revoked = session_auth_service.revoke_session_by_token(db, session_token)
         if revoked:
             db.commit()
     except SQLAlchemyError:

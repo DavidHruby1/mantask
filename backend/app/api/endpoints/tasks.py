@@ -10,11 +10,10 @@ from backend.app.error import (
 )
 from backend.app.schemas.task import TaskQuery, TaskRead, TaskCreate, TaskUpdate
 from backend.app.services.auth import get_last_active_team_id
-from backend.app.services.tasks import TaskService
+from backend.app.services.tasks import task_service
 
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
-task_service = TaskService()
 
 
 @router.get("/", response_model=list[TaskRead])

@@ -197,3 +197,6 @@ class TaskService:
         in_progress_tasks_count: int = count_team_tasks_by_status(db, team_id, status)
 
         return in_progress_tasks_count < in_progress_limit
+
+
+task_service = TaskService()

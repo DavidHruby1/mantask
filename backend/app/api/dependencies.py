@@ -7,7 +7,7 @@ from backend.app.core.db import get_db
 from backend.app.error import NotAuthenticatedError
 from backend.app.models.user_session import UserSession
 from backend.app.core.config import settings
-from backend.app.services.auth import SessionAuthService
+from backend.app.services.auth import session_auth_service
 
 
 DbSessionDep = Annotated[Session, Depends(get_db)]
@@ -22,8 +22,7 @@ def get_current_session(
     if not session_token:
         raise NotAuthenticatedError()
 
-    session_auth_service = SessionAuthService(db)
-    session = session_auth_service.get_valid_session_by_token(session_token)
+    session = session_auth_service.get_valid_session_by_token(db, session_token)
 
     if session is None:
         raise NotAuthenticatedError()
