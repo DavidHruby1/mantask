@@ -15,6 +15,8 @@ import Form from '@/components/ui/Form.vue'
         <div class="light-source"></div>
 
         <Form variant="transparent">
+            <img class="mb-4 h-16 w-16" src="/mantask-logo-svg.svg" alt="Mantask" />
+
             <Heading class="mb-5" variant="h3"> Sign in to Mantask </Heading>
 
             <Input id="email" size="md" type="email" placeholder="Email address" />
