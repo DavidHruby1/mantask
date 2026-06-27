@@ -12,7 +12,7 @@ from backend.app.error import (
     InvalidBootstrapSecretError,
 )
 from backend.app.schemas.bootstrap import BootstrapSetup, BootstrapResult, BootstrapStatus
-from backend.app.services.auth import LoginService
+from backend.app.services.auth import login_service
 from backend.app.core.config import settings
 from backend.app.services.bootstrap import bootstrap_application
 from backend.app.repositories.bootstraps import is_bootstrapped
@@ -41,11 +41,9 @@ def bootstrap_setup(
     ):
         raise InvalidBootstrapSecretError()
 
-    login_service = LoginService(db)
-
     try:
         user = bootstrap_application(db, input_data)
-        session_token = login_service.create_session(user_id=user.id)
+        session_token = login_service.create_session(db, user_id=user.id)
         db.commit()
     except IntegrityError:
         db.rollback()

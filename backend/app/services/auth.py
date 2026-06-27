@@ -41,22 +41,19 @@ ph = PasswordHasher()
 
 
 class LoginService:
-    def __init__(self, db: Session):
-        self.db = db
-
-    def create_session(self, user_id: int) -> str:
+    def create_session(self, db: Session, user_id: int) -> str:
         session_token = secrets.token_urlsafe(SESSION_TOKEN_BYTES)
         session_token_hash = hash_session_token(session_token)
         expires_at = datetime.now(timezone.utc) + timedelta(
             days=settings.SESSION_EXPIRE_DAYS
         )
         create_user_session_record(
-            self.db, user_id, session_token_hash, expires_at
+            db, user_id, session_token_hash, expires_at
         )
         return session_token
 
-    def authenticate_user(self, email: str, password: str) -> User:
-        user = get_user_by_email(self.db, email)
+    def authenticate_user(self, db: Session, email: str, password: str) -> User:
+        user = get_user_by_email(db, email)
         password_hash = user.password_hash if user else DUMMY_PASSWORD_HASH
         password_ok = self._verify_password(password, password_hash)
 
@@ -73,21 +70,18 @@ class LoginService:
 
 
 class SessionAuthService:
-    def __init__(self, db: Session):
-        self.db = db
-
-    def get_valid_session_by_token(self, session_token: str) -> UserSession | None:
+    def get_valid_session_by_token(self, db: Session, session_token: str) -> UserSession | None:
         session_token_hash = hash_session_token(session_token)
-        user_session = get_user_session_by_token_hash(self.db, session_token_hash)
+        user_session = get_user_session_by_token_hash(db, session_token_hash)
 
         if user_session is None or not self._is_valid_session(user_session):
             raise InvalidSessionError()
 
         return user_session
 
-    def revoke_session_by_token(self, session_token: str) -> bool:
+    def revoke_session_by_token(self, db: Session, session_token: str) -> bool:
         session_token_hash = hash_session_token(session_token)
-        session = get_user_session_by_token_hash(self.db, session_token_hash)
+        session = get_user_session_by_token_hash(db, session_token_hash)
 
         if session is None:
             return False
@@ -135,3 +129,7 @@ def get_last_active_team_id(db: Session, user: User) -> int:
 
 def hash_session_token(session_token: str) -> str:
     return hashlib.sha256(session_token.encode("utf-8")).hexdigest()
+
+
+login_service = LoginService()
+session_auth_service = SessionAuthService()
