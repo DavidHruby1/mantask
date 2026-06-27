@@ -10,7 +10,8 @@ import Form from '@/components/ui/Form.vue'
 
 <template>
     <Container>
-        <div class="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[640px] w-[640px] -translate-x-1/2 -translate-y-[42%] rounded-full bg-[radial-gradient(circle,rgba(31,41,55,0.72)_0%,rgba(31,41,55,0.34)_42%,transparent_74%)]"></div>
+        <div class="bootstrap-light-aura"></div>
+        <div class="bootstrap-light-source"></div>
 
         <Form
             variant="card"
@@ -91,3 +92,39 @@ import Form from '@/components/ui/Form.vue'
         </Form>
     </Container>
 </template>
+
+<style scoped>
+.bootstrap-light-aura {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(110vw, 740px);
+    height: min(110vw, 740px);
+    background: radial-gradient(
+        circle at 50% 50%,
+        rgba(31, 41, 55, 0.50) 0%,
+        rgba(31, 41, 55, 0.20) 45%,
+        transparent 75%
+    );
+    filter: blur(55px);
+    pointer-events: none;
+}
+
+.bootstrap-light-source {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 230px;
+    height: 230px;
+    background: radial-gradient(
+        circle at 50% 50%,
+        rgba(31, 41, 55, 0.85) 0%,
+        rgba(31, 41, 55, 0.45) 35%,
+        transparent 70%
+    );
+    filter: blur(34px);
+    pointer-events: none;
+}
+</style>

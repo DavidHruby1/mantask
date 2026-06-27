@@ -22,7 +22,7 @@ const buttonVariants = cva(
         variants: {
             variant: {
                 glass:
-                    'btn-glass rounded-full focus-visible:ring-white-base',
+                    'btn-glass rounded-full [--btn-shadow:0_4px_18px_2px_rgba(0,0,0,0.08)] hover:[--btn-shadow:0_8px_28px_rgba(0,0,0,0.06)] focus-visible:ring-white-base',
                 ghost:
                     `text-white-muted focus-visible:ring-white-base
                     hover:text-white-base hover:bg-white-surface`,
@@ -66,7 +66,7 @@ const buttonVariants = cva(
     box-shadow:
         inset 0 1px 0 rgba(255,255,255,0.15),
         inset 0 -5px 12px rgba(0,0,0,0.4),
-        0 4px 18px 2px rgba(0,0,0,0.25);
+        var(--btn-shadow);
     color: rgba(255,255,255,0.72);
     text-shadow: 0 1px 3px rgba(0,0,0,0.5);
     cursor: pointer;
@@ -115,8 +115,8 @@ const buttonVariants = cva(
     box-shadow:
         inset 0 1px 0 rgba(255,255,255,0.22),
         inset 0 -5px 12px rgba(0,0,0,0.3),
-        0 8px 28px rgba(0,0,0,0.3),
-        0 0 0 1px rgba(255,255,255,0.12);
+        var(--btn-shadow),
+        0 0 0 1px rgba(255,255,255,0.08);
 }
 
 .btn-glass:hover::after {
