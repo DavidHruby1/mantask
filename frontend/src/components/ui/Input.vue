@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { cva } from 'class-variance-authority'
 import { cn } from '@/utils/cn'
 
@@ -42,23 +43,48 @@ const inputVariants = cva(
         },
     },
 )
+
+const inputType = ref(props.type)
+const isPasswordVisible = ref(false)
+
+const togglePasswordVisibility = () => {
+    isPasswordVisible.value = !isPasswordVisible.value
+    inputType.value = isPasswordVisible.value ? 'text' : 'password'
+}
 </script>
 
 <template>
-    <input
-        :type="props.type"
-        :class="
-            cn(
-                inputVariants({
-                    variant: props.variant,
-                    size: props.size,
-                }),
-            )
-        "
-        :placeholder="props.placeholder"
-        :disabled="props.disabled"
-        :required="props.required"
-    />
+    <span class="relative w-full">
+        <input
+            v-bind="$attrs"
+            :type="inputType"
+            :class="
+                cn(
+                    inputVariants({
+                        variant: props.variant,
+                        size: props.size,
+                    }),
+                    { 'pr-10' : props.type === 'password' }
+                )
+            "
+            :placeholder="props.placeholder"
+            :disabled="props.disabled"
+            :required="props.required"
+        />
+        <button
+            v-if="props.type === 'password'"
+            :aria-label="isPasswordVisible ? 'Hide password' : 'Show password'"
+            type='button'
+            class="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer"
+            @click="togglePasswordVisibility"
+        >
+            <img
+                :src="isPasswordVisible ? '/eye-line.svg' : '/eye-off-line.svg'"
+                class="h-5 w-5 shrink-0"
+                alt=""
+            >
+        </button>
+    </span>
 </template>
 
 <style scoped>
