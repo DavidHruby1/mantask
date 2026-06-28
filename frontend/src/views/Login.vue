@@ -30,6 +30,17 @@ import Form from '@/components/ui/Form.vue'
 
             <Button variant="glass" size="lg"> Login </Button>
 
+            <div class="flex w-full items-center gap-3 px-1 text-white-muted/35">
+                <span class="h-px flex-1 border-t border-dashed border-current"></span>
+                <span class="text-sm leading-none">or</span>
+                <span class="h-px flex-1 border-t border-dashed border-current"></span>
+            </div>
+
+            <Button type="button" variant="ghost" size="lg">
+                <img class="h-5 w-5 shrink-0" src="/google-fill.svg" alt="" aria-hidden="true" />
+                <span>Sign in with Google</span>
+            </Button>
+
             <Text class="mt-2" color="secondary" size="xs">
                 Don't have an account?
                 <Link href="/" color="primary" size="xs"> Request an invite </Link>
