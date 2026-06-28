@@ -6,3 +6,5 @@ alembic==1.18.4
 python-dotenv==1.2.2
 argon2-cffi==25.1.0
 psycopg[binary]==3.3.4
+pytest==9.1.1
+pytest-cov==7.1.0
