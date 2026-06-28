@@ -5,11 +5,13 @@ import { cn } from '@/utils/cn'
 type ButtonProps = {
     variant?: 'glass' | 'ghost'
     size: 'sm' | 'md' | 'lg'
+    type?: 'button' | 'submit' | 'reset'
     disabled?: boolean
 }
 
 const props = withDefaults(defineProps<ButtonProps>(), {
     size: 'md',
+    type: 'submit',
     disabled: false,
 })
 
@@ -22,8 +24,8 @@ const buttonVariants = cva(
         variants: {
             variant: {
                 glass: 'btn-glass rounded-full [--btn-shadow:0_4px_18px_2px_rgba(0,0,0,0.08)] hover:[--btn-shadow:0_8px_28px_rgba(0,0,0,0.06)] focus-visible:ring-white-base',
-                ghost: `text-white-muted focus-visible:ring-white-base
-                    hover:text-white-base hover:bg-white-surface`,
+                ghost: `btn-ghost cursor-pointer rounded-full gap-3 border border-white/10 bg-white/5 text-white-muted shadow-none focus-visible:ring-white-base
+                    hover:border-white/20 hover:bg-white/10 hover:text-white-base`,
             },
             size: {
                 sm: 'w-full h-8 px-3 text-sm',
@@ -45,6 +47,7 @@ const buttonVariants = cva(
                 }),
             )
         "
+        :type="props.type"
         :disabled="props.disabled"
     >
         <slot />
@@ -181,5 +184,37 @@ const buttonVariants = cva(
 .btn-glass:focus-visible::after {
     opacity: 1;
     background: radial-gradient(circle at 50% 50%, rgba(200, 220, 255, 0.16) 0%, transparent 72%);
+}
+
+.btn-ghost {
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(255, 255, 255, 0.58);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    backdrop-filter: blur(18px) saturate(140%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    transition:
+        background 0.25s ease,
+        border-color 0.25s ease,
+        color 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+.btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+.btn-ghost:active {
+    transform: scale(0.99);
+}
+
+.btn-ghost:focus-visible {
+    outline: none;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 0 0 1px rgba(255, 255, 255, 0.06),
+        0 0 0 3px rgba(148, 163, 184, 0.14);
 }
 </style>
