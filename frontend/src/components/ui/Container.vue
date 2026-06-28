@@ -21,7 +21,10 @@ const containerVariants = cva(
 </script>
 
 <template>
-    <div v-bind="forwardedAttrs" :class="cn(containerVariants(), attrs.class as string)">
+    <div
+        v-bind="forwardedAttrs"
+        :class="cn(containerVariants(), attrs.class as string)"
+    >
         <slot />
     </div>
 </template>
