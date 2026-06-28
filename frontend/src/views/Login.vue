@@ -14,63 +14,27 @@ import Form from '@/components/ui/Form.vue'
         <div class="light-beam"></div>
         <div class="light-source"></div>
 
-        <Form
-            variant="transparent"
-        >
-            <Heading
-                class="mb-5"
-                variant="h3"
-            >
-                Sign in to Mantask
-            </Heading>
+        <Form variant="transparent">
+            <img class="mb-4 h-16 w-16" src="/mantask-logo-svg.svg" alt="Mantask" />
 
-            <Input
-                id="email"
-                size="md"
-                type="email"
-                placeholder="Email address"
-            />
-            <Input
-                id="password"
-                size="md"
-                type="password"
-                placeholder="Password"
-            />
+            <Heading class="mb-5" variant="h3"> Sign in to Mantask </Heading>
+
+            <Input id="email" size="md" type="email" placeholder="Email address" />
+            <Input id="password" size="md" type="password" placeholder="Password" />
 
             <div class="flex w-full justify-end">
-                <Link
-                    class="mb-2 -mt-2"
-                    href="/"
-                    color="primary"
-                    size="xs"
-                >
+                <Link class="mb-2 -mt-2" href="/" color="primary" size="xs">
                     Forgot password?
                 </Link>
             </div>
 
-            <Button
-                variant="glass"
-                size="lg"
-            >
-                Login
-            </Button>
+            <Button variant="glass" size="lg"> Login </Button>
 
-            <Text
-                class="mt-2"
-                color="secondary"
-                size="xs"
-            >
+            <Text class="mt-2" color="secondary" size="xs">
                 Don't have an account?
-                <Link
-                    href="/"
-                    color="primary"
-                    size="xs"
-                >
-                    Request an invite
-                </Link>
+                <Link href="/" color="primary" size="xs"> Request an invite </Link>
             </Text>
         </Form>
-
     </Container>
 </template>
 
@@ -84,8 +48,8 @@ import Form from '@/components/ui/Form.vue'
     height: 60vh;
     background: radial-gradient(
         ellipse 48% 80% at 50% 0%,
-        rgba(31, 41, 55, 0.50) 0%,
-        rgba(31, 41, 55, 0.20) 55%,
+        rgba(31, 41, 55, 0.5) 0%,
+        rgba(31, 41, 55, 0.2) 55%,
         transparent 80%
     );
     filter: blur(55px);
@@ -152,11 +116,7 @@ import Form from '@/components/ui/Form.vue'
     transform: translateX(-50%);
     width: 120px;
     height: 90px;
-    background: radial-gradient(
-        circle,
-        rgba(31, 41, 55, 0.85) 0%,
-        transparent 70%
-    );
+    background: radial-gradient(circle, rgba(31, 41, 55, 0.85) 0%, transparent 70%);
     filter: blur(26px);
     pointer-events: none;
 }
@@ -180,5 +140,4 @@ import Form from '@/components/ui/Form.vue'
         opacity: 1;
     }
 }
-
 </style>

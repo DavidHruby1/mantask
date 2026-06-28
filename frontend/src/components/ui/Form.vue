@@ -3,9 +3,9 @@ import { cva } from 'class-variance-authority'
 import { cn } from '@/utils/cn'
 
 type FormProps = {
-    variant?: 'transparent';
-    loading?: boolean;
-    novalidate?: boolean;
+    variant?: 'transparent' | 'card'
+    loading?: boolean
+    novalidate?: boolean
 }
 
 const props = withDefaults(defineProps<FormProps>(), {
@@ -14,19 +14,17 @@ const props = withDefaults(defineProps<FormProps>(), {
 })
 
 const emit = defineEmits<{
-    submit: [event: Event];
+    submit: [event: Event]
 }>()
 
-const formVariants = cva(
-    `flex flex-col items-center gap-3 relative z-10`,
-    {
-        variants: {
-            variant: {
-                transparent: 'bg-transparent max-w-[340px] w-full',
-            },
+const formVariants = cva(`flex flex-col items-center gap-3 relative z-10`, {
+    variants: {
+        variant: {
+            transparent: 'bg-transparent max-w-[380px] w-full',
+            card: 'box-content w-[calc(100%_-_80px)] min-w-[240px] max-w-[380px] rounded-[24px] border border-white-surface bg-secondary-black p-10 [&>button]:mt-2',
         },
     },
-)
+})
 
 function handleSubmit(event: Event) {
     if (props.loading) {

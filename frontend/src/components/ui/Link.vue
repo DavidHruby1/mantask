@@ -3,9 +3,9 @@ import { cva } from 'class-variance-authority'
 import { cn } from '@/utils/cn'
 
 type LinkProps = {
-    href: string;
-    color?: 'primary' | 'secondary';
-    size: 'xs' | 'sm' | 'md' | 'lg';
+    href: string
+    color?: 'primary' | 'secondary'
+    size: 'xs' | 'sm' | 'md' | 'lg'
 }
 
 const props = withDefaults(defineProps<LinkProps>(), {
@@ -36,10 +36,14 @@ const linkVariants = cva(
 <template>
     <a
         :href="props.href"
-        :class="cn(linkVariants({
-            color: props.color,
-            size: props.size
-        }))"
+        :class="
+            cn(
+                linkVariants({
+                    color: props.color,
+                    size: props.size,
+                }),
+            )
+        "
     >
         <slot />
     </a>

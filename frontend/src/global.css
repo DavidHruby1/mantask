@@ -1,14 +1,14 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
     --color-primary-black: #000000;
-    --color-secondary-black: #040404;
+    --color-secondary-black: #080808;
     --color-accent-black: #060606;
     --color-input-black: #101211;
-    --color-atmosphere: #2D3B4E;
+    --color-atmosphere: #2d3b4e;
     --color-dark-surface: rgba(255, 255, 255, 0.06);
     --color-dark-surface-focus: rgba(255, 255, 255, 0.09);
-    --color-dark-muted: rgba(255, 255, 255, 0.50);
+    --color-dark-muted: rgba(255, 255, 255, 0.5);
 
     --color-white-base: rgba(235, 237, 242, 1);
     --color-white-text: rgba(235, 237, 242, 0.8);
@@ -16,15 +16,11 @@
     --color-white-surface: rgba(235, 237, 242, 0.18);
     --color-white-surface-focus: rgba(235, 237, 242, 0.28);
     --color-white-placeholder: rgba(235, 237, 242, 0.45);
-    --color-white-placeholder-focus: rgba(235, 237, 242, 0.50);
+    --color-white-placeholder-focus: rgba(235, 237, 242, 0.5);
 }
 
 @utility bg-body {
-    background: linear-gradient(
-        to top,
-        var(--color-primary-black),
-        var(--color-secondary-black)
-    );
+    background: linear-gradient(to top, var(--color-primary-black), var(--color-secondary-black));
     background-attachment: fixed;
 }
 

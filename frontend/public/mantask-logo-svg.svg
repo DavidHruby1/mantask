@@ -1,0 +1,26 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>Minimal M Circle Logo</title>
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="62%">
+      <stop offset="0%" stop-color="#151B22"/>
+      <stop offset="100%" stop-color="#0B0F14"/>
+    </radialGradient>
+    <linearGradient id="rim" x1="128" y1="80" x2="384" y2="432" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2D3540"/>
+      <stop offset="50%" stop-color="#1A2028"/>
+      <stop offset="100%" stop-color="#343D48"/>
+    </linearGradient>
+    <linearGradient id="mark" x1="166" y1="174" x2="346" y2="338" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#AEB4BB"/>
+      <stop offset="50%" stop-color="#D8DCE0"/>
+      <stop offset="100%" stop-color="#9DA4AC"/>
+    </linearGradient>
+  </defs>
+
+  <!-- transparent canvas -->
+  <circle cx="256" cy="256" r="222" fill="url(#bg)" stroke="#111720" stroke-width="10"/>
+  <circle cx="256" cy="256" r="209" stroke="url(#rim)" stroke-width="7" opacity="0.9"/>
+
+  <!-- stylized M mark -->
+  <path d="M166 315V199L256 289L346 199V315" stroke="url(#mark)" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

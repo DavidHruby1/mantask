@@ -10,7 +10,8 @@ defineOptions({
 const attrs = useAttrs()
 
 const forwardedAttrs = computed(() => {
-    const { class: _class, ...rest } = attrs
+    const rest = { ...attrs }
+    delete rest.class
     return rest
 })
 

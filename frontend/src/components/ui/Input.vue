@@ -3,12 +3,12 @@ import { cva } from 'class-variance-authority'
 import { cn } from '@/utils/cn'
 
 type InputProps = {
-    variant?: 'underlined' | 'outlined';
-    size: 'sm' | 'md' | 'lg';
-    type: 'text' | 'number' | 'email' | 'password';
-    placeholder?: string;
-    disabled?: boolean;
-    required?: boolean;
+    variant?: 'underlined' | 'outlined'
+    size: 'sm' | 'md' | 'lg'
+    type: 'text' | 'number' | 'email' | 'password'
+    placeholder?: string
+    disabled?: boolean
+    required?: boolean
 }
 
 const props = withDefaults(defineProps<InputProps>(), {
@@ -19,7 +19,7 @@ const props = withDefaults(defineProps<InputProps>(), {
 })
 
 const inputVariants = cva(
-    `bg-dark-surface text-white-text
+    `bg-input-black text-white-text
     font-normal outline-none
     border-1 border-white-surface rounded-lg
     placeholder:text-white-placeholder placeholder:font-normal
@@ -31,10 +31,8 @@ const inputVariants = cva(
     {
         variants: {
             variant: {
-                underlined:
-                    '',
-                outlined:
-                    '',
+                underlined: '',
+                outlined: '',
             },
             size: {
                 sm: 'w-full text-sm',
@@ -49,13 +47,27 @@ const inputVariants = cva(
 <template>
     <input
         :type="props.type"
-        :class="cn(inputVariants({
-            variant: props.variant,
-            size: props.size
-        }))"
+        :class="
+            cn(
+                inputVariants({
+                    variant: props.variant,
+                    size: props.size,
+                }),
+            )
+        "
         :placeholder="props.placeholder"
         :disabled="props.disabled"
         :required="props.required"
     />
 </template>
 
+<style scoped>
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--color-white-text);
+    caret-color: var(--color-white-text);
+    box-shadow: 0 0 0 1000px var(--color-input-black) inset;
+    transition: background-color 9999s ease-out;
+}
+</style>
