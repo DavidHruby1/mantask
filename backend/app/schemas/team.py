@@ -29,7 +29,7 @@ class TeamUpdate(BaseModel):
 
     @field_validator("name")
     @classmethod
-    def validate_name(cls, name: str) -> str| None:
+    def validate_name(cls, name: str | None) -> str| None:
         if name is None:
             return None
         if name.strip() == "":
