@@ -4,7 +4,7 @@ from pydantic import (
     BaseModel,
     EmailStr,
     Field,
-    field_validator
+    field_validator,
 )
 
 
