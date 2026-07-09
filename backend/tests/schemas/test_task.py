@@ -179,3 +179,6 @@ def test_task_update_validates_date():
 
     TaskUpdate(due_date=date.today())
     TaskUpdate(review_date=date.today())
+
+
+# TaskFilters schema testing
