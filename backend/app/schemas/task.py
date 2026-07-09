@@ -20,8 +20,8 @@ class TaskCreate(BaseModel):
     reviewer_member_id: int | None = None
 
     title: str = Field(..., min_length=1, max_length=255)
-    description: str | None = Field(None, max_length=32000)
-    layer: str | None = Field(None, max_length=64)
+    description: str | None = Field(default=None, max_length=32000)
+    layer: str | None = Field(default=None, max_length=64)
     priority: TaskPriority | None = None
     review_date: date | None = None
     due_date: date | None = None
@@ -76,9 +76,9 @@ class TaskUpdate(BaseModel):
     assignee_member_id: int | None = None 
     reviewer_member_id: int | None = None
 
-    title: str | None = Field(None, min_length=1, max_length=255)
-    description: str | None = Field(None, max_length=32000)
-    layer: str | None = Field(None, max_length=64)
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    description: str | None = Field(default=None, max_length=32000)
+    layer: str | None = Field(default=None, max_length=64)
     priority: TaskPriority | None = None
     review_date: date | None = None
     due_date: date | None = None
