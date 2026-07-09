@@ -9,7 +9,7 @@ from pydantic import (
     ConfigDict,
     Field,
     field_validator,
-    model_validator
+    model_validator,
 )
 
 from backend.app.models.enums import TaskEffort, TaskPriority, TaskStatus
@@ -63,6 +63,8 @@ class TaskCreate(BaseModel):
 
     @model_validator(mode="after")
     def validate_review(self) -> Self:
+        if not self.should_review and self.review_date is not None:
+            raise ValueError("Task with no review cannot have a review date")
         if self.should_review and self.reviewer_member_id is None:
             raise ValueError("Review must have a reviewer")
         if not self.should_review and self.reviewer_member_id is not None:
@@ -81,7 +83,7 @@ class TaskUpdate(BaseModel):
     review_date: date | None = None
     due_date: date | None = None
     effort: TaskEffort | None = None
-    should_review: bool | None = None # Validate in services/
+    should_review: bool | None = None
 
     @field_validator("title")
     @classmethod
@@ -107,6 +109,15 @@ class TaskUpdate(BaseModel):
         if date_value is not None and date_value < date.today():
             raise ValueError("Dates cannot be in the past")
         return date_value
+
+    @model_validator(mode="before")
+    @classmethod
+    def reject_null_title(cls, data):
+        if (not isinstance(data, dict)):
+            return data
+        if "title" in data and data["title"] is None:
+            raise ValueError("Title cannot be null")
+        return data
 
 
 class TaskMove(BaseModel):

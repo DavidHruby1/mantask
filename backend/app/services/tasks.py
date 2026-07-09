@@ -124,6 +124,9 @@ class TaskService:
 
         # Validates the business rule that you can't have should_review True if no reviewer is assigned and vice-versa
         should_review = updates.get("should_review", task.should_review)
+        review_date = updates.get("review_date", task.review_date)
+        if not should_review and review_date is not None:
+            raise ApiConflictError("Task with no review cannot have a review date")
         if should_review and reviewer_member_id is None:
             raise ApiConflictError("Can't review task with no reviewer")
         if not should_review and reviewer_member_id is not None:
