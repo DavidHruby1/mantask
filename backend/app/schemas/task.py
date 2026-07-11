@@ -147,7 +147,7 @@ class TaskRead(BaseModel):
     effort: TaskEffort | None = None
     should_review: bool
     status: TaskStatus
-    position: int = Field(..., ge=0)
+    position: int = Field(..., ge=1)
     created_at: datetime
     updated_at: datetime
     started_working_at: datetime | None = None
