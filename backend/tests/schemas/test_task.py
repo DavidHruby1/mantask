@@ -163,28 +163,40 @@ def test_task_update_strips_title_and_normalizes_layer():
     assert task.title == "Fix login"
     assert task.layer == "backend"
 
-def test_task_update_rejects_blank_title_and_blank_layer():
-    with pytest.raises(ValidationError):
-        TaskUpdate(title="   ")
 
+@pytest.mark.parametrize("field", ["title", "layer"])
+def test_task_update_rejects_blank_title_or_layer(field):
     with pytest.raises(ValidationError):
-        TaskUpdate(layer="     ")
+        TaskUpdate(**{field: "   "})
 
-def test_task_update_validates_date():
+
+def test_task_update_rejects_explicit_null_title():
+    with pytest.raises(ValidationError, match="Title cannot be null"):
+        TaskUpdate(title=None)
+
+
+def test_task_update_allows_omitted_title():
+    task = TaskUpdate()
+
+    assert "title" not in task.model_fields_set
+
+
+@pytest.mark.parametrize("field", ["review_date", "due_date"])
+def test_task_update_rejects_past_date(field):
     with pytest.raises(ValidationError):
-        TaskUpdate(review_date=date.today() - timedelta(days=1))
+        TaskUpdate(**{field: date.today() - timedelta(days=1)})
 
-    with pytest.raises(ValidationError):
-        TaskUpdate(due_date=date.today() - timedelta(days=1))
 
-    TaskUpdate(due_date=date.today())
-    TaskUpdate(review_date=date.today())
+@pytest.mark.parametrize("field", ["review_date", "due_date"])
+def test_task_update_accepts_today(field):
+    TaskUpdate(**{field: date.today()})
 
 
 # TaskFilterFields schema testing
 def test_task_filter_fields_normalizes_statuses():
     filter_fields = TaskFilterFields(statuses=["todo", "in_progress"])
     assert filter_fields.statuses == [TaskStatus.TODO, TaskStatus.IN_PROGRESS]
+
 
 def test_task_filter_fields_returns_none_for_empty_statuses():
     filter_fields = TaskFilterFields(statuses=[])
