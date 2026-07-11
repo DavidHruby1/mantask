@@ -8,7 +8,7 @@ from pydantic import (
 )
 
 
-PASSWORD_REGEX = re.compile(r'^[A-Za-z0-9\-_:!@#$%^&*()\[\]{};<>?/\\|~\."+\',`]+$')
+PASSWORD_REGEX = re.compile(r'^[A-Za-z0-9\-_:!@#$%^&*()\[\]{};<>?/\\|~\."+\',`=]+$')
 NAME_REGEX = re.compile(r"^[a-zA-Z0-9\-_: ]+$")
 
 

@@ -4,10 +4,11 @@ from pydantic import ValidationError
 from backend.app.schemas.bootstrap import BootstrapSetup
 
 
-def test_bootstrap_validates_username():
+@pytest.mark.parametrize("username", ["     ", "David Hruby"])
+def test_bootstrap_rejects_invalid_username(username):
     with pytest.raises(ValidationError):
         BootstrapSetup(
-            username="     ",
+            username=username,
             email="hrubyd74@gmail.com",
             password="abcd12345efg",
             organization_name="Org-name",
@@ -15,16 +16,8 @@ def test_bootstrap_validates_username():
             bootstrap_secret="qwertyuiopasdfghjklzxcvbnm1234567890"
         )
 
-    with pytest.raises(ValidationError):
-        BootstrapSetup(
-            username="David Hruby",
-            email="hrubyd74@gmail.com",
-            password="abcd12345efg",
-            organization_name="Org-name",
-            team_name="Team-name",
-            bootstrap_secret="qwertyuiopasdfghjklzxcvbnm1234567890"
-        )
 
+def test_bootstrap_strips_username():
     bootstrap = BootstrapSetup(
         username=" David123  ",
         email="hrubyd74@gmail.com",
@@ -36,69 +29,55 @@ def test_bootstrap_validates_username():
     assert bootstrap.username == "David123"
 
 
-def test_bootstrap_validates_password():
+@pytest.mark.parametrize("password", ["abcd 1234", "abcd1234\u20ac"])
+def test_bootstrap_rejects_invalid_password(password):
     with pytest.raises(ValidationError):
         BootstrapSetup(
             username="David123",
             email="hrubyd74@gmail.com",
-            password="abcd 1234",
+            password=password,
             organization_name="Org-name",
             team_name="Team-name",
             bootstrap_secret="qwertyuiopasdfghjklzxcvbnm1234567890"
         )
 
-    with pytest.raises(ValidationError):
-        BootstrapSetup(
-            username="David123",
-            email="hrubyd74@gmail.com",
-            password="abcd1234=",
-            organization_name="Org-name",
-            team_name="Team-name",
-            bootstrap_secret="qwertyuiopasdfghjklzxcvbnm1234567890"
-        )
 
+def test_bootstrap_accepts_valid_password():
     bootstrap = BootstrapSetup(
         username="David123",
         email="hrubyd74@gmail.com",
-        password="Abcd1234!_",
+        password="Abcd1234=_",
         organization_name="Org-name",
         team_name="Team-name",
         bootstrap_secret="qwertyuiopasdfghjklzxcvbnm1234567890"
     )
-    assert bootstrap.password == "Abcd1234!_"
+    assert bootstrap.password == "Abcd1234=_"
 
 
-def test_bootstrap_validates_organization_name_or_team_name():
-    with pytest.raises(ValidationError):
-        BootstrapSetup(
-            username="David123",
-            email="hrubyd74@gmail.com",
-            password="abcd12345efg",
-            organization_name="Org-name",
-            team_name="   ",
-            bootstrap_secret="qwertyuiopasdfghjklzxcvbnm1234567890"
-        )
-
-    with pytest.raises(ValidationError):
-        BootstrapSetup(
-            username="David123",
-            email="hrubyd74@gmail.com",
-            password="abcd12345efg",
-            organization_name="Org.name",
-            team_name="Team-name",
-            bootstrap_secret="qwertyuiopasdfghjklzxcvbnm1234567890"
-        )
+@pytest.mark.parametrize(
+    ("field", "name"),
+    [
+        ("team_name", "   "),
+        ("organization_name", "Org.name"),
+        ("team_name", "Team/name"),
+    ],
+)
+def test_bootstrap_rejects_invalid_organization_or_team_name(field, name):
+    data = {
+        "username": "David123",
+        "email": "hrubyd74@gmail.com",
+        "password": "abcd12345efg",
+        "organization_name": "Org-name",
+        "team_name": "Team-name",
+        "bootstrap_secret": "qwertyuiopasdfghjklzxcvbnm1234567890",
+    }
+    data[field] = name
 
     with pytest.raises(ValidationError):
-        BootstrapSetup(
-            username="David123",
-            email="hrubyd74@gmail.com",
-            password="abcd12345efg",
-            organization_name="Org-name",
-            team_name="Team/name",
-            bootstrap_secret="qwertyuiopasdfghjklzxcvbnm1234567890"
-        )
+        BootstrapSetup(**data)
 
+
+def test_bootstrap_strips_valid_organization_and_team_names():
     bootstrap = BootstrapSetup(
         username="David123",
         email="hrubyd74@gmail.com",

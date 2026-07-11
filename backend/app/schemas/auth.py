@@ -1,3 +1,4 @@
+import re
 from typing import Self
 from pydantic import (
     BaseModel,
@@ -8,14 +9,12 @@ from pydantic import (
 )
 
 
+PASSWORD_REGEX = re.compile(r'^[A-Za-z0-9\-_:!@#$%^&*()\[\]{};<>?/\\|~\."+\',`=]+$')
+
+
 class LoginInput(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=8, max_length=128)
-
-    @field_validator("email")
-    @classmethod
-    def normalize_email(cls, email: str) -> str:
-        return str(email).strip().lower()
     
 
 class LoginResult(BaseModel):
@@ -40,13 +39,17 @@ class RegisterInput(BaseModel):
             raise ValueError("There can be no whitespace in username")
         return username
 
-    @field_validator("email")
+    @field_validator("password")
     @classmethod
-    def normalize_email(cls, email: str) -> str:
-        return str(email).strip().lower()
+    def validate_password(cls, password: str) -> str:
+        if any(char.isspace() for char in password):
+            raise ValueError("There can be no whitespace in password")
+        if not PASSWORD_REGEX.fullmatch(password):
+            raise ValueError("Password contains invalid characters")
+        return password
 
     @model_validator(mode="after")
-    def validate_password(self) -> Self:
+    def validate_passwords_match(self) -> Self:
         if self.password != self.password_confirmation:
             raise ValueError("Passwords do not match")
         return self
