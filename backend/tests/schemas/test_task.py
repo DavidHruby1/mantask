@@ -4,7 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from backend.app.models.enums import TaskStatus
-from backend.app.schemas.task import TaskCreate, TaskUpdate
+from backend.app.schemas.task import TaskCreate, TaskUpdate, TaskFilterFields
 
 
 # TaskCreate schema testing
@@ -181,4 +181,11 @@ def test_task_update_validates_date():
     TaskUpdate(review_date=date.today())
 
 
-# TaskFilters schema testing
+# TaskFilterFields schema testing
+def test_task_filter_fields_normalizes_statuses():
+    filter_fields = TaskFilterFields(statuses=["todo", "in_progress"])
+    assert filter_fields.statuses == [TaskStatus.TODO, TaskStatus.IN_PROGRESS]
+
+def test_task_filter_fields_returns_none_for_empty_statuses():
+    filter_fields = TaskFilterFields(statuses=[])
+    assert filter_fields.statuses is None
