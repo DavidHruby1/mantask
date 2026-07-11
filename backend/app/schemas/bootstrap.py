@@ -14,7 +14,7 @@ NAME_REGEX = re.compile(r"^[a-zA-Z0-9\-_: ]+$")
 
 class BootstrapSetup(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
-    email: EmailStr
+    email: EmailStr # No need to normalize, EmailStr already strips and lowercases
     password: str = Field(..., min_length=8, max_length=128)
     organization_name: str = Field(..., min_length=1, max_length=100)
     team_name: str = Field(..., min_length=1, max_length=100)
@@ -30,11 +30,6 @@ class BootstrapSetup(BaseModel):
             raise ValueError("There can be no whitespace in username")
         return username
 
-    @field_validator("email")
-    @classmethod
-    def normalize_email(cls, email: str) -> str:
-        return str(email).strip().lower()
-
     @field_validator("password")
     @classmethod
     def validate_password(cls, password: str) -> str:
@@ -47,11 +42,12 @@ class BootstrapSetup(BaseModel):
     @field_validator("organization_name", "team_name")
     @classmethod
     def validate_names(cls, name: str) -> str:
-        if name.strip() == "":
+        name = name.strip()
+        if name == "":
             raise ValueError("Organization and team names cannot be empty or whitespace")
         if not NAME_REGEX.fullmatch(name):
             raise ValueError("Organization and team names can only contain letters, numbers, spaces and -_:")
-        return name.strip()
+        return name
 
 
 class BootstrapResult(BaseModel):
