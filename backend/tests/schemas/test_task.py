@@ -198,6 +198,11 @@ def test_task_filter_fields_normalizes_statuses():
     assert filter_fields.statuses == [TaskStatus.TODO, TaskStatus.IN_PROGRESS]
 
 
-def test_task_filter_fields_returns_none_for_empty_statuses():
+def test_task_filter_fields_preserves_empty_statuses():
     filter_fields = TaskFilterFields(statuses=[])
-    assert filter_fields.statuses is None
+    assert filter_fields.statuses == []
+
+
+def test_task_filter_fields_defaults_to_empty_statuses():
+    filter_fields = TaskFilterFields()
+    assert filter_fields.statuses == []

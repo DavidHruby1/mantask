@@ -159,13 +159,8 @@ class TaskRead(BaseModel):
 
 
 class TaskFilterFields(BaseModel):
-    statuses: list[TaskStatus] | None = None
+    statuses: list[TaskStatus] = Field(default_factory=list)
     assignee_member_id: int | None = None
-
-    @field_validator("statuses")
-    @classmethod
-    def normalize_statuses(cls, statuses: list[TaskStatus] | None) -> list[TaskStatus] | None:
-        return statuses or None
 
 
 class TaskQuery(TaskFilterFields):

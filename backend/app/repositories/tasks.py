@@ -11,7 +11,7 @@ from backend.app.schemas.task import TaskFilters, TaskCreate
 def find_tasks(db: Session, filters: TaskFilters) -> list[Task]:
     stmt = select(Task).where(Task.team_id == filters.team_id)
 
-    if filters.statuses is not None:
+    if filters.statuses:
         stmt = stmt.where(Task.status.in_(filters.statuses))
     if filters.assignee_member_id is not None:
         stmt = stmt.where(Task.assignee_member_id == filters.assignee_member_id)
@@ -35,7 +35,7 @@ def count_team_tasks_by_status(db: Session, team_id: int, status: TaskStatus) ->
 
 
 def get_last_task_position(db: Session, filters: TaskFilters) -> int | None:
-    statuses = filters.statuses if filters.statuses is not None else [TaskStatus.TODO]
+    statuses = filters.statuses or [TaskStatus.TODO]
     stmt = (
         select(Task)
         .where(Task.team_id == filters.team_id)
