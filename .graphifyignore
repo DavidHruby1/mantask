@@ -1,0 +1,15 @@
+/*
+!/backend/
+!/frontend/
+
+/backend/*
+!/backend/app/
+!/backend/app/**
+!/backend/alembic/
+/backend/alembic/*
+!/backend/alembic/versions/
+!/backend/alembic/versions/**
+
+/frontend/*
+!/frontend/src/
+!/frontend/src/**
