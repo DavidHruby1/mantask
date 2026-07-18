@@ -79,15 +79,16 @@ import Form from '@/components/ui/Form.vue'
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: min(115vw, 800px);
-    height: min(115vw, 800px);
+    width: min(125vw, 920px);
+    height: min(125vw, 920px);
     background: radial-gradient(
         circle at 50% 50%,
-        rgba(31, 41, 55, 0.62) 0%,
-        rgba(31, 41, 55, 0.28) 45%,
-        transparent 75%
+        rgba(45, 59, 78, 0.64) 0%,
+        rgba(38, 50, 67, 0.3) 42%,
+        rgba(38, 50, 67, 0.14) 70%,
+        transparent 86%
     );
-    filter: blur(55px);
+    filter: blur(46px);
     pointer-events: none;
     animation: auraFadeIn 1.2s ease-out forwards;
 }
@@ -97,15 +98,15 @@ import Form from '@/components/ui/Form.vue'
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 240px;
-    height: 240px;
+    width: 320px;
+    height: 320px;
     background: radial-gradient(
         circle at 50% 50%,
-        rgba(31, 41, 55, 0.95) 0%,
-        rgba(31, 41, 55, 0.55) 35%,
-        transparent 70%
+        rgba(62, 82, 109, 0.92) 0%,
+        rgba(45, 59, 78, 0.56) 38%,
+        transparent 74%
     );
-    filter: blur(34px);
+    filter: blur(30px);
     pointer-events: none;
     animation: sourceFadeIn 0.9s ease-out forwards;
 }
