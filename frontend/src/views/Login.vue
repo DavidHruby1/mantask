@@ -59,8 +59,8 @@ import Form from '@/components/ui/Form.vue'
     height: 60vh;
     background: radial-gradient(
         ellipse 48% 80% at 50% 0%,
-        rgba(31, 41, 55, 0.5) 0%,
-        rgba(31, 41, 55, 0.2) 55%,
+        rgba(31, 41, 55, 0.58) 0%,
+        rgba(31, 41, 55, 0.26) 55%,
         transparent 80%
     );
     filter: blur(55px);
@@ -76,9 +76,9 @@ import Form from '@/components/ui/Form.vue'
     height: 0;
     background: radial-gradient(
         ellipse 35% 100% at 50% 0%,
-        rgba(31, 41, 55, 0.85) 0%,
-        rgba(31, 41, 55, 0.45) 30%,
-        rgba(31, 41, 55, 0.15) 65%,
+        rgba(31, 41, 55, 0.92) 0%,
+        rgba(31, 41, 55, 0.52) 30%,
+        rgba(31, 41, 55, 0.2) 65%,
         transparent 100%
     );
     filter: blur(38px);
@@ -97,8 +97,8 @@ import Form from '@/components/ui/Form.vue'
     height: 100%;
     background: radial-gradient(
         ellipse 40% 100% at 50% 0%,
-        rgba(31, 41, 55, 0.6) 0%,
-        rgba(31, 41, 55, 0.15) 60%,
+        rgba(31, 41, 55, 0.68) 0%,
+        rgba(31, 41, 55, 0.2) 60%,
         transparent 100%
     );
     filter: blur(20px);
@@ -114,7 +114,7 @@ import Form from '@/components/ui/Form.vue'
     height: 105%;
     background: radial-gradient(
         ellipse 45% 100% at 50% 0%,
-        rgba(31, 41, 55, 0.2) 0%,
+        rgba(31, 41, 55, 0.26) 0%,
         transparent 75%
     );
     filter: blur(48px);
@@ -127,7 +127,7 @@ import Form from '@/components/ui/Form.vue'
     transform: translateX(-50%);
     width: 120px;
     height: 90px;
-    background: radial-gradient(circle, rgba(31, 41, 55, 0.85) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(31, 41, 55, 0.92) 0%, transparent 70%);
     filter: blur(26px);
     pointer-events: none;
 }
