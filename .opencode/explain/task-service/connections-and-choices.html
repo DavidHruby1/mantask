@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="cs">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Napojení a rozhodnutí | TaskService</title>
+    <link rel="stylesheet" href="site.css">
+</head>
+<body>
+    <nav class="chapter-nav" aria-label="Navigace kapitol">
+        <a href="functions-and-relations.html">← Funkce</a><a class="index-link" href="index.html">Obsah</a><a href="check-your-understanding.html">Další: Ověření →</a>
+    </nav>
+    <header class="site-header">
+        <p class="eyebrow">Kapitola 5</p>
+        <h1>Napojení a rozhodnutí</h1>
+        <p class="lede">Kdo službu volá, kdo vlastní stav a transakci a které záměry lze z kódu opravdu doložit.</p>
+    </header>
+    <main>
+        <h2>Volající a hranice API</h2>
+        <p>Jediným consumerem singletonu <code>task_service</code> je <a href="../../../backend/app/api/endpoints/tasks.py"><code>backend/app/api/endpoints/tasks.py</code></a>. GET seznamu volá <code>get_all_tasks</code>. GET detailu, PATCH a DELETE nejprve volají <code>get_accessible_task</code>. POST volá <code>create_task</code>; PATCH poté <code>update_task</code>. Endpoint převádí SQLAlchemy objekty na <code>TaskRead</code>.</p>
+
+        <h2>Stav, side effects a transakce</h2>
+        <p><code>find_tasks</code>, lookupy a county provádějí databázové čtení. <code>insert_task</code> volá <code>db.add(task)</code>; repository <code>update_task</code> mění atributy spravovaného objektu. Ani jedna service metoda nevolá <code>commit</code>.</p>
+        <span class="source-label">backend/app/api/endpoints/tasks.py:51-61</span>
+        <pre class="numbered" data-lines="51&#10;52&#10;53&#10;54&#10;55&#10;56&#10;57&#10;58&#10;59&#10;60&#10;61"><code>    active_team_id = get_last_active_team_id(db, user)
+    created_task = task_service.create_task(db, active_team_id, user_id, payload)
+
+    try: 
+        db.commit()
+        db.refresh(created_task)
+    except IntegrityError:
+        db.rollback()
+        raise ApiConflictError("Bootstrap data conflicts with existing records")
+
+    return TaskRead.model_validate(created_task)</code></pre>
+        <p>Tento výřez dokládá vlastnictví transakce endpointem: service připraví změnu, endpoint ji potvrdí a obnoví serverové hodnoty. Při integrity chybě endpoint provede rollback. Stejný vzor používá PATCH; DELETE volá <code>db.delete</code> přímo v endpointu.</p>
+
+        <h2>Závislosti a vynucení pravidel</h2>
+        <p><a href="../../../backend/app/schemas/task.py">Pydantic schémata</a> vlastní syntaktickou validaci a pravidla zjistitelná jen z payloadu, například povolený počáteční status a ne-prázdný title. Service vlastní kontroly vyžadující databázi nebo současný Task. <a href="../../../backend/app/models/task.py">SQLAlchemy model</a> přidává poslední obranu v PostgreSQL: CHECK constraints a unikátní pozici.</p>
+        <p>WIP limit pochází ze singletonu <a href="../../../backend/app/models/app_config.py"><code>AppConfig</code></a>; databázový default je <code>2</code>. Chybějící řádek není považován za „bez limitu“, ale za <code>ApiInternalServerError</code>. Jde tedy o povinnou bootstrap konfiguraci.</p>
+
+        <h2>Cílené testy</h2>
+        <p><a href="../../../backend/tests/schemas/test_task.py"><code>backend/tests/schemas/test_task.py</code></a> ověřuje normalizaci title/layer, datumy, počáteční statusy, review kombinace a PATCH rozlišení vynechaného title. Soubor <a href="../../../backend/tests/services/test_tasks.py"><code>backend/tests/services/test_tasks.py</code></a> je prázdný a task API integrační testy nebyly nalezeny.</p>
+        <div class="callout unknown"><strong>Důsledek:</strong> větvení podle členství, aktivního týmu, WIP limitu, výsledného review stavu a transakční chování endpointu nemá v repozitáři přímé automatizované pokrytí.</div>
+
+        <h2>Trade-offs</h2>
+        <p><strong>Service bez commitu</strong> udržuje transakční rozhodnutí u HTTP use case a dovoluje endpointu mapovat databázové výjimky. Cenou je nutnost, aby každý write caller nezapomněl commitnout nebo rollbacknout.</p>
+        <p><strong>Více validačních vrstev</strong> není čistá duplicita: schéma zná payload, service zná související řádky a model chrání databázový stav. Review invariant se ale částečně opakuje ve schématu, service a CHECK constraintu, takže změna pravidla musí zůstat synchronizovaná.</p>
+        <p><strong>Count-before-insert</strong> je jednoduchý a čitelný, ale WIP limit není samostatný databázový constraint. Současné inserty navíc závodí o stejnou vypočtenou pozici; unikátní constraint může konflikt zachytit až při commitu.</p>
+        <p><strong>Různá granularita chyb</strong>: list sjednocuje neexistující, neaktivní a cizí tým do <code>TaskAccessDeniedError</code>, zatímco detail vrací odlišné chyby pro Task, členství a Team. To může omezovat únik informací u listu, ale rozdíl není dokumentován.</p>
+
+        <h2>Skutečně neznámý záměr</h2>
+        <div class="callout unknown">
+            <p>Z dostupného kódu ani dokumentace nelze určit, proč kontrola WIP limitu při create proběhne před ověřením členství creatora, proč list a detail zveřejňují odlišně podrobné chyby ani zda se počítá s retry po pozičním konfliktu. Historii nebylo nutné použít k popisu chování; tyto produktové a bezpečnostní motivace zůstávají nedoložené.</p>
+        </div>
+    </main>
+    <nav class="chapter-nav" aria-label="Navigace kapitol">
+        <a href="functions-and-relations.html">← Funkce</a><a class="index-link" href="index.html">Obsah</a><a href="check-your-understanding.html">Další: Ověření →</a>
+    </nav>
+</body>
+</html>

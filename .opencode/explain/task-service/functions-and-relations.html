@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="cs">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Funkce a jejich vazby | TaskService</title>
+    <link rel="stylesheet" href="site.css">
+    <script src="site.js" defer></script>
+</head>
+<body>
+    <nav class="chapter-nav" aria-label="Navigace kapitol">
+        <a href="how-it-works.html">← Jak to funguje</a><a class="index-link" href="index.html">Obsah</a><a href="connections-and-choices.html">Další: Napojení →</a>
+    </nav>
+    <header class="site-header">
+        <p class="eyebrow">Kapitola 4</p>
+        <h1>Funkce a jejich vazby</h1>
+        <p class="lede">Úplná reference definovaných metod a přímo volaných projektových funkcí; graf pod ní záměrně ukazuje jen architektonicky podstatné vazby.</p>
+    </header>
+    <main>
+        <h2>Funkce uvnitř souboru</h2>
+        <section class="function-entry" id="get-all-tasks">
+            <h3><code>get_all_tasks</code></h3>
+            <code class="signature">def get_all_tasks(self, db: Session, session: UserSession, query: TaskQuery) -&gt; list[Task]:</code>
+            <p>Orchestrace načtení seznamu: nejprve vytvoří autorizované <code>TaskFilters</code>, potom deleguje dotaz. Patří sem, protože caller nemá znát přístupové předpoklady repository filtru.</p>
+        </section>
+        <section class="function-entry" id="create-task">
+            <h3><code>create_task</code></h3>
+            <code class="signature">def create_task(self, db: Session, active_team_id: int, user_id: int, payload: TaskCreate) -&gt; Task:</code>
+            <p>Koordinuje WIP limit, týmové identity, pozici a čas začátku práce a nakonec přidání Task do session. Jde o hlavní write entry point; mechanické sestavení modelu přenechává repository.</p>
+        </section>
+        <section class="function-entry" id="update-task">
+            <h3><code>update_task</code></h3>
+            <code class="signature">def update_task(self, db: Session, task: Task, payload: TaskUpdate) -&gt; Task:</code>
+            <p>Sloučí částečný payload se stávajícím stavem, ověří týmové identity a review invariant a teprve pak mutuje Task. Tato hranice potřebuje zároveň validovaný vstup i perzistentní stav.</p>
+        </section>
+        <section class="function-entry" id="get-accessible-task">
+            <h3><code>get_accessible_task</code></h3>
+            <code class="signature">def get_accessible_task(self, db: Session, task_id: int, user_id: int) -&gt; Task:</code>
+            <p>Načte Task a ověří členství, existenci týmu a jeho aktivitu. Centralizuje přístupovou bránu společnou pro GET detailu, PATCH a DELETE.</p>
+        </section>
+        <section class="function-entry" id="resolve-task-filters">
+            <h3><code>_resolve_task_filters</code></h3>
+            <code class="signature">def _resolve_task_filters(self, db: Session, session: UserSession, query: TaskQuery) -&gt; TaskFilters:</code>
+            <p>Převede volitelný tým z query na povinný a autorizovaný <code>team_id</code> a ověří případný assignee filtr. Je privátní, protože výsledný filtr je interní kontrakt mezi service a repository.</p>
+        </section>
+        <section class="function-entry" id="can-create">
+            <h3><code>_can_create_in_progress_task</code></h3>
+            <code class="signature">def _can_create_in_progress_task(self, db: Session, team_id: int) -&gt; bool:</code>
+            <p>Ověří aktivní tým, načte globální limit a porovná jej s počtem týmových <code>IN_PROGRESS</code> Task. Vrací bool pro větev create; chybějící konfigurace a neplatný tým jsou samostatné chyby.</p>
+        </section>
+
+        <h2>Externí funkce</h2>
+        <section class="function-entry">
+            <h3><code>find_tasks</code></h3>
+            <code class="signature">def find_tasks(db: Session, filters: TaskFilters) -&gt; list[Task]:</code>
+            <p>Sestaví SELECT pro tým, volitelné statusy a assignee a řadí podle statusu, pozice a ID. Je to persistence hranice pro list operaci.</p>
+        </section>
+        <section class="function-entry">
+            <h3><code>get_task_by_id</code></h3>
+            <code class="signature">def get_task_by_id(db: Session, task_id: int) -&gt; Task | None:</code>
+            <p>Provede primární lookup přes <code>db.get</code>. Service nad návratovou hodnotou doplní doménovou chybu a autorizaci.</p>
+        </section>
+        <section class="function-entry">
+            <h3><code>count_team_tasks_by_status</code></h3>
+            <code class="signature">def count_team_tasks_by_status(db: Session, team_id: int, status: TaskStatus) -&gt; int:</code>
+            <p>Vrátí agregovaný počet Task ve stavu; <code>None</code> ze scalar převádí na nulu. Poskytuje aktuální vstup pro rozhodnutí o WIP limitu.</p>
+        </section>
+        <section class="function-entry">
+            <h3><code>get_last_task_position</code></h3>
+            <code class="signature">def get_last_task_position(db: Session, filters: TaskFilters) -&gt; int | None:</code>
+            <p>Najde nejvyšší pozici ve zvolených statusech, při prázdném seznamu používá <code>TODO</code>. Create mu vždy předá právě status payloadu, aby mohl nový Task zařadit na konec sloupce.</p>
+        </section>
+        <section class="function-entry">
+            <h3><code>insert_task</code></h3>
+            <code class="signature">def insert_task(db: Session, team_id: int, creator_member_id: int, payload: TaskCreate, position: int, started_working_at: datetime | None) -&gt; Task:</code>
+            <p>Sestaví SQLAlchemy <code>Task</code>, přidá jej přes <code>db.add</code> a vrátí jej bez commitu. Service dodává již rozhodnuté doménové hodnoty; endpoint vlastní transakci.</p>
+        </section>
+        <section class="function-entry">
+            <h3><code>update_task</code></h3>
+            <code class="signature">def update_task(task: Task, updates: dict[str, object]) -&gt; Task:</code>
+            <p>Nastaví každé pole přes <code>setattr</code> a vrátí tentýž spravovaný objekt. Alias <code>update_task_repository</code> v service odlišuje tuto mechanickou funkci od stejně pojmenované service metody.</p>
+        </section>
+        <section class="function-entry">
+            <h3><code>get_team_by_id</code></h3>
+            <code class="signature">def get_team_by_id(db: Session, team_id: int) -&gt; Team | None:</code>
+            <p>Načte Team primárním klíčem. Service z něj čte <code>is_active</code> při filtrování, přístupu i WIP kontrole.</p>
+        </section>
+        <section class="function-entry">
+            <h3><code>get_team_member</code></h3>
+            <code class="signature">def get_team_member(db: Session, team_id: int, user_id: int) -&gt; TeamMember | None:</code>
+            <p>Vyhledá týmové členství podle identity uživatele. Create jej potřebuje k převodu <code>user_id</code> na cizí klíč <code>creator_member_id</code>.</p>
+        </section>
+        <section class="function-entry">
+            <h3><code>is_team_member</code></h3>
+            <code class="signature">def is_team_member(db: Session, team_id: int, user_id: int) -&gt; bool:</code>
+            <p>Pomocí SQL EXISTS levně odpoví, zda členství existuje. Používají jej obě read access brány, když nepotřebují celý TeamMember.</p>
+        </section>
+        <section class="function-entry">
+            <h3><code>get_team_member_by_id</code></h3>
+            <code class="signature">def get_team_member_by_id(db: Session, team_id: int, member_id: int) -&gt; TeamMember | None:</code>
+            <p>Ověří, že member ID skutečně patří danému týmu. Service jej používá pro assignee a reviewer při create, update i filtru; tyto opakované pomocné hrany jsou v grafu sloučeny.</p>
+        </section>
+        <section class="function-entry">
+            <h3><code>get_in_progress_limit</code></h3>
+            <code class="signature">def get_in_progress_limit(db: Session) -&gt; int | None:</code>
+            <p>Čte singleton <code>AppConfig</code> s ID 1 a vrací jeho limit, nebo <code>None</code>. Chybějící konfiguraci interpretuje až service jako interní serverovou chybu.</p>
+        </section>
+
+        <h2>Výběrový graf vztahů</h2>
+        <p>Plné čáry jsou přímá volání. Graf vynechává konstruktory schémat, standardní knihovnu a opakované méně důležité validační hrany.</p>
+        <div class="graph-shell">
+            <div class="graph-toolbar" aria-label="Ovládání grafu">
+                <button type="button" data-zoom-in aria-label="Přiblížit graf">+</button>
+                <button type="button" data-zoom-out aria-label="Oddálit graf">−</button>
+                <button type="button" data-zoom-reset aria-label="Obnovit měřítko grafu">100 %</button>
+            </div>
+            <div class="graph-viewport" tabindex="0" aria-label="Posuvný graf funkcí; lze posouvat scrollbary nebo tažením">
+                <svg class="graph-canvas" viewBox="0 0 1500 1050" role="img" aria-labelledby="graph-title graph-desc">
+                    <title id="graph-title">Výběrový graf funkcí TaskService</title>
+                    <desc id="graph-desc">Šest modrých service metod volá vybrané fialové repository funkce. Šipky popisují autorizaci, čtení, počítání, vložení a mutaci.</desc>
+                    <defs><marker id="arrow-graph" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#64748b"/></marker></defs>
+
+                    <path d="M250 120 H445" class="edge" marker-end="url(#arrow-graph)"/><text x="348" y="102" class="edge-label">sestaví filtry</text>
+                    <path d="M665 120 H910" class="edge" marker-end="url(#arrow-graph)"/><text x="788" y="102" class="edge-label">načte seznam</text>
+
+                    <path d="M250 390 H445" class="edge" marker-end="url(#arrow-graph)"/><text x="348" y="372" class="edge-label">ověří WIP</text>
+                    <path d="M665 390 H910" class="edge" marker-end="url(#arrow-graph)"/><text x="788" y="372" class="edge-label">spočítá status</text>
+                    <path d="M250 420 C360 500 400 510 440 510" class="edge" marker-end="url(#arrow-graph)"/><text x="345" y="492" class="edge-label">určí pozici</text>
+                    <path d="M250 440 C430 610 690 620 910 620" class="edge" marker-end="url(#arrow-graph)"/><text x="600" y="606" class="edge-label">přidá Task</text>
+                    <path d="M665 420 C790 470 950 500 1140 500" class="edge" marker-end="url(#arrow-graph)"/><text x="900" y="475" class="edge-label">načte limit</text>
+
+                    <path d="M250 750 H445" class="edge" marker-end="url(#arrow-graph)"/><text x="348" y="732" class="edge-label">mutuje pole</text>
+
+                    <path d="M265 940 H465" class="edge" marker-end="url(#arrow-graph)"/><text x="365" y="922" class="edge-label">načte Task</text>
+                    <path d="M265 970 C430 1030 700 1030 910 970" class="edge" marker-end="url(#arrow-graph)"/><text x="600" y="1020" class="edge-label">ověří členství</text>
+
+                    <ellipse cx="160" cy="120" rx="90" ry="54" class="node-local"/><text x="160" y="115" class="svg-label">get_all_tasks</text><text x="160" y="139" class="edge-label">service</text>
+                    <ellipse cx="555" cy="120" rx="110" ry="58" class="node-local"/><text x="555" y="115" class="svg-label">_resolve_task_filters</text><text x="555" y="139" class="edge-label">service</text>
+                    <ellipse cx="160" cy="390" rx="90" ry="54" class="node-local"/><text x="160" y="385" class="svg-label">create_task</text><text x="160" y="409" class="edge-label">service</text>
+                    <ellipse cx="555" cy="390" rx="110" ry="58" class="node-local"/><text x="555" y="379" class="svg-label">_can_create_</text><text x="555" y="402" class="svg-label">in_progress_task</text>
+                    <ellipse cx="160" cy="750" rx="90" ry="54" class="node-local"/><text x="160" y="745" class="svg-label">update_task</text><text x="160" y="769" class="edge-label">service</text>
+                    <ellipse cx="160" cy="940" rx="105" ry="54" class="node-local"/><text x="160" y="935" class="svg-label">get_accessible_task</text><text x="160" y="959" class="edge-label">service</text>
+
+                    <ellipse cx="1010" cy="120" rx="90" ry="50" class="node-external"/><text x="1010" y="125" class="svg-label">find_tasks</text>
+                    <ellipse cx="1010" cy="390" rx="125" ry="50" class="node-external"/><text x="1010" y="395" class="svg-label">count_team_tasks_by_status</text>
+                    <ellipse cx="555" cy="510" rx="110" ry="46" class="node-external"/><text x="555" y="515" class="svg-label">get_last_task_position</text>
+                    <ellipse cx="1010" cy="620" rx="90" ry="46" class="node-external"/><text x="1010" y="625" class="svg-label">insert_task</text>
+                    <ellipse cx="1250" cy="500" rx="105" ry="46" class="node-external"/><text x="1250" y="505" class="svg-label">get_in_progress_limit</text>
+                    <ellipse cx="555" cy="750" rx="105" ry="50" class="node-external"/><text x="555" y="755" class="svg-label">update_task_repository</text>
+                    <ellipse cx="555" cy="940" rx="90" ry="48" class="node-external"/><text x="555" y="945" class="svg-label">get_task_by_id</text>
+                    <ellipse cx="1010" cy="940" rx="90" ry="48" class="node-external"/><text x="1010" y="945" class="svg-label">is_team_member</text>
+
+                    <rect x="1250" y="760" width="210" height="145" rx="12" fill="#fff" stroke="#94a3b8"/>
+                    <text x="1270" y="790" style="font:700 16px system-ui">Legenda</text>
+                    <circle cx="1285" cy="830" r="15" class="node-local"/><text x="1370" y="835" class="edge-label">metoda v souboru</text>
+                    <circle cx="1285" cy="872" r="15" class="node-external"/><text x="1370" y="877" class="edge-label">externí funkce</text>
+                </svg>
+            </div>
+            <p class="diagram-equivalent"><strong>Textová alternativa:</strong> list vede přes resolver filtrů do čtení; create vede přes WIP kontrolu, pozici a insert; update vede do repository mutace; přístupová brána čte Task, členství a Team.</p>
+        </div>
+    </main>
+    <nav class="chapter-nav" aria-label="Navigace kapitol">
+        <a href="how-it-works.html">← Jak to funguje</a><a class="index-link" href="index.html">Obsah</a><a href="connections-and-choices.html">Další: Napojení →</a>
+    </nav>
+</body>
+</html>

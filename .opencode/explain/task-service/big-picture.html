@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="cs">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Celkový obraz | TaskService</title>
+    <link rel="stylesheet" href="site.css">
+</head>
+<body>
+    <nav class="chapter-nav" aria-label="Navigace kapitol">
+        <a href="index.html">← Úvod</a><a class="index-link" href="index.html">Obsah</a><a href="core-idea.html">Další: Ústřední myšlenka →</a>
+    </nav>
+    <header class="site-header">
+        <p class="eyebrow">Kapitola 1 · lze přeskočit</p>
+        <h1>Celkový obraz</h1>
+        <p class="lede">Úkol není jen řádek v databázi. Patří týmu, odkazuje na členy týmu a podléhá pravidlům přístupu, review a limitu rozpracované práce.</p>
+    </header>
+    <main>
+        <h2>Doména ve třech pojmech</h2>
+        <p><strong>Task</strong> nese obsah, status, pořadí a odkazy na creator, assignee a reviewer. <strong>TeamMember</strong> je týmová identita uživatele; service proto neukládá do těchto polí přímo <code>user_id</code>. <strong>AppConfig</strong> obsahuje globální <code>in_progress_limit</code>, který omezuje počet úkolů ve stavu <code>IN_PROGRESS</code>.</p>
+        <p>Životní cyklus má stavy <code>TODO</code>, <code>IN_PROGRESS</code>, <code>REVIEW</code> a <code>DONE</code>. Tento soubor vytváří jen první dva stavy; další přechody zde implementované nejsou. Databázový model navíc hlídá například unikátní pozici v kombinaci tým–status a soulad <code>should_review</code> s reviewerem. Viz <a href="../../../backend/app/models/task.py">model Task</a> a <a href="../../../backend/app/schemas/task.py">schémata vstupu</a>.</p>
+
+        <h2>Mapa vrstev</h2>
+        <div class="diagram">
+            <svg viewBox="0 0 900 330" role="img" aria-labelledby="map-title map-desc">
+                <title id="map-title">Umístění TaskService mezi HTTP a databází</title>
+                <desc id="map-desc">FastAPI endpoint předá ověřená data TaskService. TaskService uplatní přístupová a business pravidla a volá repositories. Repositories čtou nebo mění SQLAlchemy session nad PostgreSQL. Endpoint vlastní commit a rollback.</desc>
+                <defs><marker id="arrow-map" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#64748b"/></marker></defs>
+                <rect x="30" y="95" width="170" height="90" rx="18" fill="#fff" stroke="#64748b" stroke-width="2"/>
+                <text x="115" y="130" class="svg-label">FastAPI endpoint</text><text x="115" y="157" class="svg-label">/tasks</text>
+                <rect x="275" y="70" width="220" height="140" rx="22" fill="#e0f2fe" stroke="#075985" stroke-width="3"/>
+                <text x="385" y="125" class="svg-label">TaskService</text><text x="385" y="153" class="svg-label">pravidla a orchestrace</text>
+                <rect x="570" y="95" width="150" height="90" rx="18" fill="#f3e8ff" stroke="#7c3aed" stroke-width="2"/>
+                <text x="645" y="130" class="svg-label">repositories</text><text x="645" y="157" class="svg-label">SQLAlchemy</text>
+                <ellipse cx="825" cy="140" rx="62" ry="55" fill="#fff" stroke="#64748b" stroke-width="2"/>
+                <text x="825" y="135" class="svg-label">PostgreSQL</text><text x="825" y="160" class="svg-label">stav</text>
+                <path d="M200 125 H270" class="edge" marker-end="url(#arrow-map)"/><text x="235" y="112" class="edge-label">volá</text>
+                <path d="M495 125 H565" class="edge" marker-end="url(#arrow-map)"/><text x="530" y="112" class="edge-label">dotazuje</text>
+                <path d="M720 140 H758" class="edge" marker-end="url(#arrow-map)"/><text x="739" y="126" class="edge-label">SQL</text>
+                <path d="M385 215 V275 H115 V190" class="edge" marker-end="url(#arrow-map)"/><text x="250" y="265" class="edge-label">vrátí Task nebo vyvolá AppError</text>
+                <text x="115" y="305" class="edge-label">endpoint: commit / rollback / response model</text>
+            </svg>
+            <p class="diagram-equivalent"><strong>Textová alternativa:</strong> endpoint volá TaskService, ten repositories, repositories databázi. Výsledek nebo doménová chyba se vrací k endpointu; endpoint řídí transakci a HTTP reprezentaci.</p>
+        </div>
+
+        <h2>Kam soubor patří</h2>
+        <p><a href="../../../backend/app/services/tasks.py"><code>backend/app/services/tasks.py</code></a> je aplikační service: skládá více dotazů a business kontrol do jedné operace. Neobsahuje FastAPI dekorátory ani SQL konstrukce. Jeho jediným produkčním klientem je <a href="../../../backend/app/api/endpoints/tasks.py"><code>backend/app/api/endpoints/tasks.py</code></a>; persistence detaily deleguje do <a href="../../../backend/app/repositories/tasks.py">task repository</a>, <a href="../../../backend/app/repositories/teams.py">team repository</a> a <a href="../../../backend/app/repositories/bootstraps.py">bootstrap repository</a>.</p>
+    </main>
+    <nav class="chapter-nav" aria-label="Navigace kapitol">
+        <a href="index.html">← Úvod</a><a class="index-link" href="index.html">Obsah</a><a href="core-idea.html">Další: Ústřední myšlenka →</a>
+    </nav>
+</body>
+</html>
