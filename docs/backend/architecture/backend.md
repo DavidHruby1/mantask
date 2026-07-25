@@ -38,7 +38,7 @@ This backend is a FastAPI application centered on a single `/api` router tree, a
 
 ### Migrations
 
-`alembic/env.py` points Alembic at `settings.DATABASE_URL`, imports model metadata from `Base.metadata`, and defines a custom `render_item()` hook so `IntEnumType` values are rendered correctly during autogeneration. It uses the standard offline and online Alembic runners. The initial migration creates `app_config`, `app_users`, `teams`, `user_sessions`, `team_members`, and `tasks`; the later revision adds a unique constraint on `tasks(team_id, status, position)`.
+`alembic/env.py` points Alembic at `settings.DATABASE_URL`, imports model metadata from `Base.metadata`, and defines a custom `render_item()` hook so `IntEnumType` values are rendered correctly during autogeneration. It uses the standard offline and online Alembic runners. The initial migration creates `app_config`, `app_users`, `teams`, `user_sessions`, `team_members`, and `tasks`. The task ordering upgrade is split in two for PostgreSQL 11: an autocommit revision adds `BACKLOG` to the native enum, then a transactional revision changes the creation default and normalizes each team/status column to gaps of `1000` without changing its `(position, id)` visible order. The final `(team_id, status, position)` constraint is deferrable for explicit rebalancing transactions but remains immediate by default for ordinary writes.
 
 ## Data Flow
 
@@ -74,4 +74,6 @@ This backend is a FastAPI application centered on a single `/api` router tree, a
 - `alembic/env.py`: Alembic configuration, metadata wiring, and `IntEnumType` rendering.
 - `alembic/versions/83e5ec226cc6_initial_migration.py`: initial schema shape.
 - `alembic/versions/69b849fd1043_.py`: task unique constraint added after the initial migration.
+- `alembic/versions/2d4c6e8f0a1b_add_backlog_task_status.py`: PostgreSQL enum addition and guarded removal.
+- `alembic/versions/4f6a8b0c2d3e_normalize_task_positions.py`: sparse normalization, default, and deferrable uniqueness.
 - `app/api/endpoints/auth.py`, `app/api/endpoints/bootstrap.py`, `app/api/endpoints/tasks.py`: request flow using the shared dependencies and commit/rollback pattern.

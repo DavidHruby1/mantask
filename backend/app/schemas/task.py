@@ -16,6 +16,8 @@ from backend.app.models.enums import TaskEffort, TaskPriority, TaskStatus
 
 
 class TaskCreate(BaseModel):
+    """Validate task creation input, defaulting new work to the backlog column."""
+
     assignee_member_id: int | None = None
     reviewer_member_id: int | None = None
 
@@ -27,7 +29,7 @@ class TaskCreate(BaseModel):
     due_date: date | None = None
     effort: TaskEffort | None = None
     should_review: bool = True
-    status: TaskStatus = TaskStatus.TODO
+    status: TaskStatus = TaskStatus.BACKLOG
 
     @field_validator("title")
     @classmethod
@@ -55,10 +57,11 @@ class TaskCreate(BaseModel):
     @field_validator("status")
     @classmethod
     def validate_status(cls, status: TaskStatus) -> TaskStatus:
+        """Restrict creation to entry statuses; later lifecycle changes belong to task policy."""
         if status not in TaskStatus:
             raise ValueError("Invalid status")
-        if status not in [TaskStatus.TODO, TaskStatus.IN_PROGRESS]:
-            raise ValueError("Status must be TODO or IN_PROGRESS")
+        if status not in [TaskStatus.BACKLOG, TaskStatus.TODO, TaskStatus.IN_PROGRESS]:
+            raise ValueError("Status must be BACKLOG, TODO or IN_PROGRESS")
         return status
 
     @model_validator(mode="after")
@@ -119,6 +122,8 @@ class TaskDelete(BaseModel):
 
 
 class TaskRead(BaseModel):
+    """Expose persisted task state while matching the database's positive-position contract."""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -136,7 +141,7 @@ class TaskRead(BaseModel):
     effort: TaskEffort | None = None
     should_review: bool
     status: TaskStatus
-    position: int = Field(..., ge=0)
+    position: int = Field(..., ge=1)
     created_at: datetime
     updated_at: datetime
     started_working_at: datetime | None = None

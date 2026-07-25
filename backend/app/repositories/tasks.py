@@ -35,7 +35,8 @@ def count_team_tasks_by_status(db: Session, team_id: int, status: TaskStatus) ->
 
 
 def get_last_task_position(db: Session, filters: TaskFilters) -> int | None:
-    statuses = filters.statuses if filters.statuses is not None else [TaskStatus.TODO]
+    """Return the append boundary for the requested team/status scope."""
+    statuses = filters.statuses if filters.statuses is not None else [TaskStatus.BACKLOG]
     stmt = (
         select(Task)
         .where(Task.team_id == filters.team_id)

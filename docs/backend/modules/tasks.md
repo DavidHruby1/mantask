@@ -23,7 +23,7 @@ This module covers task read/write flows for a team-scoped task table. The main 
 
 ### Creating tasks
 
-`TaskCreate` normalizes `title` and `layer`, rejects past `review_date`/`due_date`, and only allows `TODO` or `IN_PROGRESS` statuses. In `create_task()`, an `IN_PROGRESS` payload triggers `_can_create_in_progress_task()`, which counts current `IN_PROGRESS` tasks for the team and compares that count to `get_in_progress_limit()`. The creator must be a member of the active team, and optional assignee/reviewer members must also belong to that team. The new task position is assigned as the last position in the same team/status bucket plus one, and `started_working_at` is set when the new task starts in progress.
+`TaskCreate` normalizes `title` and `layer`, rejects past `review_date`/`due_date`, defaults to `BACKLOG`, and allows creation in `BACKLOG`, `TODO`, or `IN_PROGRESS`. In `create_task()`, an `IN_PROGRESS` payload triggers `_can_create_in_progress_task()`, which counts current `IN_PROGRESS` tasks for the team and compares that count to `get_in_progress_limit()`. The creator must be a member of the active team, and optional assignee/reviewer members must also belong to that team. New tasks append in their team/status column at `1000` or the last position plus `1000`; creation returns a safe conflict when that append would exceed PostgreSQL `INTEGER`. `started_working_at` is still set when a task is created in progress.
 
 ### Updating tasks
 
@@ -35,7 +35,11 @@ This module covers task read/write flows for a team-scoped task table. The main 
 
 ### Data model and enums
 
-`TaskStatus` and `TaskPriority` are string enums. `TaskEffort` is an `IntEnum` persisted with `IntEnumType`, which stores the value as a `SmallInteger` and converts it back to the enum on reads. `Task` defines a unique constraint on `(team_id, status, position)` and check constraints for minimum position, non-blank `layer`/`title`, non-negative counters, completed/submitted-review consistency, and `should_review`/reviewer consistency.
+`TaskStatus` exposes `BACKLOG`, `TODO`, `IN_PROGRESS`, `REVIEW`, and `DONE`; `TaskPriority` is also a string enum. `TaskEffort` is an `IntEnum` persisted with `IntEnumType`, which stores the value as a `SmallInteger` and converts it back to the enum on reads. `Task` defines a deferrable, initially immediate unique constraint on `(team_id, status, position)` and check constraints for positive position, non-blank `layer`/`title`, non-negative counters, completed/submitted-review consistency, and `should_review`/reviewer consistency. Ordinary writes therefore receive immediate uniqueness checks; only a transaction that explicitly defers the named constraint can temporarily overlap positions.
+
+### Ordering migration
+
+The persisted upgrade has two revisions because PostgreSQL 11 requires enum additions outside a transaction. The first adds `backlog` in an Alembic autocommit block. The dependent transactional revision checks integer capacity, changes the database default to `backlog`, and assigns `1000, 2000, ...` within every `(team_id, status)` partition using existing `(position, id)` order before replacing the unique constraint. Existing statuses are not rewritten. Downgrade restores the `todo` default and ordinary immediate uniqueness while retaining sparse positions; removal of the enum value refuses to proceed while any `BACKLOG` task exists rather than rewriting it.
 
 ### Schemas
 
@@ -60,7 +64,6 @@ This module covers task read/write flows for a team-scoped task table. The main 
 
 - The DELETE route is a hard delete, not a soft delete; if soft-delete is intended, the current code does not implement it.
 - `TaskUpdate` does not expose `status`, so status transitions are not handled by this route.
-- `TaskRead.position` allows `0`, but the table constraint requires `position >= 1`.
 - `TaskMove` and `TaskDelete` are currently unused in this scope.
 - In-progress limit enforcement only appears in task creation here.
 

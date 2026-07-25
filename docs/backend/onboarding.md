@@ -8,7 +8,7 @@ A maintainer's starting path through the backend documentation.
 
 2. **[modules/auth-and-teams.md](modules/auth-and-teams.md)** — Learn how authentication works from both ends: the one-time bootstrap flow that creates the first user, teams, and config, and the ongoing login/logout/session lifecycle with hashed tokens and cookie-based transport. This also covers the user, team, and team-member data models that everything else depends on.
 
-3. **[modules/tasks.md](modules/tasks.md)** — Learn the task management domain: the `Task` model with its constraints and enum lifecycle, the `TaskService` business rules (IN_PROGRESS limits, position ordering, access checks), and the `Task` repository query patterns.
+3. **[modules/tasks.md](modules/tasks.md)** — Learn the task management domain: the `Task` model with its constraints and enum lifecycle, the `TaskService` business rules (IN_PROGRESS limits, sparse position ordering, access checks), and the `Task` repository query patterns.
 
 ## Source Layout Reference
 
@@ -49,7 +49,7 @@ app/
     error.py             — AppError exception hierarchy (14 error types)
 alembic/
     env.py               — Migration runner configuration
-    versions/            — Migration scripts
+    versions/            — Migration scripts, including the two-step BACKLOG/ordering upgrade
 ```
 
 ## Gaps

@@ -56,7 +56,7 @@ def post_task(
         db.refresh(created_task)
     except IntegrityError:
         db.rollback()
-        raise ApiConflictError("Bootstrap data conflicts with existing records")
+        raise ApiConflictError("Task creation conflicts with current board state")
 
     return TaskRead.model_validate(created_task)
 

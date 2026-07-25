@@ -35,6 +35,10 @@ from backend.app.error import (
     TaskAccessDeniedError
 )
 
+# Keep sparse ordering arithmetic within PostgreSQL's persisted INTEGER range.
+TASK_POSITION_GAP = 1000
+MAX_TASK_POSITION = 2_147_483_647
+
 
 class TaskService:
     def get_all_tasks(
@@ -53,6 +57,7 @@ class TaskService:
         user_id: int,
         payload: TaskCreate
     ) -> Task:
+        """Create a task at the sparse end of its column while preserving creation policy."""
         if payload.status == TaskStatus.IN_PROGRESS:
             can_create_in_progress_task = self._can_create_in_progress_task(db, active_team_id)
             if not can_create_in_progress_task:
@@ -81,9 +86,11 @@ class TaskService:
         )
 
         last_task_position = get_last_task_position(db, filters)
-        position = 1
+        position = TASK_POSITION_GAP
         if last_task_position is not None:
-            position = last_task_position + 1
+            if last_task_position > MAX_TASK_POSITION - TASK_POSITION_GAP:
+                raise ApiConflictError("No position is available in the destination column")
+            position = last_task_position + TASK_POSITION_GAP
 
         started_working_at = None
         if payload.status == TaskStatus.IN_PROGRESS:
