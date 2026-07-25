@@ -20,6 +20,8 @@ from sqlalchemy.orm import (
 
 from backend.app.core.db import Base
 from backend.app.models.enums import TeamType
+from backend.app.models.team_member import TeamMember
+from backend.app.models.task import Task
 
 
 class Team(Base):
@@ -69,5 +71,5 @@ class Team(Base):
         server_default=text("TRUE")
     )
 
-    members: Mapped[List["TeamMember"]] = relationship("TeamMember", back_populates="team")
-    tasks: Mapped[List["Task"]] = relationship("Task", back_populates="team")
+    members: Mapped[list["TeamMember"]] = relationship("TeamMember", back_populates="team")
+    tasks: Mapped[list["Task"]] = relationship("Task", back_populates="team")
