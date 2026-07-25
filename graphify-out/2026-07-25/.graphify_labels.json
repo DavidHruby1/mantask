@@ -32,6 +32,7 @@
   "30": "Mantask",
   "31": "__init__.py",
   "32": "test_auth.py",
+  "33": "test_bootstrap.py",
   "34": "test_tasks.py",
   "35": "env.d.ts",
   "36": "eslint.config.ts",
