@@ -2,7 +2,7 @@
 
 ## Summary
 
-This module covers task read/write flows for a team-scoped task table. The main path is: router → service → repository → SQLAlchemy model, with Pydantic schemas enforcing request/response shape. The current DELETE route hard-deletes rows; there is no soft-delete or move-to-done flow in this source.
+This module covers task read/write flows for a team-scoped task table. The main path is: router → service → repository → SQLAlchemy model, with Pydantic schemas enforcing request/response shape. The current DELETE route hard-deletes rows; workflow movement uses a dedicated atomic route.
 
 ## Start Here
 
@@ -23,11 +23,19 @@ This module covers task read/write flows for a team-scoped task table. The main 
 
 ### Creating tasks
 
-`TaskCreate` normalizes `title` and `layer`, rejects past `review_date`/`due_date`, defaults to `BACKLOG`, and allows creation in `BACKLOG`, `TODO`, or `IN_PROGRESS`. In `create_task()`, an `IN_PROGRESS` payload triggers `_can_create_in_progress_task()`, which counts current `IN_PROGRESS` tasks for the team and compares that count to `get_in_progress_limit()`. The creator must be a member of the active team, and optional assignee/reviewer members must also belong to that team. New tasks append in their team/status column at `1000` or the last position plus `1000`; creation returns a safe conflict when that append would exceed PostgreSQL `INTEGER`. `started_working_at` is still set when a task is created in progress.
+`TaskCreate` normalizes `title` and `layer`, rejects past `review_date`/`due_date`, defaults to `BACKLOG`, and allows creation in `BACKLOG`, `TODO`, or `IN_PROGRESS`. In `create_task()`, an `IN_PROGRESS` payload triggers `_has_in_progress_capacity()`, which counts current `IN_PROGRESS` tasks for the team and compares that count to `get_in_progress_limit()`. The creator must be a member of the active team, and optional assignee/reviewer members must also belong to that team. New tasks append in their team/status column at `1000` or the last position plus `1000`; creation returns a safe conflict when that append would exceed PostgreSQL `INTEGER`. `started_working_at` is still set when a task is created in progress.
 
 ### Updating tasks
 
-`TaskUpdate` is partial and does not include `status`, so this scope does not implement a status-transition write path. The service validates optional assignee/reviewer membership and enforces the `should_review` ↔ reviewer presence rule before applying the update dictionary to the ORM object.
+`TaskUpdate` is partial and does not include `status`; status changes use the move route. The service validates optional assignee/reviewer membership, enforces the `should_review` ↔ reviewer presence rule, and prevents a task already in `REVIEW` from becoming non-reviewable.
+
+### Moving and reordering tasks
+
+`PATCH /tasks/{task_id}/move` accepts `TaskMove` and returns the committed `TaskRead`. The endpoint authenticates through the normal session dependency, reuses `get_accessible_task()` for moved-task access, and owns one commit/rollback boundary around service orchestration. Integrity collisions return `409` with a refetch-safe board-state conflict; other database failures return a safe `500`. Clients should refetch before retrying either conflict rather than assuming a partial move was retained.
+
+`TaskService.move_task()` owns transition direction, review eligibility, count-based `IN_PROGRESS` capacity, exact-placement no-ops, sparse-position allocation, lifecycle timestamps, and returned/reopened counters. Forward moves advance one applicable workflow step (non-review work advances from `IN_PROGRESS` to `DONE`), while backward moves may cross stages. Entering early columns clears lifecycle timestamps; later stages preserve timestamps already reached in the current pass and set missing stage timestamps from one UTC movement instant.
+
+The repository resolves anchors only within the destination team/status while excluding the moved task. Invalid, stale, self, cross-team, and wrong-status anchors therefore share `Anchor is invalid or stale`. Positions use prepend/midpoint/append gaps where possible. Exhausted space triggers a destination-only rebalance in `(position, id)` order; only `uq_task_team_status_position` is deferred, and only inside that rebalance transaction. The source column is never compacted.
 
 ### Deleting tasks
 
@@ -43,7 +51,7 @@ The persisted upgrade has two revisions because PostgreSQL 11 requires enum addi
 
 ### Schemas
 
-`TaskFilters` is the repository shape with a required `team_id`; `TaskQuery` adds an optional `team_id` for request parsing. `TaskFilterFields.normalize_statuses()` collapses an empty list to `None`. `TaskMove` and `TaskDelete` are defined in this module but are not referenced by the routes or service code in this scope.
+`TaskFilters` is the repository shape with a required `team_id`; `TaskQuery` adds an optional `team_id` for request parsing. `TaskFilterFields.normalize_statuses()` collapses an empty list to `None`. `TaskMove` supplies the required destination status and optional predecessor anchor.
 
 ## Data Flow
 
@@ -63,9 +71,9 @@ The persisted upgrade has two revisions because PostgreSQL 11 requires enum addi
 ## Known Risks
 
 - The DELETE route is a hard delete, not a soft delete; if soft-delete is intended, the current code does not implement it.
-- `TaskUpdate` does not expose `status`, so status transitions are not handled by this route.
-- `TaskMove` and `TaskDelete` are currently unused in this scope.
-- In-progress limit enforcement only appears in task creation here.
+- Movement has no role-based authorization or assignee-only policy beyond existing active-team membership access.
+- The `IN_PROGRESS` limit remains count-based and is not serialized with a capacity lock, so concurrent entrants can race.
+- Movement does not lock whole columns, compact source gaps, or automatically retry board conflicts.
 
 ## Sources
 

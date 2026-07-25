@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, text
 from sqlalchemy.orm import Session
 
 from backend.app.models.task import Task
@@ -22,6 +22,76 @@ def find_tasks(db: Session, filters: TaskFilters) -> list[Task]:
 
 def get_task_by_id(db: Session, task_id: int) -> Task | None:
     return db.get(Task, task_id)
+
+
+def get_destination_neighbors(
+    db: Session,
+    team_id: int,
+    target_status: TaskStatus,
+    anchor_task_id: int | None,
+    moved_task_id: int,
+) -> tuple[Task | None, Task | None]:
+    """Resolve a placement only inside its destination column, excluding the moved row.
+
+    A supplied anchor that is absent from that exact scope is represented by two
+    ``None`` values so the service can reject every stale or invalid anchor uniformly.
+    Without an anchor, the second value is the first destination task for prepending.
+    """
+    scope = (
+        Task.team_id == team_id,
+        Task.status == target_status,
+        Task.id != moved_task_id,
+    )
+    if anchor_task_id is None:
+        first = db.scalar(select(Task).where(*scope).order_by(Task.position, Task.id).limit(1))
+        return None, first
+
+    anchor = db.scalar(
+        select(Task).where(*scope, Task.id == anchor_task_id).limit(1)
+    )
+    if anchor is None:
+        return None, None
+
+    successor = db.scalar(
+        select(Task)
+        .where(
+            *scope,
+            (Task.position > anchor.position)
+            | ((Task.position == anchor.position) & (Task.id > anchor.id)),
+        )
+        .order_by(Task.position, Task.id)
+        .limit(1)
+    )
+    return anchor, successor
+
+
+def rebalance_task_column(
+    db: Session,
+    team_id: int,
+    status: TaskStatus,
+    moved_task_id: int,
+    position_gap: int,
+) -> list[Task]:
+    """Stage a destination-only sparse rebalance and return its stable row order.
+
+    Only the board-position uniqueness constraint is deferred. The caller owns the
+    surrounding transaction and must commit or roll back the staged ORM mutations.
+    """
+    db.execute(text("SET CONSTRAINTS uq_task_team_status_position DEFERRED"))
+    tasks = list(
+        db.scalars(
+            select(Task)
+            .where(
+                Task.team_id == team_id,
+                Task.status == status,
+                Task.id != moved_task_id,
+            )
+            .order_by(Task.position, Task.id)
+        ).all()
+    )
+    for index, task in enumerate(tasks, start=1):
+        task.position = index * position_gap
+    return tasks
 
 
 def count_team_tasks_by_status(db: Session, team_id: int, status: TaskStatus) -> int:
