@@ -53,6 +53,7 @@ class TaskService:
         user_id: int,
         payload: TaskCreate
     ) -> Task:
+        """Create a team task, assigning it to its creator when omitted."""
         if payload.status == TaskStatus.IN_PROGRESS:
             can_create_in_progress_task = self._can_create_in_progress_task(db, active_team_id)
             if not can_create_in_progress_task:
@@ -64,7 +65,11 @@ class TaskService:
             raise TeamMembershipError()
         creator_member_id = creator_member.id
 
-        if payload.assignee_member_id is not None:
+        if payload.assignee_member_id is None:
+            payload = payload.model_copy(
+                update={"assignee_member_id": creator_member_id}
+            )
+        else:
             assignee_member = get_team_member_by_id(db, active_team_id, payload.assignee_member_id)
             if assignee_member is None:
                 raise TeamMembershipError("Invalid assignee")

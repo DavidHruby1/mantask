@@ -112,11 +112,14 @@ class TaskUpdate(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def reject_null_title(cls, data):
+    def reject_null_required_fields(cls, data):
+        """Reject explicit nulls that would violate required task columns."""
         if (not isinstance(data, dict)):
             return data
         if "title" in data and data["title"] is None:
             raise ValueError("Title cannot be null")
+        if "should_review" in data and data["should_review"] is None:
+            raise ValueError("Should review cannot be null")
         return data
 
 

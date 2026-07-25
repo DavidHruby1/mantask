@@ -175,6 +175,11 @@ def test_task_update_rejects_explicit_null_title():
         TaskUpdate(title=None)
 
 
+def test_task_update_rejects_explicit_null_should_review():
+    with pytest.raises(ValidationError, match="Should review cannot be null"):
+        TaskUpdate(should_review=None)
+
+
 def test_task_update_allows_omitted_title():
     task = TaskUpdate()
 
