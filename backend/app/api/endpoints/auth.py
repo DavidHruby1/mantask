@@ -69,9 +69,9 @@ def auth_user(
 
 @router.post("/logout", response_model=LoginResult)
 def logout(
-    db: DbSessionDep, 
-    session_token: SessionTokenDep, 
-    response: Response
+    db: DbSessionDep,
+    response: Response,
+    session_token: SessionTokenDep = None,
 ) -> LoginResult:
     if not session_token:
         response.delete_cookie(settings.SESSION_COOKIE_NAME)

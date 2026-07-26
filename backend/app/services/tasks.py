@@ -18,6 +18,7 @@ from backend.app.repositories.tasks import (
     insert_task,
     get_last_task_position,
     update_task as update_task_repository,
+    lock_task_positions,
     get_destination_neighbors,
     rebalance_task_column,
 )
@@ -59,11 +60,11 @@ class TaskService:
         user_id: int,
         payload: TaskCreate
     ) -> Task:
-        """Create a task at the sparse end of its column while preserving creation policy."""
-        if payload.status == TaskStatus.IN_PROGRESS:
-            if not self._has_in_progress_capacity(db, active_team_id):
-                raise ApiConflictError("IN_PROGRESS limit reached")
+        """Validate task membership, then serialize capacity and sparse append allocation.
 
+        The team lock is acquired only after member checks and remains owned by the
+        endpoint's transaction through commit or rollback.
+        """
         # Ensure the creator is a member of the active team.
         creator_member = get_team_member(db, active_team_id, user_id)    
         if creator_member is None:
@@ -79,6 +80,12 @@ class TaskService:
             reviewer_member = get_team_member_by_id(db, active_team_id, payload.reviewer_member_id)
             if reviewer_member is None:
                 raise TeamMembershipError("Invalid reviewer")
+
+        # Capacity and append-position reads must observe one serialized team state.
+        lock_task_positions(db, active_team_id)
+        if payload.status == TaskStatus.IN_PROGRESS:
+            if not self._can_create_in_progress_task(db, active_team_id):
+                raise ApiConflictError("IN_PROGRESS limit reached")
 
         filters = TaskFilters(
             team_id=active_team_id, 
@@ -197,7 +204,7 @@ class TaskService:
             assignee_member_id=query.assignee_member_id,
         )
 
-    def _has_in_progress_capacity(self, db: Session, team_id: int) -> bool:
+    def _can_create_in_progress_task(self, db: Session, team_id: int) -> bool:
         """Apply the configured count-based capacity rule shared by creation and movement."""
         team = get_team_by_id(db, team_id)
         if not team:
@@ -221,7 +228,7 @@ class TaskService:
         target_index = statuses.index(target_status)
 
         if target_status == TaskStatus.REVIEW and not task.should_review:
-            raise ApiConflictError("A task without review cannot enter REVIEW")
+            raise InvalidTaskError("A task without review cannot enter REVIEW")
 
         if target_index > source_index:
             next_index = source_index + 1
@@ -229,12 +236,12 @@ class TaskService:
             if task.status == TaskStatus.IN_PROGRESS and not task.should_review:
                 next_index = statuses.index(TaskStatus.DONE)
             if target_index != next_index:
-                raise ApiConflictError("Task can only move one workflow step forward")
+                raise InvalidTaskError("Task can only move one workflow step forward")
 
         if (
             target_status == TaskStatus.IN_PROGRESS
             and task.status != TaskStatus.IN_PROGRESS
-            and not self._has_in_progress_capacity(db, task.team_id)
+            and not self._can_create_in_progress_task(db, task.team_id)
         ):
             raise ApiConflictError("IN_PROGRESS limit reached")
 
@@ -246,8 +253,8 @@ class TaskService:
     ) -> dict[str, object]:
         """Derive lifecycle timestamps and backward-event counters from one move instant.
 
-        Timestamps already reached in the current lifecycle pass are retained where the
-        destination permits them; returning to pre-work columns starts a fresh pass.
+        Each re-entry into active work or review records the supplied move instant.
+        Later-stage timestamps are retained only where the destination still permits them.
         """
         updates: dict[str, object] = {
             "started_working_at": None,
@@ -257,15 +264,15 @@ class TaskService:
             "reopened_count": task.reopened_count,
         }
         if target_status == TaskStatus.IN_PROGRESS:
-            updates["started_working_at"] = task.started_working_at or moved_at
+            updates["started_working_at"] = moved_at
         elif target_status == TaskStatus.REVIEW:
             updates["started_working_at"] = task.started_working_at or moved_at
-            updates["submitted_for_review_at"] = task.submitted_for_review_at or moved_at
+            updates["submitted_for_review_at"] = moved_at
         elif target_status == TaskStatus.DONE:
             updates["started_working_at"] = task.started_working_at or moved_at
             if task.should_review:
                 updates["submitted_for_review_at"] = task.submitted_for_review_at or moved_at
-            updates["completed_at"] = task.completed_at or moved_at
+            updates["completed_at"] = moved_at
 
         statuses = list(TaskStatus)
         moving_backward = statuses.index(target_status) < statuses.index(task.status)
@@ -299,15 +306,24 @@ class TaskService:
     def move_task(self, db: Session, task: Task, payload: TaskMove) -> Task:
         """Coordinate one policy-complete move while leaving transaction completion to the endpoint.
 
-        Anchor validation, idempotence, sparse allocation, optional destination rebalance,
-        lifecycle state, and counters are resolved before one generic task update is staged.
+        A team advisory lock and post-lock refresh make every decision use serialized,
+        current state. Anchor validation, idempotence, sparse allocation, optional
+        destination rebalance, lifecycle state, and counters are then resolved before
+        one generic task update is staged.
         """
+        lock_task_positions(db, task.team_id)
+        db.refresh(task)
+
+        # A self-anchor is an explicit idempotent request, independent of transition policy.
+        if payload.anchor_task_id == task.id:
+            return task
+
         self._validate_move(db, task, payload.target_status)
         anchor, successor = get_destination_neighbors(
             db, task.team_id, payload.target_status, payload.anchor_task_id, task.id
         )
         if payload.anchor_task_id is not None and anchor is None:
-            raise ApiConflictError("Anchor is invalid or stale")
+            raise InvalidTaskError("Anchor is invalid or stale")
 
         # Same-column requests that describe the row's current neighbors are exact no-ops.
         if task.status == payload.target_status:
@@ -335,7 +351,7 @@ class TaskService:
                     None,
                 )
                 if anchor_index is None:
-                    raise ApiConflictError("Anchor is invalid or stale")
+                    raise InvalidTaskError("Anchor is invalid or stale")
                 anchor = ordered[anchor_index]
                 successor = ordered[anchor_index + 1] if anchor_index + 1 < len(ordered) else None
             position = self._calculate_move_position(anchor, successor)

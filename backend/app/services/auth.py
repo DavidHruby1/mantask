@@ -2,11 +2,11 @@ from datetime import datetime, timedelta, timezone
 
 import hashlib
 import secrets
-from argon2 import (
-    PasswordHasher, 
-    VerifyMismatchError, 
-    VerificationError, 
-    InvalidHashError
+from argon2 import PasswordHasher
+from argon2.exceptions import (
+    InvalidHashError,
+    VerificationError,
+    VerifyMismatchError,
 )
 
 from sqlalchemy.orm import Session

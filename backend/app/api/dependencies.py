@@ -12,12 +12,12 @@ from backend.app.services.auth import session_auth_service
 
 DbSessionDep = Annotated[Session, Depends(get_db)]
 SessionTokenDep = Annotated[
-    str | None, Cookie(default=None, alias=settings.SESSION_COOKIE_NAME)
+    str | None, Cookie(alias=settings.SESSION_COOKIE_NAME)
 ]
 
 
 def get_current_session(
-    db: DbSessionDep, session_token: SessionTokenDep
+    db: DbSessionDep, session_token: SessionTokenDep = None
 ) -> UserSession:
     if not session_token:
         raise NotAuthenticatedError()

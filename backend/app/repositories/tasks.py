@@ -8,6 +8,11 @@ from backend.app.models.enums import TaskStatus
 from backend.app.schemas.task import TaskFilters, TaskCreate
 
 
+# Serialize task position and IN_PROGRESS capacity decisions per team without
+# coupling unrelated teams. Both values fit PostgreSQL's two-integer lock key.
+TASK_POSITIONS_LOCK_NAMESPACE = 1_298_695_507
+
+
 def find_tasks(db: Session, filters: TaskFilters) -> list[Task]:
     stmt = select(Task).where(Task.team_id == filters.team_id)
 
@@ -22,6 +27,23 @@ def find_tasks(db: Session, filters: TaskFilters) -> list[Task]:
 
 def get_task_by_id(db: Session, task_id: int) -> Task | None:
     return db.get(Task, task_id)
+
+
+def lock_task_positions(db: Session, team_id: int) -> None:
+    """Serialize one team's position allocation and IN_PROGRESS capacity checks.
+
+    The PostgreSQL advisory lock belongs to the current transaction, so this
+    repository operation never commits and endpoint commit/rollback releases it.
+    The module-owned namespace keeps this lock independent from other advisory
+    lock uses while allowing create and move to coordinate on the same team key.
+    """
+    db.execute(
+        text(
+            "SELECT pg_advisory_xact_lock("
+            "CAST(:namespace AS INTEGER), CAST(:team_id AS INTEGER))"
+        ),
+        {"namespace": TASK_POSITIONS_LOCK_NAMESPACE, "team_id": team_id},
+    )
 
 
 def get_destination_neighbors(
