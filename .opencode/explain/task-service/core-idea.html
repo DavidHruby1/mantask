@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="cs">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ústřední myšlenka | TaskService</title>
+    <link rel="stylesheet" href="site.css">
+</head>
+<body>
+    <nav class="chapter-nav" aria-label="Navigace kapitol">
+        <a href="big-picture.html">← Celkový obraz</a><a class="index-link" href="index.html">Obsah</a><a href="how-it-works.html">Další: Jak to funguje →</a>
+    </nav>
+    <header class="site-header">
+        <p class="eyebrow">Kapitola 2</p>
+        <h1>Ústřední myšlenka</h1>
+        <p class="lede">Service převádí již syntakticky platný požadavek na doménově povolenou změnu nebo jednoznačnou chybu.</p>
+    </header>
+    <main>
+        <h2>Jeden konkrétní úkol</h2>
+        <p>Představme si <code>TaskCreate(title="Opravit login", status=IN_PROGRESS, should_review=False)</code> od uživatele <code>user_id=7</code> v aktivním týmu <code>team_id=3</code>. Pydantic už ověřil tvar payloadu. Service však ještě musí zjistit, zda tým existuje a je aktivní, zda limit rozpracovaných úkolů nebyl vyčerpán a zda je uživatel členem týmu.</p>
+        <p>Je-li aktuální počet <code>1</code> a limit <code>2</code>, operace pokračuje. Členství uživatele se převede na například <code>creator_member_id=12</code>. Poslední pozice ve sloupci <code>IN_PROGRESS</code> je třeba <code>4</code>, proto nový úkol dostane <code>position=5</code> a aktuální UTC čas do <code>started_working_at</code>. Repository přidá nový objekt do session; endpoint jej teprve následně commitne.</p>
+
+        <div class="diagram">
+            <svg viewBox="0 0 960 410" role="img" aria-labelledby="flow-title flow-desc">
+                <title id="flow-title">Průchod konkrétní hodnoty vytvořením úkolu</title>
+                <desc id="flow-desc">Payload pro tým 3 prochází kontrolou limitu 1 ze 2, převodem uživatele 7 na člena 12 a výpočtem pozice 5. Poté je Task přidán do session. Při plném limitu tok končí konfliktem.</desc>
+                <defs><marker id="arrow-core" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#64748b"/></marker><marker id="arrow-fail" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#b42318"/></marker></defs>
+                <rect x="20" y="55" width="180" height="110" rx="16" fill="#fff" stroke="#64748b" stroke-width="2"/>
+                <text x="110" y="92" class="svg-label">TaskCreate</text><text x="110" y="120" class="svg-label">team=3, user=7</text><text x="110" y="148" class="svg-label">IN_PROGRESS</text>
+                <rect x="260" y="55" width="170" height="110" rx="16" fill="#e0f2fe" stroke="#075985" stroke-width="2"/>
+                <text x="345" y="91" class="svg-label">limit WIP</text><text x="345" y="120" class="svg-label">počet 1 &lt; limit 2</text>
+                <rect x="490" y="55" width="180" height="110" rx="16" fill="#e0f2fe" stroke="#075985" stroke-width="2"/>
+                <text x="580" y="91" class="svg-label">členství</text><text x="580" y="120" class="svg-label">user 7 → member 12</text>
+                <rect x="730" y="55" width="200" height="110" rx="16" fill="#e0f2fe" stroke="#075985" stroke-width="2"/>
+                <text x="830" y="91" class="svg-label">pořadí a čas</text><text x="830" y="120" class="svg-label">4 + 1 → position 5</text><text x="830" y="148" class="svg-label">UTC now</text>
+                <rect x="730" y="265" width="200" height="90" rx="16" fill="#f3e8ff" stroke="#7c3aed" stroke-width="2"/>
+                <text x="830" y="302" class="svg-label">insert_task</text><text x="830" y="330" class="svg-label">db.add(Task)</text>
+                <rect x="260" y="265" width="190" height="90" rx="16" fill="#fff1f2" stroke="#b42318" stroke-width="2"/>
+                <text x="355" y="302" class="svg-label">ApiConflictError</text><text x="355" y="330" class="svg-label">pokud 2 ≮ 2</text>
+                <path d="M200 110 H255" class="edge" marker-end="url(#arrow-core)"/><text x="228" y="96" class="edge-label">ověř</text>
+                <path d="M430 110 H485" class="edge" marker-end="url(#arrow-core)"/><text x="458" y="96" class="edge-label">ano</text>
+                <path d="M670 110 H725" class="edge" marker-end="url(#arrow-core)"/><text x="698" y="96" class="edge-label">platí</text>
+                <path d="M830 165 V260" class="edge" marker-end="url(#arrow-core)"/><text x="870" y="215" class="edge-label">sestav</text>
+                <path d="M345 165 V260" class="edge edge-failure" marker-end="url(#arrow-fail)"/><text x="385" y="215" class="edge-label">limit plný</text>
+            </svg>
+            <p class="diagram-equivalent"><strong>Textová alternativa:</strong> vstup projde kontrolou limitu, členství a pořadí. Úspěch přidá Task do session; plný limit skončí <code>ApiConflictError</code> bez vložení.</p>
+        </div>
+
+        <h2>Co by bez této vrstvy chybělo</h2>
+        <p>Endpoint nebo repository by musely znát pořadí všech kontrol, význam týmového členství, výpočet pozice i zvláštní čas pro <code>IN_PROGRESS</code>. Pravidla by se snadno rozptýlila mezi HTTP a SQL kód. TaskService je drží pohromadě, ale záměrně nepřebírá transakci: caller může v jedné endpointové operaci rozhodnout o <code>commit</code>, <code>rollback</code> a převodu integrity chyby na API chybu.</p>
+    </main>
+    <nav class="chapter-nav" aria-label="Navigace kapitol">
+        <a href="big-picture.html">← Celkový obraz</a><a class="index-link" href="index.html">Obsah</a><a href="how-it-works.html">Další: Jak to funguje →</a>
+    </nav>
+</body>
+</html>

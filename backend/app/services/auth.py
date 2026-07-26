@@ -71,12 +71,17 @@ class LoginService:
 
 class SessionAuthService:
     def get_valid_session_by_token(self, db: Session, session_token: str) -> UserSession | None:
+        """Validate a session and extend its expiry; the caller persists the change."""
         session_token_hash = hash_session_token(session_token)
         user_session = get_user_session_by_token_hash(db, session_token_hash)
+        now = datetime.now(timezone.utc)
 
-        if user_session is None or not self._is_valid_session(user_session):
+        if user_session is None or not self._is_valid_session(user_session, now):
             raise InvalidSessionError()
 
+        user_session.expires_at = now + timedelta(
+            days=settings.SESSION_EXPIRE_DAYS
+        )
         return user_session
 
     def revoke_session_by_token(self, db: Session, session_token: str) -> bool:
@@ -90,9 +95,8 @@ class SessionAuthService:
 
         return True
 
-    def _is_valid_session(self, session: UserSession) -> bool:
-        now = datetime.now(timezone.utc)
-
+    def _is_valid_session(self, session: UserSession, now: datetime) -> bool:
+        """Accept only unrevoked sessions whose expiration is still in the future."""
         if session.revoked_at:
             return False
         if session.expires_at <= now:
@@ -102,9 +106,10 @@ class SessionAuthService:
 
 
 def ensure_active_team_id(db: Session, user: User) -> int | None:
+    """Keep a usable team selected, falling back to the user's private team."""
     try:
         active_team_id = get_last_active_team_id(db, user)
-    except NoActiveTeamSelectedError:
+    except (NoActiveTeamSelectedError, TeamNotFoundError):
         active_team_id = get_private_team_id(db, user)
 
     if user.last_active_team_id != active_team_id:

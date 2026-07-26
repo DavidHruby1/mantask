@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="cs">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ověření porozumění | TaskService</title>
+    <link rel="stylesheet" href="site.css">
+</head>
+<body>
+    <nav class="chapter-nav" aria-label="Navigace kapitol">
+        <a href="connections-and-choices.html">← Napojení</a><a class="index-link" href="index.html">Obsah</a><a href="index.html">Zpět na úvod →</a>
+    </nav>
+    <header class="site-header">
+        <p class="eyebrow">Kapitola 6</p>
+        <h1>Ověření porozumění</h1>
+        <p class="lede">Osm otázek na strukturu, tok řízení a hranice odpovědnosti.</p>
+    </header>
+    <main>
+        <section class="question">
+            <p>1. Proč <code>get_all_tasks</code> volá <code>_resolve_task_filters</code> před <code>find_tasks</code>?</p>
+            <ol class="options"><li>Repository přijímá pouze filtr s povinným a autorizovaným <code>team_id</code>.</li><li>Repository neumí řadit Task bez aktivní session.</li><li>Pydantic neumí parsovat seznam statusů z query.</li></ol>
+            <details><summary>Zobrazit odpověď</summary><p><strong>a.</strong> Resolver doplní tým a ověří přístup; repository pak řeší jen SQL filtraci.</p></details>
+        </section>
+        <section class="question">
+            <p>2. Kdo vlastní úspěšný <code>commit</code> po <code>create_task</code>?</p>
+            <ol class="options"><li><code>insert_task</code>, hned po <code>db.add</code>.</li><li>FastAPI endpoint <code>post_task</code>.</li><li>SQLAlchemy model <code>Task</code> při konstrukci.</li></ol>
+            <details><summary>Zobrazit odpověď</summary><p><strong>b.</strong> Service a repository jen připraví objekt v session; endpoint commitne, refreshne a při chybě rollbackne.</p></details>
+        </section>
+        <section class="question">
+            <p>3. Co zajišťuje <code>payload.model_dump(exclude_unset=True)</code> při PATCH?</p>
+            <ol class="options"><li>Do mutace vstoupí jen pole, která klient skutečně poslal.</li><li>Všechna pole s hodnotou <code>None</code> se automaticky odstraní.</li><li>Task se převede přímo na SQL UPDATE statement.</li></ol>
+            <details><summary>Zobrazit odpověď</summary><p><strong>a.</strong> Vynechané pole zachová starý stav; explicitně poslané <code>null</code> zůstává přítomnou aktualizací.</p></details>
+        </section>
+        <section class="question">
+            <p>4. Proč create hledá creatora přes <code>get_team_member(team_id, user_id)</code>, ne přes <code>get_team_member_by_id</code>?</p>
+            <ol class="options"><li>Creator se ukládá jako User, nikoli TeamMember.</li><li>Vstup zná identitu uživatele a potřebuje ji převést na týmové membership ID.</li><li><code>get_team_member_by_id</code> funguje pouze pro reviewera.</li></ol>
+            <details><summary>Zobrazit odpověď</summary><p><strong>b.</strong> <code>creator_member_id</code> je cizí klíč na TeamMember, zatímco autentizovaná session poskytuje <code>user_id</code>.</p></details>
+        </section>
+        <section class="question">
+            <p>5. Která operace sdílí přístupovou bránu <code>get_accessible_task</code>?</p>
+            <ol class="options"><li>Jen GET detailu.</li><li>GET seznamu a POST.</li><li>GET detailu, PATCH a DELETE.</li></ol>
+            <details><summary>Zobrazit odpověď</summary><p><strong>c.</strong> Všechny tři nejprve potřebují existující Task dostupný aktuálnímu členovi aktivního týmu.</p></details>
+        </section>
+        <section class="question">
+            <p>6. Kde se rozhoduje, že nový <code>IN_PROGRESS</code> Task dostane <code>started_working_at</code>?</p>
+            <ol class="options"><li>V TaskService, před voláním <code>insert_task</code>.</li><li>V databázovém server defaultu modelu Task.</li><li>V response modelu <code>TaskRead</code>.</li></ol>
+            <details><summary>Zobrazit odpověď</summary><p><strong>a.</strong> Service nastaví aktuální UTC čas jen pro tento status a předá jej repository.</p></details>
+        </section>
+        <section class="question">
+            <p>7. Proč service při update kombinuje <code>updates</code> se stávajícími poli Task?</p>
+            <ol class="options"><li>Aby mohla validovat výsledný review invariant i při částečném payloadu.</li><li>Aby obešla Pydantic validaci všech přijatých polí.</li><li>Aby při každém PATCH přepsala všechna pole.</li></ol>
+            <details><summary>Zobrazit odpověď</summary><p><strong>a.</strong> Platnost závisí na výsledné kombinaci <code>should_review</code>, reviewera a data, ne jen na nově poslaných hodnotách.</p></details>
+        </section>
+        <section class="question">
+            <p>8. Co znamená návrat <code>None</code> z <code>get_in_progress_limit</code>?</p>
+            <ol class="options"><li>Pro tým neplatí žádný limit.</li><li>Konfigurace aplikace chybí a service vyvolá interní serverovou chybu.</li><li>Limit se automaticky nastaví na databázový default bez vložení řádku.</li></ol>
+            <details><summary>Zobrazit odpověď</summary><p><strong>b.</strong> Default <code>2</code> platí při vytvoření řádku AppConfig; neexistující singleton je chyba konfigurace.</p></details>
+        </section>
+    </main>
+    <nav class="chapter-nav" aria-label="Navigace kapitol">
+        <a href="connections-and-choices.html">← Napojení</a><a class="index-link" href="index.html">Obsah</a><a href="index.html">Zpět na úvod →</a>
+    </nav>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="cs">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Jak to funguje | TaskService</title>
+    <link rel="stylesheet" href="site.css">
+</head>
+<body>
+    <nav class="chapter-nav" aria-label="Navigace kapitol">
+        <a href="core-idea.html">← Ústřední myšlenka</a><a class="index-link" href="index.html">Obsah</a><a href="functions-and-relations.html">Další: Funkce →</a>
+    </nav>
+    <header class="site-header">
+        <p class="eyebrow">Kapitola 3</p>
+        <h1>Jak to funguje</h1>
+        <p class="lede">Výřezy jsou v pořadí hlavních operací: načtení seznamu, vytvoření, aktualizace a kontrola přístupu.</p>
+    </header>
+    <main>
+        <h2>1. Seznam začíná bezpečnými filtry</h2>
+        <span class="source-label">backend/app/services/tasks.py:40-47</span>
+        <pre class="numbered" data-lines="40&#10;41&#10;42&#10;43&#10;44&#10;45&#10;46&#10;47"><code>    def get_all_tasks(
+        self,
+        db: Session,
+        session: UserSession,
+        query: TaskQuery
+    ) -&gt; list[Task]:
+        filters = self._resolve_task_filters(db, session, query)
+        return find_tasks(db, filters)</code></pre>
+        <p>Vstupem je autentizovaná session a uživatelský dotaz. Service nejprve nahradí volitelný <code>team_id</code> oprávněným, povinným filtrem a teprve potom pustí repository dotaz. Důležité je pořadí: <code>find_tasks</code> nikdy nedostane filtr bez týmu.</p>
+        <span class="source-label">backend/app/services/tasks.py:160-186</span>
+        <pre class="numbered" data-lines="160&#10;161&#10;162&#10;163&#10;164&#10;165&#10;166&#10;167&#10;168&#10;169&#10;170&#10;171&#10;172&#10;173&#10;174&#10;175&#10;176&#10;177&#10;178&#10;179&#10;180&#10;181&#10;182&#10;183&#10;184&#10;185&#10;186"><code>        team_id = query.team_id
+        user_id = session.user_id
+
+        if team_id is None:
+            if not session.user.last_active_team_id:
+                raise NoActiveTeamSelectedError()
+            team_id = session.user.last_active_team_id
+
+        team = get_team_by_id(db, team_id)
+        if (
+            team is None or
+            not team.is_active or
+            not is_team_member(db, team_id, user_id)
+        ):
+            raise TaskAccessDeniedError()
+
+        assignee_member_id = query.assignee_member_id
+        if assignee_member_id is not None:
+            assignee_member = get_team_member_by_id(db, team_id, assignee_member_id)
+            if assignee_member is None:
+                raise InvalidTaskError("Invalid assignee_member_id")
+
+        return TaskFilters(
+            team_id=team_id,
+            statuses=query.statuses,
+            assignee_member_id=query.assignee_member_id,
+        )</code></pre>
+        <div class="trace"><h3>Normální stopa</h3><p><code>query.team_id=None</code> → poslední aktivní tým je <code>3</code> → tým je aktivní a user je člen → vznikne <code>TaskFilters(team_id=3, ...)</code> → repository vrátí seřazené úkoly.</p></div>
+        <div class="trace failure"><h3>Chybová stopa</h3><p>Výslovně zadaný neaktivní tým, neexistující tým i cizí tým končí stejným <code>TaskAccessDeniedError</code>. Service tak navenek nerozlišuje, která přístupová podmínka selhala.</p></div>
+
+        <h2>2. Vytvoření ověřuje stav a identity</h2>
+        <span class="source-label">backend/app/services/tasks.py:56-75</span>
+        <pre class="numbered" data-lines="56&#10;57&#10;58&#10;59&#10;60&#10;61&#10;62&#10;63&#10;64&#10;65&#10;66&#10;67&#10;68&#10;69&#10;70&#10;71&#10;72&#10;73&#10;74&#10;75"><code>        if payload.status == TaskStatus.IN_PROGRESS:
+            can_create_in_progress_task = self._can_create_in_progress_task(db, active_team_id)
+            if not can_create_in_progress_task:
+                raise ApiConflictError("IN_PROGRESS limit reached")
+
+        # Ensure the creator is a member of the active team.
+        creator_member = get_team_member(db, active_team_id, user_id)    
+        if creator_member is None:
+            raise TeamMembershipError()
+        creator_member_id = creator_member.id
+
+        if payload.assignee_member_id is not None:
+            assignee_member = get_team_member_by_id(db, active_team_id, payload.assignee_member_id)
+            if assignee_member is None:
+                raise TeamMembershipError("Invalid assignee")
+
+        if payload.reviewer_member_id is not None:
+            reviewer_member = get_team_member_by_id(db, active_team_id, payload.reviewer_member_id)
+            if reviewer_member is None:
+                raise TeamMembershipError("Invalid reviewer")</code></pre>
+        <p><code>TaskCreate</code> již hlídá kombinaci review polí, ale neví, zda uvedená ID patří stejnému týmu. Service proto ověřuje creator, assignee a reviewer proti persistence stavu. U <code>IN_PROGRESS</code> navíc nejdřív provede WIP kontrolu.</p>
+        <span class="source-label">backend/app/services/tasks.py:77-99</span>
+        <pre class="numbered" data-lines="77&#10;78&#10;79&#10;80&#10;81&#10;82&#10;83&#10;84&#10;85&#10;86&#10;87&#10;88&#10;89&#10;90&#10;91&#10;92&#10;93&#10;94&#10;95&#10;96&#10;97&#10;98&#10;99"><code>        filters = TaskFilters(
+            team_id=active_team_id, 
+            statuses=[payload.status],
+            assignee_member_id=None
+        )
+
+        last_task_position = get_last_task_position(db, filters)
+        position = 1
+        if last_task_position is not None:
+            position = last_task_position + 1
+
+        started_working_at = None
+        if payload.status == TaskStatus.IN_PROGRESS:
+            started_working_at = datetime.now(tz=timezone.utc)
+
+        return insert_task(
+            db,
+            active_team_id, 
+            creator_member_id, 
+            payload, 
+            position, 
+            started_working_at
+        )</code></pre>
+        <div class="trace"><h3>Normální stopa</h3><p>Repository najde poslední pozici ve stejném statusu, service přičte jedna a případně nastaví UTC začátek práce. <code>insert_task</code> pouze provede <code>db.add</code>; objekt zatím není commitnutý.</p></div>
+        <div class="trace failure"><h3>Chybová stopa</h3><p>Současné requesty mohou oba přečíst stejnou poslední pozici. Databázová unikátnost <code>(team_id, status, position)</code> pak jeden commit odmítne; endpoint zachytí <code>IntegrityError</code>, provede rollback a vrátí conflict. Service sama tuto race condition neuzamyká.</p></div>
+
+        <h2>3. PATCH rozlišuje vynechané a explicitní hodnoty</h2>
+        <span class="source-label">backend/app/services/tasks.py:107-135</span>
+        <pre class="numbered" data-lines="107&#10;108&#10;109&#10;110&#10;111&#10;112&#10;113&#10;114&#10;115&#10;116&#10;117&#10;118&#10;119&#10;120&#10;121&#10;122&#10;123&#10;124&#10;125&#10;126&#10;127&#10;128&#10;129&#10;130&#10;131&#10;132&#10;133&#10;134&#10;135"><code>        updates = payload.model_dump(exclude_unset=True)
+
+        if "assignee_member_id" in updates:
+            assignee_member_id = updates["assignee_member_id"]
+            if assignee_member_id is not None:
+                assignee_member = get_team_member_by_id(db, task.team_id, assignee_member_id)
+                if assignee_member is None:
+                    raise InvalidTaskError("Invalid assignee_member_id")
+
+        if "reviewer_member_id" in updates:
+            reviewer_member_id = updates["reviewer_member_id"]
+            if reviewer_member_id is not None:
+                reviewer_member = get_team_member_by_id(db, task.team_id, reviewer_member_id)
+                if reviewer_member is None:
+                    raise InvalidTaskError("Invalid reviewer_member_id")
+        else:
+            reviewer_member_id = task.reviewer_member_id
+
+        # Validates the business rule that you can't have should_review True if no reviewer is assigned and vice-versa
+        should_review = updates.get("should_review", task.should_review)
+        review_date = updates.get("review_date", task.review_date)
+        if not should_review and review_date is not None:
+            raise ApiConflictError("Task with no review cannot have a review date")
+        if should_review and reviewer_member_id is None:
+            raise ApiConflictError("Can't review task with no reviewer")
+        if not should_review and reviewer_member_id is not None:
+            raise ApiConflictError("Can't assign reviewer to task that shouldn't be reviewed")
+
+        return update_task_repository(task, updates)</code></pre>
+        <p><code>exclude_unset=True</code> zachová PATCH semantiku: chybějící pole se nemění, explicitní <code>null</code> může vztah odstranit. Kontrola review pravidla kombinuje nové hodnoty se stávajícím stavem Task; poté repository nastaví jen přítomná pole.</p>
+        <div class="trace failure"><h3>Chybová stopa</h3><p>Odebrání reviewera bez současného nastavení <code>should_review=False</code> vytvoří výslednou kombinaci „review požadováno, reviewer chybí“ a skončí <code>ApiConflictError</code> ještě před mutací objektu.</p></div>
+
+        <h2>4. Přístup k jednomu Task je samostatná brána</h2>
+        <span class="source-label">backend/app/services/tasks.py:137-152</span>
+        <pre class="numbered" data-lines="137&#10;138&#10;139&#10;140&#10;141&#10;142&#10;143&#10;144&#10;145&#10;146&#10;147&#10;148&#10;149&#10;150&#10;151&#10;152"><code>    def get_accessible_task(self, db: Session, task_id: int, user_id: int) -&gt; Task:
+        task = get_task_by_id(db, task_id)                  
+        if not task:
+            raise TaskNotFoundError()
+
+        team_id = task.team_id
+        if not is_team_member(db, team_id, user_id):
+            raise TeamMembershipError()
+
+        team = get_team_by_id(db, team_id)
+        if team is None:
+            raise TeamNotFoundError()
+        if not team.is_active:
+            raise TeamInactiveError()
+
+        return task </code></pre>
+        <p>GET jednoho úkolu, PATCH i DELETE sdílejí tuto bránu. Vrací spravovaný SQLAlchemy objekt, který PATCH následně mutuje a DELETE předává <code>db.delete</code>.</p>
+    </main>
+    <nav class="chapter-nav" aria-label="Navigace kapitol">
+        <a href="core-idea.html">← Ústřední myšlenka</a><a class="index-link" href="index.html">Obsah</a><a href="functions-and-relations.html">Další: Funkce →</a>
+    </nav>
+</body>
+</html>

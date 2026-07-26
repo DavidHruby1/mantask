@@ -16,7 +16,7 @@ TASK_POSITIONS_LOCK_NAMESPACE = 1_298_695_507
 def find_tasks(db: Session, filters: TaskFilters) -> list[Task]:
     stmt = select(Task).where(Task.team_id == filters.team_id)
 
-    if filters.statuses is not None:
+    if filters.statuses:
         stmt = stmt.where(Task.status.in_(filters.statuses))
     if filters.assignee_member_id is not None:
         stmt = stmt.where(Task.assignee_member_id == filters.assignee_member_id)

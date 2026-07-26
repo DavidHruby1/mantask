@@ -71,7 +71,11 @@ class TaskService:
             raise TeamMembershipError()
         creator_member_id = creator_member.id
 
-        if payload.assignee_member_id is not None:
+        if payload.assignee_member_id is None:
+            payload = payload.model_copy(
+                update={"assignee_member_id": creator_member_id}
+            )
+        else:
             assignee_member = get_team_member_by_id(db, active_team_id, payload.assignee_member_id)
             if assignee_member is None:
                 raise TeamMembershipError("Invalid assignee")
@@ -144,6 +148,9 @@ class TaskService:
 
         # Validates the business rule that you can't have should_review True if no reviewer is assigned and vice-versa
         should_review = updates.get("should_review", task.should_review)
+        review_date = updates.get("review_date", task.review_date)
+        if not should_review and review_date is not None:
+            raise ApiConflictError("Task with no review cannot have a review date")
         if task.status == TaskStatus.REVIEW and not should_review:
             raise ApiConflictError("A task in REVIEW must remain reviewable")
         if should_review and reviewer_member_id is None:

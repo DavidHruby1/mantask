@@ -9,7 +9,7 @@ from pydantic import (
     ConfigDict,
     Field,
     field_validator,
-    model_validator
+    model_validator,
 )
 
 from backend.app.models.enums import TaskEffort, TaskPriority, TaskStatus
@@ -22,8 +22,8 @@ class TaskCreate(BaseModel):
     reviewer_member_id: int | None = None
 
     title: str = Field(..., min_length=1, max_length=255)
-    description: str | None = Field(None, max_length=32000)
-    layer: str | None = Field(None, max_length=64)
+    description: str | None = Field(default=None, max_length=32000)
+    layer: str | None = Field(default=None, max_length=64)
     priority: TaskPriority | None = None
     review_date: date | None = None
     due_date: date | None = None
@@ -66,6 +66,8 @@ class TaskCreate(BaseModel):
 
     @model_validator(mode="after")
     def validate_review(self) -> Self:
+        if not self.should_review and self.review_date is not None:
+            raise ValueError("Task with no review cannot have a review date")
         if self.should_review and self.reviewer_member_id is None:
             raise ValueError("Review must have a reviewer")
         if not self.should_review and self.reviewer_member_id is not None:
@@ -77,14 +79,14 @@ class TaskUpdate(BaseModel):
     assignee_member_id: int | None = None 
     reviewer_member_id: int | None = None
 
-    title: str | None = Field(None, min_length=1, max_length=255)
-    description: str | None = Field(None, max_length=32000)
-    layer: str | None = Field(None, max_length=64)
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    description: str | None = Field(default=None, max_length=32000)
+    layer: str | None = Field(default=None, max_length=64)
     priority: TaskPriority | None = None
     review_date: date | None = None
     due_date: date | None = None
     effort: TaskEffort | None = None
-    should_review: bool | None = None # Validate in services/
+    should_review: bool | None = None
 
     @field_validator("title")
     @classmethod
@@ -110,6 +112,18 @@ class TaskUpdate(BaseModel):
         if date_value is not None and date_value < date.today():
             raise ValueError("Dates cannot be in the past")
         return date_value
+
+    @model_validator(mode="before")
+    @classmethod
+    def reject_null_required_fields(cls, data):
+        """Reject explicit nulls that would violate required task columns."""
+        if (not isinstance(data, dict)):
+            return data
+        if "title" in data and data["title"] is None:
+            raise ValueError("Title cannot be null")
+        if "should_review" in data and data["should_review"] is None:
+            raise ValueError("Should review cannot be null")
+        return data
 
 
 class TaskMove(BaseModel):
@@ -153,13 +167,8 @@ class TaskRead(BaseModel):
 
 
 class TaskFilterFields(BaseModel):
-    statuses: list[TaskStatus] | None = None
+    statuses: list[TaskStatus] = Field(default_factory=list)
     assignee_member_id: int | None = None
-
-    @field_validator("statuses")
-    @classmethod
-    def normalize_statuses(cls, statuses: list[TaskStatus] | None) -> list[TaskStatus] | None:
-        return statuses or None
 
 
 class TaskQuery(TaskFilterFields):
