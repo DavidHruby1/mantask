@@ -145,7 +145,7 @@ def test_get_all_tasks_rejects_invalid_assignee(monkeypatch):
         )
 
 
-def test_create_task_assigns_first_todo_task_to_creator(monkeypatch):
+def test_create_task_assigns_first_backlog_task_to_creator(monkeypatch):
     db = Mock(spec=Session)
     payload = TaskCreate(title="First task", should_review=False)
     task = SimpleNamespace(id=1)
@@ -167,7 +167,7 @@ def test_create_task_assigns_first_todo_task_to_creator(monkeypatch):
         db,
         TaskFilters(
             team_id=20,
-            statuses=[TaskStatus.TODO],
+            statuses=[TaskStatus.BACKLOG],
             assignee_member_id=None,
         ),
     )
@@ -176,7 +176,7 @@ def test_create_task_assigns_first_todo_task_to_creator(monkeypatch):
         20,
         40,
         payload.model_copy(update={"assignee_member_id": 40}),
-        1,
+        tasks_service.TASK_POSITION_GAP,
         None,
     )
     assert result is task
@@ -217,7 +217,14 @@ def test_create_task_validates_assignee_and_reviewer(monkeypatch):
         any_order=True,
     )
     assert get_member_by_id.call_count == 2
-    insert_task.assert_called_once_with(db, 20, 40, payload, 4, None)
+    insert_task.assert_called_once_with(
+        db,
+        20,
+        40,
+        payload,
+        3 + tasks_service.TASK_POSITION_GAP,
+        None,
+    )
 
 
 def test_create_task_rejects_non_member_creator(monkeypatch):
@@ -340,7 +347,7 @@ def test_create_in_progress_task_sets_start_time(monkeypatch):
         20,
         40,
         payload.model_copy(update={"assignee_member_id": 40}),
-        1,
+        tasks_service.TASK_POSITION_GAP,
         now,
     )
     assert result is task
@@ -446,6 +453,7 @@ def test_update_task_passes_partial_update_and_keeps_existing_review(monkeypatch
     db = Mock(spec=Session)
     task = SimpleNamespace(
         team_id=20,
+        status=TaskStatus.BACKLOG,
         reviewer_member_id=60,
         should_review=True,
         review_date=date.max,
@@ -470,6 +478,7 @@ def test_update_task_accepts_valid_assignee(monkeypatch):
     db = Mock(spec=Session)
     task = SimpleNamespace(
         team_id=20,
+        status=TaskStatus.BACKLOG,
         reviewer_member_id=None,
         should_review=False,
         review_date=None,
@@ -489,6 +498,7 @@ def test_update_task_accepts_cleared_assignee(monkeypatch):
     db = Mock(spec=Session)
     task = SimpleNamespace(
         team_id=20,
+        status=TaskStatus.BACKLOG,
         reviewer_member_id=None,
         should_review=False,
         review_date=None,
@@ -509,6 +519,7 @@ def test_update_task_rejects_invalid_assignee(monkeypatch):
     update_task = Mock()
     task = SimpleNamespace(
         team_id=20,
+        status=TaskStatus.BACKLOG,
         reviewer_member_id=None,
         should_review=False,
         review_date=None,
@@ -530,6 +541,7 @@ def test_update_task_accepts_reviewer_for_reviewed_task(monkeypatch):
     db = Mock(spec=Session)
     task = SimpleNamespace(
         team_id=20,
+        status=TaskStatus.BACKLOG,
         reviewer_member_id=None,
         should_review=False,
         review_date=None,
@@ -556,6 +568,7 @@ def test_update_task_accepts_cleared_reviewer(monkeypatch):
     db = Mock(spec=Session)
     task = SimpleNamespace(
         team_id=20,
+        status=TaskStatus.BACKLOG,
         reviewer_member_id=60,
         should_review=True,
         review_date=date.max,
@@ -591,6 +604,7 @@ def test_update_task_rejects_invalid_reviewer(monkeypatch):
     update_task = Mock()
     task = SimpleNamespace(
         team_id=20,
+        status=TaskStatus.BACKLOG,
         reviewer_member_id=None,
         should_review=False,
         review_date=None,
@@ -617,6 +631,7 @@ def test_update_task_rejects_review_date_without_review(monkeypatch):
     update_task = Mock()
     task = SimpleNamespace(
         team_id=20,
+        status=TaskStatus.BACKLOG,
         reviewer_member_id=None,
         should_review=False,
         review_date=None,
@@ -644,6 +659,7 @@ def test_update_task_rejects_review_without_reviewer(monkeypatch):
     update_task = Mock()
     task = SimpleNamespace(
         team_id=20,
+        status=TaskStatus.BACKLOG,
         reviewer_member_id=None,
         should_review=False,
         review_date=None,
@@ -661,6 +677,7 @@ def test_update_task_rejects_reviewer_without_review(monkeypatch):
     update_task = Mock()
     task = SimpleNamespace(
         team_id=20,
+        status=TaskStatus.BACKLOG,
         reviewer_member_id=60,
         should_review=True,
         review_date=None,

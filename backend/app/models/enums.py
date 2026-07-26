@@ -4,6 +4,9 @@ from sqlalchemy import SmallInteger, TypeDecorator
 
 
 class TaskStatus(StrEnum):
+    """Define the persisted and API-visible task workflow columns in board order."""
+
+    BACKLOG = "backlog"
     TODO = "todo"
     IN_PROGRESS = "in_progress"
     REVIEW = "review"

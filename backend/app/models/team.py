@@ -22,6 +22,8 @@ from backend.app.models.team_member import TeamMember
 from backend.app.models.task import Task
 from backend.app.core.db import Base
 from backend.app.models.enums import TeamType
+from backend.app.models.team_member import TeamMember
+from backend.app.models.task import Task
 
 
 class Team(Base):

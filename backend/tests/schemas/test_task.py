@@ -18,7 +18,7 @@ def test_task_create_strips_title_and_normalizes_layer():
 
     assert task.title == "Fix login"
     assert task.layer == "backend"
-    assert task.status == TaskStatus.TODO
+    assert task.status == TaskStatus.BACKLOG
 
 
 def test_task_create_rejects_blank_title():

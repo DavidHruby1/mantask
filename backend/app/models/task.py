@@ -26,10 +26,19 @@ if TYPE_CHECKING:
 
 
 class Task(Base):
+    """Persist a team task while enforcing lifecycle and board-position invariants."""
+
     __tablename__ = "tasks"
 
     __table_args__ = (
-        UniqueConstraint("team_id", "status", "position", name="uq_task_team_status_position"),
+        UniqueConstraint(
+            "team_id",
+            "status",
+            "position",
+            name="uq_task_team_status_position",
+            deferrable=True,
+            initially="IMMEDIATE",
+        ),
         CheckConstraint("position >= 1", name="task_position"),
         CheckConstraint("layer IS NULL OR btrim(layer) <> ''", name="task_layer_not_blank"),
         CheckConstraint("btrim(title) <> ''", name="task_title_not_blank"),
@@ -83,6 +92,7 @@ class Task(Base):
             validate_strings=True
         ),
         nullable=False,
+        server_default=text("'backlog'::task_status"),
     )
     priority: Mapped[TaskPriority | None] = mapped_column(
         Enum(

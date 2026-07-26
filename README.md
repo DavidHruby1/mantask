@@ -5,3 +5,8 @@ Mantask is a task management application designed to help users organize and pri
 ## Bootstrap
 
 Set `BOOTSTRAP_SECRET` in your deployment environment before first launch. Use a long random value, and have the initial setup screen send the same secret with the bootstrap request.
+
+## Notes
+
+- When you have a task where user is assigned as assignee, then only that user can work with the task.
+-> Have simple if check at each task operation that throws errors early.

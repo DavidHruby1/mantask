@@ -12,6 +12,8 @@ yarn-error.log*
 pnpm-debug.log*
 *.eslintcache
 .ruff_cache/
+graphify-out/
+.coverage
 
 # Vite
 .vite/

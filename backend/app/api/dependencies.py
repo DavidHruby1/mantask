@@ -13,7 +13,7 @@ from backend.app.services.auth import session_auth_service
 
 DbSessionDep = Annotated[Session, Depends(get_db)]
 SessionTokenDep = Annotated[
-    str | None, Cookie(default=None, alias=settings.SESSION_COOKIE_NAME)
+    str | None, Cookie(alias=settings.SESSION_COOKIE_NAME)
 ]
 
 
