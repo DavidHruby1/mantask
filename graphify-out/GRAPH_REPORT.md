@@ -1,16 +1,16 @@
 # Graph Report - mantask  (2026-07-25)
 
 ## Corpus Check
-- 79 files · ~22,253 words
+- 80 files · ~24,263 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 491 nodes · 977 edges · 43 communities (41 shown, 2 thin omitted)
-- Extraction: 92% EXTRACTED · 8% INFERRED · 0% AMBIGUOUS · INFERRED: 75 edges (avg confidence: 0.53)
+- 559 nodes · 983 edges · 45 communities (39 shown, 6 thin omitted)
+- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 34 edges (avg confidence: 0.61)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `4c7460fc`
+- Built from commit: `f0fe9764`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -37,67 +37,65 @@
 - tsconfig.json
 - Mantask
 - test_auth.py
+- BaseModel
 - Functionality
 - Research: Task Move Endpoint
 - Constraints & Invariants
 - Plan: Atomic Task Movement
+- Self
 
 ## God Nodes (most connected - your core abstractions)
-1. `Task` - 24 edges
-2. `TaskCreate` - 24 edges
-3. `Functionality` - 24 edges
-4. `TaskUpdate` - 21 edges
-5. `TaskStatus` - 20 edges
-6. `TaskService` - 20 edges
-7. `AppError` - 19 edges
-8. `User` - 18 edges
-9. `BootstrapSetup` - 18 edges
-10. `Team` - 17 edges
+1. `TaskService` - 42 edges
+2. `TaskCreate` - 32 edges
+3. `TaskUpdate` - 30 edges
+4. `Functionality` - 24 edges
+5. `AppError` - 19 edges
+6. `Task` - 18 edges
+7. `BootstrapSetup` - 18 edges
+8. `Base` - 15 edges
+9. `TaskQuery` - 14 edges
+10. `TaskFilters` - 13 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `upgrade()` --indirect_call--> `TaskEffort`  [INFERRED]
-  backend/alembic/versions/83e5ec226cc6_initial_migration.py → backend/app/models/enums.py
-- `Task` --uses--> `Base`  [INFERRED]
-  backend/app/models/task.py → backend/app/core/db.py
-- `UserSession` --uses--> `Base`  [INFERRED]
-  backend/app/models/user_session.py → backend/app/core/db.py
-- `TaskService` --uses--> `NoActiveTeamSelectedError`  [INFERRED]
-  backend/app/services/tasks.py → backend/app/error.py
-- `LoginService` --uses--> `TeamNotFoundError`  [INFERRED]
-  backend/app/services/auth.py → backend/app/error.py
+- `AppConfig` --uses--> `Base`  [INFERRED]
+  backend/app/models/app_config.py → backend/app/core/db.py
+- `post_task()` --references--> `TaskCreate`  [EXTRACTED]
+  backend/app/api/endpoints/tasks.py → backend/app/schemas/task.py
+- `insert_task()` --references--> `TaskCreate`  [EXTRACTED]
+  backend/app/repositories/tasks.py → backend/app/schemas/task.py
+- `TaskService` --uses--> `TaskCreate`  [INFERRED]
+  backend/app/services/tasks.py → backend/app/schemas/task.py
+- `test_task_create_rejects_blank_layer()` --calls--> `TaskCreate`  [EXTRACTED]
+  backend/tests/schemas/test_task.py → backend/app/schemas/task.py
 
 ## Import Cycles
 - None detected.
 
-## Communities (43 total, 2 thin omitted)
+## Communities (45 total, 6 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.10
-Nodes (38): TaskEffort, TaskPriority, TaskStatus, Task, count_team_tasks_by_status(), find_tasks(), get_last_task_position(), get_task_by_id() (+30 more)
+Cohesion: 0.06
+Nodes (63): Reject explicit nulls that would violate required task columns., TaskCreate, TaskDelete, TaskFilterFields, TaskFilters, TaskMove, TaskQuery, TaskUpdate (+55 more)
 
 ### Community 1 - "Community 1"
-Cohesion: 0.17
-Nodes (15): bootstrap_setup(), bootstrap_status(), DbSessionDep, Response, BootstrapResult, BootstrapSetup, BootstrapStatus, BaseModel (+7 more)
+Cohesion: 0.13
+Nodes (22): bootstrap_setup(), bootstrap_status(), DbSessionDep, Response, AppAlreadyBootstrappedError, InvalidBootstrapSecretError, AppConfig, create_app_config() (+14 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.20
-Nodes (21): Base, AppConfig, TeamType, UserRole, TeamMember, Team, User, create_app_config() (+13 more)
+Cohesion: 0.07
+Nodes (56): render_item(), run_migrations_offline(), run_migrations_online(), upgrade(), get_current_session(), UserSession, Authenticate activity and persist the renewed server and browser expiry., get_settings() (+48 more)
 
 ### Community 3 - "Community 3"
-Cohesion: 0.19
-Nodes (18): ApiConflictError, AppAlreadyBootstrappedError, AppError, InvalidBootstrapSecretError, InvalidTaskError, TaskAccessDeniedError, TaskNotFoundError, TeamInactiveError (+10 more)
+Cohesion: 0.10
+Nodes (29): delete_task(), get_task(), get_tasks(), patch_task(), post_task(), CurrentSessionDep, DbSessionDep, # TODO: Task doesn't have to have assignee, it can be picked up by anyone if nob (+21 more)
 
 ### Community 4 - "Community 4"
 Cohesion: 0.14
-Nodes (22): auth_user(), login(), logout(), CurrentSessionDep, DbSessionDep, Response, SessionTokenDep, ApiInternalServerError (+14 more)
+Nodes (21): auth_user(), login(), logout(), CurrentSessionDep, DbSessionDep, Response, SessionTokenDep, ApiInternalServerError (+13 more)
 
 ### Community 5 - "Community 5"
-Cohesion: 0.23
-Nodes (16): AuthenticationFailedError, InvalidSessionError, NoActiveTeamSelectedError, UserSession, is_team_member(), create_user(), create_user_session_record(), get_user_by_email() (+8 more)
-
-### Community 6 - "Community 6"
-Cohesion: 0.11
-Nodes (15): render_item(), run_migrations_offline(), run_migrations_online(), upgrade(), get_current_session(), DbSessionDep, SessionTokenDep, get_settings() (+7 more)
+Cohesion: 0.12
+Nodes (28): ensure_active_team_id(), get_last_active_team_id(), hash_session_token(), LoginService, Session, UserSession, Keep a usable team selected, falling back to the user's private team., Validate a session and extend its expiry; the caller persists the change. (+20 more)
 
 ### Community 7 - "Community 7"
 Cohesion: 0.27
@@ -135,10 +133,6 @@ Nodes (3): LinkProps, linkVariants, props
 Cohesion: 0.50
 Nodes (3): props, TextProps, textVariants
 
-### Community 17 - "tasks.py"
-Cohesion: 0.27
-Nodes (13): delete_task(), get_task(), get_tasks(), patch_task(), post_task(), CurrentSessionDep, DbSessionDep, # TODO: Task doesn't have to have assignee, it can be picked up by anyone if nob (+5 more)
-
 ### Community 27 - "tsconfig.app.json"
 Cohesion: 0.15
 Nodes (13): compilerOptions, noUncheckedIndexedAccess, paths, tsBuildInfoFile, exclude, extends, include, @/* (+5 more)
@@ -170,22 +164,22 @@ Nodes (7): Approved Solution, Inputs, Plan: Atomic Task Movement, Plan-Wide Safe
 ## Knowledge Gaps
 - **153 isolated node(s):** `@opencode-ai/plugin`, `$schema`, `eslint`, `typescript`, `unicorn` (+148 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **2 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **6 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `TaskCreate` connect `Community 0` to `tasks.py`, `Community 3`?**
-  _High betweenness centrality (0.021) - this node is a cross-community bridge._
+- **Why does `TaskCreate` connect `Community 0` to `Community 2`, `Community 3`?**
+  _High betweenness centrality (0.030) - this node is a cross-community bridge._
+- **Why does `TaskUpdate` connect `Community 0` to `Community 3`?**
+  _High betweenness centrality (0.023) - this node is a cross-community bridge._
 - **Why does `BootstrapSetup` connect `Community 1` to `Community 2`?**
   _High betweenness centrality (0.020) - this node is a cross-community bridge._
-- **Why does `ApiInternalServerError` connect `Community 4` to `Community 0`, `Community 1`, `Community 3`, `tasks.py`?**
-  _High betweenness centrality (0.019) - this node is a cross-community bridge._
-- **Are the 10 inferred relationships involving `Task` (e.g. with `Base` and `IntEnumType`) actually correct?**
-  _`Task` has 10 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 3 inferred relationships involving `TaskCreate` (e.g. with `TaskEffort` and `TaskPriority`) actually correct?**
-  _`TaskCreate` has 3 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 3 inferred relationships involving `TaskUpdate` (e.g. with `TaskEffort` and `TaskPriority`) actually correct?**
-  _`TaskUpdate` has 3 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 10 inferred relationships involving `TaskStatus` (e.g. with `Task` and `TaskCreate`) actually correct?**
-  _`TaskStatus` has 10 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 4 inferred relationships involving `TaskService` (e.g. with `TaskCreate` and `TaskFilters`) actually correct?**
+  _`TaskService` has 4 INFERRED edges - model-reasoned connections that need verification._
+- **What connects `Authenticate activity and persist the renewed server and browser expiry.`, `Reject explicit nulls that would violate required task columns.`, `Validate a session and extend its expiry; the caller persists the change.` to the rest of the system?**
+  _163 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `Community 0` be split into smaller, more focused modules?**
+  _Cohesion score 0.059018367961457395 - nodes in this community are weakly interconnected._
+- **Should `Community 1` be split into smaller, more focused modules?**
+  _Cohesion score 0.12873563218390804 - nodes in this community are weakly interconnected._

@@ -32,6 +32,7 @@
   "30": "Mantask",
   "31": "__init__.py",
   "32": "test_auth.py",
+  "33": "BaseModel",
   "34": "test_tasks.py",
   "35": "env.d.ts",
   "36": "eslint.config.ts",
@@ -41,5 +42,6 @@
   "40": "Research: Task Move Endpoint",
   "41": "Constraints & Invariants",
   "42": "Plan: Atomic Task Movement",
-  "43": "site.js"
+  "43": "site.js",
+  "44": "Self"
 }

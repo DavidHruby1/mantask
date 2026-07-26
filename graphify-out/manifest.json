@@ -20,8 +20,8 @@
     "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
   },
   "backend/app/api/dependencies.py": {
-    "mtime": 1784048218.9835851,
-    "ast_hash": "c577f9f8780ac3533c1da55dc0afffb1",
+    "mtime": 1785005952.3285668,
+    "ast_hash": "d33a157cdb1546173c217e9f90861303",
     "semantic_hash": ""
   },
   "backend/app/api/endpoints/__init__.py": {
@@ -145,8 +145,8 @@
     "semantic_hash": ""
   },
   "backend/app/schemas/task.py": {
-    "mtime": 1784986029.3956344,
-    "ast_hash": "cd99dac118ba8c4d0e01eef421dff0f1",
+    "mtime": 1785005390.8011749,
+    "ast_hash": "5b525d671ded5034c8520d10f6404ad0",
     "semantic_hash": ""
   },
   "backend/app/schemas/team.py": {
@@ -155,8 +155,8 @@
     "semantic_hash": ""
   },
   "backend/app/services/auth.py": {
-    "mtime": 1784986029.3956344,
-    "ast_hash": "6743f6ff7efde954fd5ec9242deb3a01",
+    "mtime": 1785005952.3246458,
+    "ast_hash": "ab18e39df29de986be6faaea0c98d46b",
     "semantic_hash": ""
   },
   "backend/app/services/bootstrap.py": {
@@ -165,8 +165,8 @@
     "semantic_hash": "83f0bc71578c8323d8a10ed04879d107"
   },
   "backend/app/services/tasks.py": {
-    "mtime": 1784986029.3956344,
-    "ast_hash": "43f4a6e6e64387f2b24e2dc40159041f",
+    "mtime": 1785005390.8129528,
+    "ast_hash": "d3830e4f6349baabb9043b1484cdc81c",
     "semantic_hash": ""
   },
   "frontend/src/App.vue": {
@@ -350,8 +350,8 @@
     "semantic_hash": ""
   },
   "backend/tests/schemas/test_task.py": {
-    "mtime": 1784986029.399607,
-    "ast_hash": "38f75f6d624c20cdac9d93ff1a2991a8",
+    "mtime": 1785005390.8129528,
+    "ast_hash": "445af0000499dd2db144c192f20f371c",
     "semantic_hash": ""
   },
   "backend/tests/schemas/test_team.py": {
@@ -360,8 +360,8 @@
     "semantic_hash": ""
   },
   "backend/tests/services/test_auth.py": {
-    "mtime": 1784986029.399607,
-    "ast_hash": "ec481d0523ab18c16b66bb8b61d9ae93",
+    "mtime": 1785005952.3285668,
+    "ast_hash": "55e269a543a7825fea400e6bc0766089",
     "semantic_hash": ""
   },
   "backend/tests/services/test_bootstrap.py": {
@@ -370,8 +370,8 @@
     "semantic_hash": ""
   },
   "backend/tests/services/test_tasks.py": {
-    "mtime": 1784986029.4035792,
-    "ast_hash": "a3066d05608688e8edf7af0dd26642fe",
+    "mtime": 1785005952.3285668,
+    "ast_hash": "7d870400a3ff06c7195660f0ed1364fb",
     "semantic_hash": ""
   },
   "backend/tests/schemas/__init__.py": {
@@ -457,6 +457,11 @@
   ".opencode/artifacts/task-001/RISKS.md": {
     "mtime": 1784971329.4654357,
     "ast_hash": "80639bc364799368909757e8261fe770",
+    "semantic_hash": ""
+  },
+  "backend/tests/api/test_dependencies.py": {
+    "mtime": 1785005952.3324878,
+    "ast_hash": "573cfefb687b4454df73835b545ef31e",
     "semantic_hash": ""
   }
 }
