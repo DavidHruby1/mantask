@@ -278,12 +278,12 @@ class TaskService:
         if target_status == TaskStatus.IN_PROGRESS:
             updates["started_working_at"] = moved_at
         elif target_status == TaskStatus.REVIEW:
-            updates["started_working_at"] = task.started_working_at or moved_at
+            updates["started_working_at"] = task.started_working_at
             updates["submitted_for_review_at"] = moved_at
         elif target_status == TaskStatus.DONE:
-            updates["started_working_at"] = task.started_working_at or moved_at
+            updates["started_working_at"] = task.started_working_at
             if task.should_review:
-                updates["submitted_for_review_at"] = task.submitted_for_review_at or moved_at
+                updates["submitted_for_review_at"] = task.submitted_for_review_at
             updates["completed_at"] = moved_at
 
         statuses = list(TaskStatus)
