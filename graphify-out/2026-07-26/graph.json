@@ -3730,7 +3730,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/tasks.py",
-      "source_location": "L399",
+      "source_location": "L382",
       "weight": 1.0,
       "source": "backend_app_services_tasks_taskservice_move_task",
       "target": "backend_app_services_tasks_taskservice_movement_lifecycle_updates",
@@ -3762,7 +3762,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/tasks.py",
-      "source_location": "L352",
+      "source_location": "L354",
       "weight": 1.0,
       "source": "backend_app_services_tasks_taskservice_move_task",
       "target": "backend_app_services_tasks_taskservice_calculate_move_position",
@@ -9611,5 +9611,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "02c7deda8c9a16b3e57daeb6e85c119ce26ba676"
+  "built_at_commit": "e1bce5aa8459aa9ad48786769d69403a781a8597"
 }
