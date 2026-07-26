@@ -53,11 +53,17 @@ def get_destination_neighbors(
     anchor_task_id: int | None,
     moved_task_id: int,
 ) -> tuple[Task | None, Task | None]:
-    """Resolve a placement only inside its destination column, excluding the moved row.
+    """Return the tasks immediately before and after the requested insertion point.
 
-    A supplied anchor that is absent from that exact scope is represented by two
-    ``None`` values so the service can reject every stale or invalid anchor uniformly.
-    Without an anchor, the second value is the first destination task for prepending.
+    ``anchor_task_id`` means "place the moved task directly after this task". The
+    returned pair is therefore ``(anchor, anchor's successor)``. With no anchor,
+    the request means "place the task first", so the pair is ``(None, first_task)``.
+
+    Both lookups are restricted to the destination team and status and exclude the
+    task being moved. If a supplied anchor is missing, belongs to another team or
+    status, or is the moved task itself, ``(None, None)`` tells the service to reject
+    it as invalid or stale. An empty destination also returns ``(None, None)``, but
+    only when no anchor was supplied, which the service can distinguish from input.
     """
     scope = (
         Task.team_id == team_id,
@@ -94,10 +100,18 @@ def rebalance_task_column(
     moved_task_id: int,
     position_gap: int,
 ) -> list[Task]:
-    """Stage a destination-only sparse rebalance and return its stable row order.
+    """Create fresh position gaps in one destination column when insertion space runs out.
 
-    Only the board-position uniqueness constraint is deferred. The caller owns the
-    surrounding transaction and must commit or roll back the staged ORM mutations.
+    The moved task is excluded because the caller assigns its final position after
+    this function returns. Every other task in the destination team/status keeps its
+    current ``(position, id)`` order and is renumbered to ``position_gap``,
+    ``2 * position_gap``, and so on. The returned list is that same stable order, so
+    the caller can find the requested anchor and calculate the new insertion point.
+
+    Renumbering can temporarily reuse positions still held by rows later in the
+    update, so this function defers only ``uq_task_team_status_position`` until the
+    transaction ends. It only stages ORM changes: the endpoint-owned transaction
+    must commit them or roll them back together with the move.
     """
     db.execute(text("SET CONSTRAINTS uq_task_team_status_position DEFERRED"))
     tasks = list(

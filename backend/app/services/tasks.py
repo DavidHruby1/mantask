@@ -222,7 +222,19 @@ class TaskService:
         return in_progress_tasks_count < in_progress_limit
 
     def _validate_move(self, db: Session, task: Task, target_status: TaskStatus) -> None:
-        """Enforce workflow, review, and entry-capacity policy before any move is staged."""
+        """Reject a status change that violates the board's workflow policy.
+
+        Enum declaration order defines the workflow: BACKLOG -> TODO -> IN_PROGRESS
+        -> REVIEW -> DONE. A forward move may advance exactly one stage; tasks with
+        ``should_review=False`` skip REVIEW and may advance directly from IN_PROGRESS
+        to DONE. A task that does require review cannot skip REVIEW, and a task that
+        does not require review cannot enter it. Backward moves may cross any number
+        of stages.
+
+        Entering IN_PROGRESS from another status is also rejected when the team's
+        configured count limit is full. Reordering within IN_PROGRESS does not consume
+        capacity and therefore does not run that check.
+        """
         statuses = list(TaskStatus)
         source_index = statuses.index(task.status)
         target_index = statuses.index(target_status)
@@ -232,7 +244,7 @@ class TaskService:
 
         if target_index > source_index:
             next_index = source_index + 1
-            # Review-disabled work advances directly from active work to completion.
+            # For work that does not require review, DONE is the next applicable stage.
             if task.status == TaskStatus.IN_PROGRESS and not task.should_review:
                 next_index = statuses.index(TaskStatus.DONE)
             if target_index != next_index:
@@ -314,7 +326,8 @@ class TaskService:
         lock_task_positions(db, task.team_id)
         db.refresh(task)
 
-        # A self-anchor is an explicit idempotent request, independent of transition policy.
+        # Anchoring a task to itself describes no change, so return before validating
+        # transitions or capacity; retries of an already-applied request remain harmless.
         if payload.anchor_task_id == task.id:
             return task
 
@@ -325,7 +338,8 @@ class TaskService:
         if payload.anchor_task_id is not None and anchor is None:
             raise InvalidTaskError("Anchor is invalid or stale")
 
-        # Same-column requests that describe the row's current neighbors are exact no-ops.
+        # If the task is already between the requested predecessor and successor,
+        # the requested ordering is already satisfied and no position needs changing.
         if task.status == payload.target_status:
             task_key = (task.position, task.id)
             if payload.anchor_task_id is None:
@@ -339,6 +353,8 @@ class TaskService:
 
         position = self._calculate_move_position(anchor, successor)
         if position is None:
+            # No integer exists between the neighboring positions. Re-space only the
+            # destination column, resolve the same insertion point, and try once more.
             ordered = rebalance_task_column(
                 db, task.team_id, payload.target_status, task.id, TASK_POSITION_GAP
             )
@@ -358,7 +374,8 @@ class TaskService:
             if position is None:
                 raise ApiConflictError("No position is available in the destination column")
 
-        # Reordering within a column is position-only; lifecycle state belongs to transitions.
+        # A same-column reorder changes only position. Timestamps and counters describe
+        # workflow transitions, so changing them here would invent a lifecycle event.
         if task.status == payload.target_status:
             return update_task_repository(task, {"position": position})
 
