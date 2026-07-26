@@ -338,38 +338,55 @@ class TaskService:
         if payload.anchor_task_id is not None and anchor is None:
             raise InvalidTaskError("Anchor is invalid or stale")
 
-        # If the task is already between the requested predecessor and successor,
-        # the requested ordering is already satisfied and no position needs changing.
+        # Neighbors exclude the moved task, so being between them means the requested
+        # same-column ordering is already satisfied and no position needs changing.
         if task.status == payload.target_status:
             task_key = (task.position, task.id)
-            if payload.anchor_task_id is None:
-                if successor is None or task_key < (successor.position, successor.id):
-                    return task
-            else:
-                after_anchor = task_key > (anchor.position, anchor.id)  # type: ignore[union-attr]
-                before_successor = successor is None or task_key < (successor.position, successor.id)
-                if after_anchor and before_successor:
-                    return task
+            is_already_at_destination = (
+                (anchor is None or (anchor.position, anchor.id) < task_key)
+                and (successor is None or task_key < (successor.position, successor.id))
+            )
+            if is_already_at_destination:
+                return task
 
         position = self._calculate_move_position(anchor, successor)
         if position is None:
-            # No integer exists between the neighboring positions. Re-space only the
-            # destination column, resolve the same insertion point, and try once more.
-            ordered = rebalance_task_column(
+            # The neighboring positions are consecutive (or at the integer limit), so
+            # no valid sparse position can be assigned. Renumber only the destination
+            # column to restore gaps, then resolve the requested insertion point again
+            # from the exact ordered list that was renumbered.
+            rebalanced_tasks = rebalance_task_column(
                 db, task.team_id, payload.target_status, task.id, TASK_POSITION_GAP
             )
+
             if payload.anchor_task_id is None:
+                # No anchor means "place the moved task first". The first remaining
+                # task therefore becomes its successor after the rebalance.
                 anchor = None
-                successor = ordered[0] if ordered else None
+                successor = rebalanced_tasks[0] if rebalanced_tasks else None
             else:
-                anchor_index = next(
-                    (index for index, row in enumerate(ordered) if row.id == payload.anchor_task_id),
-                    None,
-                )
+                # Moves and creates share the team lock, but deletion does not. Find
+                # the anchor again by ID so a concurrent deletion remains a stale-anchor
+                # client error instead of using neighbors from the earlier snapshot.
+                anchor_index = None
+                for index, candidate in enumerate(rebalanced_tasks):
+                    if candidate.id == payload.anchor_task_id:
+                        anchor_index = index
+                        break
+
                 if anchor_index is None:
                     raise InvalidTaskError("Anchor is invalid or stale")
-                anchor = ordered[anchor_index]
-                successor = ordered[anchor_index + 1] if anchor_index + 1 < len(ordered) else None
+
+                anchor = rebalanced_tasks[anchor_index]
+                successor_index = anchor_index + 1
+                successor = (
+                    rebalanced_tasks[successor_index]
+                    if successor_index < len(rebalanced_tasks)
+                    else None
+                )
+
+            # Recalculate between the newly spaced neighbors. Failure now means the
+            # destination column cannot fit another positive PostgreSQL INTEGER.
             position = self._calculate_move_position(anchor, successor)
             if position is None:
                 raise ApiConflictError("No position is available in the destination column")
