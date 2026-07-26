@@ -18,15 +18,24 @@ def test_bootstrap_application_creates_initial_state(monkeypatch):
         bootstrap_secret="a" * 32,
     )
     db = Mock(spec=Session)
-    user = SimpleNamespace(id=10, last_active_team_id=None)
-    private_team = SimpleNamespace(id=20)
-    shared_team = SimpleNamespace(id=30)
+    user = SimpleNamespace(id=None, last_active_team_id=None)
+    private_team = SimpleNamespace(id=None)
+    shared_team = SimpleNamespace(id=None)
     create_app_config = Mock()
     hash_password = Mock(return_value="password-hash")
     create_user = Mock(return_value=user)
     create_private_team = Mock(return_value=private_team)
     create_team = Mock(return_value=shared_team)
     create_team_member = Mock()
+
+    def assign_generated_ids():
+        if user.id is None:
+            user.id = 10
+        if create_private_team.called and create_team.called:
+            private_team.id = 20
+            shared_team.id = 30
+
+    db.flush.side_effect = assign_generated_ids
 
     monkeypatch.setattr(bootstrap_service, "create_app_config", create_app_config)
     monkeypatch.setattr(bootstrap_service, "create_user", create_user)
@@ -52,21 +61,14 @@ def test_bootstrap_application_creates_initial_state(monkeypatch):
     )
     create_private_team.assert_called_once_with(db, owner_user_id=user.id)
     create_team.assert_called_once_with(db, name=input_data.team_name)
-    assert create_team_member.call_args_list == [
-        call(
-            db,
-            user_id=user.id,
-            team_id=private_team.id,
-            role=UserRole.OWNER,
-        ),
-        call(
-            db,
-            user_id=user.id,
-            team_id=shared_team.id,
-            role=UserRole.OWNER,
-        ),
-    ]
-    assert db.flush.call_count == 2
+    create_team_member.assert_has_calls(
+        [
+            call(db, user_id=10, team_id=20, role=UserRole.OWNER),
+            call(db, user_id=10, team_id=30, role=UserRole.OWNER),
+        ],
+        any_order=True,
+    )
+    assert create_team_member.call_count == 2
     assert user.last_active_team_id == private_team.id
     assert result is user
     db.commit.assert_not_called()
