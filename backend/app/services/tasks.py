@@ -338,8 +338,9 @@ class TaskService:
         if payload.anchor_task_id is not None and anchor is None:
             raise InvalidTaskError("Anchor is invalid or stale")
 
-        # Neighbors exclude the moved task, so being between them means the requested
-        # same-column ordering is already satisfied and no position needs changing.
+        # Dropping a task back onto its current place in the same column is a no-op.
+        # The task is already there when it remains ordered between the requested
+        # anchor and successor, which were resolved without the task itself.
         if task.status == payload.target_status:
             task_key = (task.position, task.id)
             is_already_at_destination = (
@@ -365,15 +366,17 @@ class TaskService:
                 anchor = None
                 successor = rebalanced_tasks[0] if rebalanced_tasks else None
             else:
-                # Moves and creates share the team lock, but deletion does not. Find
-                # the anchor again by ID so a concurrent deletion remains a stale-anchor
-                # client error instead of using neighbors from the earlier snapshot.
+                # The request says "place the moved task after anchor_task_id".
+                # Find that task in the rebalanced list so the next item can be
+                # used as the moved task's successor.
                 anchor_index = None
                 for index, candidate in enumerate(rebalanced_tasks):
                     if candidate.id == payload.anchor_task_id:
                         anchor_index = index
                         break
 
+                # Deletion does not use the task-position lock, so the anchor may
+                # have disappeared after the earlier validation.
                 if anchor_index is None:
                     raise InvalidTaskError("Anchor is invalid or stale")
 
