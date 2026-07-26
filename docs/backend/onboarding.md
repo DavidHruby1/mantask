@@ -32,7 +32,7 @@ app/
         users.py         — User and user-session data access
         teams.py         — Team and team-member data access
         bootstraps.py    — AppConfig data access
-        tasks.py         — Task data access (queries, inserts, updates)
+        tasks.py         — Task data access and team-scoped advisory locking
     models/
         task.py          — Task ORM model with 8 check constraints
         user.py          — User ORM model
@@ -54,6 +54,6 @@ alembic/
 
 ## Gaps
 
-- No test documentation or test coverage exists yet (tests/ directory is empty).
+- Backend movement coverage now includes service, endpoint, and PostgreSQL concurrency tests; broader CRUD coverage remains incomplete.
 - No API-first OpenAPI/Swagger documentation strategy is defined beyond what FastAPI auto-generates.
 - No frontend-backend contract documentation exists yet.

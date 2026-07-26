@@ -73,12 +73,3 @@ coverage/
 
 _docs/
 repomix-output.xml
-
-# =========================
-# AI 
-# =========================
-
-.opencode/
-AGENTS.md
-PRD.md
-graphify-out/

@@ -8,7 +8,7 @@ from backend.app.error import (
     ApiConflictError,
     ApiInternalServerError,
 )
-from backend.app.schemas.task import TaskQuery, TaskRead, TaskCreate, TaskUpdate
+from backend.app.schemas.task import TaskQuery, TaskRead, TaskCreate, TaskUpdate, TaskMove
 from backend.app.services.auth import get_last_active_team_id
 from backend.app.services.tasks import task_service
 
@@ -83,6 +83,29 @@ def patch_task(
         raise ApiConflictError("Task update conflicts with existing records")
 
     return TaskRead.model_validate(updated_task)
+
+
+@router.patch("/{task_id}/move", response_model=TaskRead, status_code=200)
+def move_task(
+    db: DbSessionDep,
+    session: CurrentSessionDep,
+    task_id: int,
+    payload: TaskMove,
+) -> TaskRead:
+    """Move an accessible task and commit all board and lifecycle effects atomically."""
+    task = task_service.get_accessible_task(db, task_id, session.user_id)
+    try:
+        moved_task = task_service.move_task(db, task, payload)
+        db.commit()
+        db.refresh(moved_task)
+    except IntegrityError:
+        db.rollback()
+        raise ApiConflictError("Task movement conflicts with current board state")
+    except SQLAlchemyError:
+        db.rollback()
+        raise ApiInternalServerError("Unable to move task right now. Please try again.")
+
+    return TaskRead.model_validate(moved_task)
 
 
 @router.delete("/{task_id}", status_code=204)

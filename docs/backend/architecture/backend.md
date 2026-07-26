@@ -28,6 +28,10 @@ This backend is a FastAPI application centered on a single `/api` router tree, a
 
 `app/core/db.py` builds the SQLAlchemy engine with `pool_pre_ping=True`, `pool_size=10`, and `max_overflow=20`, and enables SQL echo when `settings.DEBUG` is true. `SessionLocal` is configured with `autoflush=False`, `autocommit=False`, and `expire_on_commit=False`. `get_db()` is the FastAPI dependency generator: it yields a session, then always closes it in `finally`.
 
+Task movement illustrates endpoint-owned transaction completion: the authenticated move endpoint calls the task service, commits once, refreshes the result, and rolls back before translating any database failure. Creation and movement acquire the same transaction-scoped PostgreSQL advisory lock keyed by a fixed repository namespace and `team_id` before capacity or position reads; movement refreshes its previously access-checked task after acquiring the lock and before using mutable status or position. Endpoint commit/rollback releases the lock automatically, and unrelated teams use different lock keys.
+
+The service owns the fixed `TaskStatus` workflow order (including `BACKLOG`), lifecycle re-entry timestamps, capacity, counters, and sparse-position policy; task repositories own the shared lock, scoped neighbor reads, and destination normalization. Self-anchor is a post-lock/post-refresh `200` no-op, and existing-adjacency same-column requests are intentional no-ops. Invalid transitions and anchors are client-input `400` errors, while capacity/position exhaustion and commit collisions are `409`. Ordinary task writes keep position uniqueness immediate. Only destination rebalance executes `SET CONSTRAINTS uq_task_team_status_position DEFERRED`, within the same transaction as status, lifecycle, counters, and final position; positivity and every other constraint remain immediate. A commit-time `IntegrityError` is a safety net rather than an allocation mechanism.
+
 ### Request dependencies and current session lookup
 
 `app/api/dependencies.py` defines `DbSessionDep` as `Annotated[Session, Depends(get_db)]`. `SessionTokenDep` reads a cookie using `settings.SESSION_COOKIE_NAME`. `get_current_session()` requires that cookie, passes it to `session_auth_service.get_valid_session_by_token(db, session_token)`, and raises `NotAuthenticatedError` when the cookie is missing. Invalid, expired, or revoked sessions are signaled by `InvalidSessionError` from the auth service. `CurrentSessionDep` is the typed dependency for endpoints that need the authenticated `UserSession`.
@@ -63,6 +67,9 @@ This backend is a FastAPI application centered on a single `/api` router tree, a
 - CORS is restricted to `http://localhost:5173` in the current app setup.
 - Auth failure paths are split between `NotAuthenticatedError` for a missing cookie and `InvalidSessionError` for an invalid, expired, or revoked session.
 - `SESSION_COOKIE_NAME` is part of the request contract because the dependency reads that cookie name directly.
+- Task movement relies on existing membership rather than role-based policy and does not lock whole columns. Count-based `IN_PROGRESS` enforcement is serialized by the shared team advisory lock.
+- Advisory-lock correctness is cooperative: future task position and capacity writers must call the repository lock helper before relevant reads.
+- Movement conflicts require clients to refetch authoritative board state; the backend does not retry automatically.
 
 ## Sources
 
