@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from typing import Tuple
 
 import hashlib
 import secrets
@@ -35,6 +36,7 @@ from backend.app.repositories.users import (
 
 DUMMY_PASSWORD_HASH = "$argon2id$v=19$m=65536,t=3,p=4$Q2k2U05wOTdoZkVEMTZUUA$qyASxedh9bH8/a6Xr8Hg9fXR9zlqwvUb89LgqnLr4HY"
 SESSION_TOKEN_BYTES = 32
+SESSION_RENEWAL_THRESHOLD = timedelta(days=settings.SESSION_EXPIRE_DAYS - 1)
 
 
 ph = PasswordHasher()
@@ -70,7 +72,9 @@ class LoginService:
 
 
 class SessionAuthService:
-    def get_valid_session_by_token(self, db: Session, session_token: str) -> UserSession | None:
+    def get_valid_session_by_token(
+        self, db: Session, session_token: str
+    ) -> Tuple[UserSession, bool]:
         """Validate a session and extend its expiry; the caller persists the change."""
         session_token_hash = hash_session_token(session_token)
         user_session = get_user_session_by_token_hash(db, session_token_hash)
@@ -79,10 +83,15 @@ class SessionAuthService:
         if user_session is None or not self._is_valid_session(user_session, now):
             raise InvalidSessionError()
 
-        user_session.expires_at = now + timedelta(
-            days=settings.SESSION_EXPIRE_DAYS
-        )
-        return user_session
+        remaining = user_session.expires_at - now
+        if remaining < SESSION_RENEWAL_THRESHOLD:
+            user_session.expires_at = now + timedelta(
+                days=settings.SESSION_EXPIRE_DAYS
+            )
+            return user_session, True
+
+        return user_session, False
+
 
     def revoke_session_by_token(self, db: Session, session_token: str) -> bool:
         session_token_hash = hash_session_token(session_token)
@@ -112,7 +121,8 @@ def ensure_active_team_id(db: Session, user: User) -> int | None:
     except (NoActiveTeamSelectedError, TeamNotFoundError):
         active_team_id = get_private_team_id(db, user)
 
-    if user.last_active_team_id != active_team_id:
+    
+    if active_team_id != user.last_active_team_id:
         user.last_active_team_id = active_team_id
 
     return active_team_id

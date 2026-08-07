@@ -17,7 +17,7 @@ def test_get_current_session_persists_expiry_and_renews_cookie(monkeypatch):
     monkeypatch.setattr(
         dependencies.session_auth_service,
         "get_valid_session_by_token",
-        Mock(return_value=session),
+        Mock(return_value=(session, True)),
     )
 
     result = dependencies.get_current_session(
@@ -47,7 +47,7 @@ def test_get_current_session_rolls_back_failed_expiry_renewal(monkeypatch):
     monkeypatch.setattr(
         dependencies.session_auth_service,
         "get_valid_session_by_token",
-        Mock(return_value=SimpleNamespace(id=1)),
+        Mock(return_value=(SimpleNamespace(id=1), True)),
     )
 
     with pytest.raises(ApiInternalServerError, match="Unable to renew the session"):
@@ -59,3 +59,25 @@ def test_get_current_session_rolls_back_failed_expiry_renewal(monkeypatch):
 
     db.rollback.assert_called_once_with()
     response.set_cookie.assert_not_called()
+
+
+def test_get_current_session_does_not_persist_unmodified_expiry(monkeypatch):
+    db = Mock(spec=Session)
+    response = Mock(spec=Response)
+    session = SimpleNamespace(id=1)
+    monkeypatch.setattr(
+        dependencies.session_auth_service,
+        "get_valid_session_by_token",
+        Mock(return_value=(session, False)),
+    )
+
+    result = dependencies.get_current_session(
+        db,
+        "plain-session-token",
+        response,
+    )
+
+    db.commit.assert_not_called()
+    db.rollback.assert_not_called()
+    response.set_cookie.assert_not_called()
+    assert result is session

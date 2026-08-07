@@ -7,7 +7,7 @@ from backend.app.api.dependencies import (
     CurrentSessionDep,
 )
 from backend.app.core.config import settings
-from backend.app.error import AuthenticationFailedError, ApiInternalServerError
+from backend.app.error import ApiInternalServerError
 from backend.app.schemas.auth import LoginInput, LoginResult
 from backend.app.services.auth import (
     login_service,
@@ -35,7 +35,6 @@ def login(
         db.rollback()
         raise ApiInternalServerError("Unable to complete the request right now. Please try again.")
 
-    # if gets reused more times than current, move it to function
     response.set_cookie(
         key=settings.SESSION_COOKIE_NAME,
         value=session_token,
@@ -57,12 +56,15 @@ def login(
 def auth_user(
     db: DbSessionDep, session: CurrentSessionDep
 ) -> LoginResult:
-    try:
-        active_team_id = ensure_active_team_id(db, session.user)
-        db.commit()
-    except SQLAlchemyError:
-        db.rollback()
-        raise ApiInternalServerError("Unable to complete the request right now. Please try again.")
+    previous_team_id = session.user.last_active_team_id
+    active_team_id = ensure_active_team_id(db, session.user)
+
+    if active_team_id != previous_team_id:
+        try:
+            db.commit()
+        except SQLAlchemyError:
+            db.rollback()
+            raise ApiInternalServerError("Unable to complete the request right now. Please try again.")
 
     return LoginResult(authenticated=True, active_team_id=active_team_id)
 

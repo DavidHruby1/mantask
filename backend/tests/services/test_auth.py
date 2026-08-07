@@ -187,7 +187,33 @@ def test_get_valid_session_by_token_renews_valid_session(monkeypatch):
     assert session.expires_at == now + timedelta(
         days=auth_service.settings.SESSION_EXPIRE_DAYS
     )
-    assert result is session
+    assert result == (session, True)
+
+
+def test_get_valid_session_by_token_does_not_renew_recent_session(monkeypatch):
+    db = Mock(spec=Session)
+    now = datetime(2026, 7, 25, 10, 30, tzinfo=timezone.utc)
+    datetime_mock = Mock(wraps=datetime)
+    datetime_mock.now.return_value = now
+    expires_at = now + timedelta(days=auth_service.settings.SESSION_EXPIRE_DAYS)
+    session = SimpleNamespace(
+        revoked_at=None,
+        expires_at=expires_at,
+    )
+    monkeypatch.setattr(auth_service, "datetime", datetime_mock)
+    monkeypatch.setattr(
+        auth_service,
+        "get_user_session_by_token_hash",
+        Mock(return_value=session),
+    )
+
+    result = SessionAuthService().get_valid_session_by_token(
+        db,
+        "plain-session-token",
+    )
+
+    assert session.expires_at == expires_at
+    assert result == (session, False)
 
 
 @pytest.mark.parametrize(
