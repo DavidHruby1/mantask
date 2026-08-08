@@ -10,12 +10,14 @@ export const useSessionStore = defineStore('session', () => {
     // Refreshes the bootstrap and authentication state used for routing.
     // Values are updated together so a failed request cannot leave a partial new state.
     async function loadStatus() {
-        const bootstrapStatus = await sessionApi.getBootstrapStatus()
+        if (bootstrapped.value !== true) {
+            const bootstrapStatus = await sessionApi.getBootstrapStatus()
 
-        if (!bootstrapStatus.bootstrapped) {
-            bootstrapped.value = false
-            authenticated.value = false
-            return
+            if (!bootstrapStatus.bootstrapped) {
+                bootstrapped.value = false
+                authenticated.value = false
+                return
+            }
         }
 
         const loginResult = await sessionApi.getLoginResult()
