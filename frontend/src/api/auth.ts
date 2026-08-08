@@ -16,7 +16,7 @@ export interface LoginResult {
 }
 
 
-export const sessionApi = {
+export const authApi = {
     async getBootstrapStatus(): Promise<BootstrapStatus> {
         const response = await api.get<BootstrapStatus>('/api/bootstrap/status')
         return response.data
@@ -39,4 +39,3 @@ export const sessionApi = {
         }
     }
 }
-

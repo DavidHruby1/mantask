@@ -3,6 +3,8 @@ import { ref } from 'vue'
 import { cva } from 'class-variance-authority'
 import { cn } from '@/utils/cn'
 
+defineOptions({ inheritAttrs: false })
+
 type InputProps = {
     variant?: 'underlined' | 'outlined'
     size: 'sm' | 'md' | 'lg'
@@ -10,6 +12,7 @@ type InputProps = {
     placeholder?: string
     disabled?: boolean
     required?: boolean
+    error?: string
 }
 
 const props = withDefaults(defineProps<InputProps>(), {
@@ -18,6 +21,8 @@ const props = withDefaults(defineProps<InputProps>(), {
     disabled: false,
     required: false,
 })
+
+const inputModel = defineModel<string>()
 
 const inputVariants = cva(
     `bg-input-black text-white-text
@@ -56,6 +61,7 @@ const togglePasswordVisibility = () => {
 <template>
     <span class="relative w-full">
         <input
+            v-model="inputModel"
             v-bind="$attrs"
             :type="inputType"
             :class="
@@ -70,6 +76,7 @@ const togglePasswordVisibility = () => {
             :placeholder="props.placeholder"
             :disabled="props.disabled"
             :required="props.required"
+            :aria-invalid="Boolean(props.error)"
         />
         <button
             v-if="props.type === 'password'"
@@ -84,6 +91,9 @@ const togglePasswordVisibility = () => {
                 alt=""
             >
         </button>
+        <p v-if="props.error" class="w-full text-sm text-red-700">
+            {{ props.error }}
+        </p>
     </span>
 </template>
 

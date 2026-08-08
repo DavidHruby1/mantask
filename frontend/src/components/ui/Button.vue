@@ -5,13 +5,13 @@ import { cn } from '@/utils/cn'
 type ButtonProps = {
     variant?: 'glass' | 'ghost'
     size: 'sm' | 'md' | 'lg'
-    type?: 'button' | 'submit' | 'reset'
+    type: 'button' | 'submit' | 'reset'
     disabled?: boolean
 }
 
 const props = withDefaults(defineProps<ButtonProps>(), {
     size: 'md',
-    type: 'submit',
+    type: 'button',
     disabled: false,
 })
 

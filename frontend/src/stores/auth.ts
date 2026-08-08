@@ -1,9 +1,9 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 
-import { sessionApi } from '@/api/session'
+import { authApi } from '@/api/auth'
 
-export const useSessionStore = defineStore('session', () => {
+export const useAuthStore = defineStore('auth', () => {
     const bootstrapped = ref<boolean | null>(null)
     const authenticated = ref<boolean | null>(null)
 
@@ -11,7 +11,7 @@ export const useSessionStore = defineStore('session', () => {
     // Values are updated together so a failed request cannot leave a partial new state.
     async function loadStatus() {
         if (bootstrapped.value !== true) {
-            const bootstrapStatus = await sessionApi.getBootstrapStatus()
+            const bootstrapStatus = await authApi.getBootstrapStatus()
 
             if (!bootstrapStatus.bootstrapped) {
                 bootstrapped.value = false
@@ -20,7 +20,7 @@ export const useSessionStore = defineStore('session', () => {
             }
         }
 
-        const loginResult = await sessionApi.getLoginResult()
+        const loginResult = await authApi.getLoginResult()
 
         bootstrapped.value = true
         authenticated.value = loginResult.authenticated

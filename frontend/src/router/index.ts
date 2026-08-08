@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { useSessionStore } from '@/stores/session'
+import { useAuthStore } from '@/stores/auth'
 
 const routes = [
     {
@@ -28,17 +28,19 @@ const router = createRouter({
     routes,
 })
 
-// Refreshes server-backed session state before choosing the route.
-// Each session state has one valid entry route, which prevents redirect loops.
+// Refreshes server-backed auth state before choosing the route.
+// Each auth state has one valid entry route, which prevents redirect loops.
 router.beforeEach(async (target) => {
-    const session = useSessionStore()
-    await session.loadStatus()
+    if (target.name === 'bootstrap') return true
 
-    if (!session.bootstrapped) {
+    const auth = useAuthStore()
+    await auth.loadStatus()
+
+    if (!auth.bootstrapped) {
         return target.name === 'bootstrap' ? true : { name: 'bootstrap' }
     }
 
-    if (!session.authenticated) {
+    if (!auth.authenticated) {
         return target.name === 'login' ? true : { name: 'login' }
     }
 
