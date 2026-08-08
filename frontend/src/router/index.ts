@@ -32,7 +32,6 @@ const router = createRouter({
 // Each session state has one valid entry route, which prevents redirect loops.
 router.beforeEach(async (target) => {
     const session = useSessionStore()
-
     await session.loadStatus()
 
     if (!session.bootstrapped) {
