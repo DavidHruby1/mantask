@@ -2,10 +2,7 @@
 import { cva } from 'class-variance-authority'
 import { cn } from '@/utils/cn'
 
-type TextProps = {
-    color?: 'primary' | 'secondary'
-    size: 'xs' | 'sm' | 'md' | 'lg'
-}
+import type { TextProps } from '@/interfaces'
 
 const props = withDefaults(defineProps<TextProps>(), {
     color: 'primary',

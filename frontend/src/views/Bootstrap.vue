@@ -6,6 +6,7 @@ import Input from '@/components/ui/Input.vue'
 import Text from '@/components/ui/Text.vue'
 import Heading from '@/components/ui/Heading.vue'
 import Form from '@/components/ui/Form.vue'
+import { useAuthStore } from '@/stores/auth'
 import {
     validateBootstrapSecret,
     validateEmail,
@@ -15,14 +16,19 @@ import {
 } from '@/utils/validation'
 
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
+import type { BootstrapSetup, FormErrors } from '@/interfaces'
+
+const authStore = useAuthStore()
+const router = useRouter()
 const username = ref<string>('')
 const email = ref<string>('')
 const password = ref<string>('')
 const organization = ref<string>('')
 const team = ref<string>('')
 const bootstrapSecret = ref<string>('')
-const formErrors = ref<Record<string, string>>({
+const formErrors = ref<FormErrors>({
     username: '',
     email: '',
     password: '',
@@ -30,6 +36,8 @@ const formErrors = ref<Record<string, string>>({
     team: '',
     bootstrapSecret: '',
 })
+const isSubmitting = ref(false)
+
 
 function validateBootstrapForm(): boolean {
     const results = [
@@ -52,12 +60,30 @@ function validateBootstrapForm(): boolean {
     return results.every(Boolean)
 }
 
-// This function will use store to send data to backend
-// Then it will recieve result of the operation and act accordingly
-// 1. it validates the whole form
-function handleBootstrapSubmit() {
-    if (!validateBootstrapForm()) return
+// Submits the validated bootstrap form and navigates to the dashboard after the server creates the account.
+async function handleBootstrapSubmit() {
+    if (isSubmitting.value || !validateBootstrapForm()) return
 
+    isSubmitting.value = true
+
+    try {
+        const payload: BootstrapSetup = {
+            username: username.value.trim(),
+            email: email.value.trim(),
+            password: password.value,
+            organization_name: organization.value.trim(),
+            team_name: team.value.trim(),
+            bootstrap_secret: bootstrapSecret.value,
+        }
+
+        const succeeded = await authStore.bootstrap(payload)
+
+        if (succeeded) {
+            await router.push({ name: 'dashboard' })
+        }
+    } finally {
+        isSubmitting.value = false
+    }
 }
 </script>
 
@@ -68,6 +94,7 @@ function handleBootstrapSubmit() {
 
         <Form
             variant="card"
+            :loading="isSubmitting"
             @submit-form="handleBootstrapSubmit"
         >
             <Heading class="mb-0" variant="h3"> Set up Mantask </Heading>
@@ -165,8 +192,9 @@ function handleBootstrapSubmit() {
                 type="submit"
                 variant="glass"
                 size="lg"
+                :disabled="isSubmitting"
             >
-                Create owner account
+                {{ isSubmitting ? 'Creating owner account...' : 'Create owner account' }}
             </Button>
 
             <Text class="mt-2" color="secondary" size="xs">

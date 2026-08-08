@@ -2,12 +2,7 @@
 import { cva } from 'class-variance-authority'
 import { cn } from '@/utils/cn'
 
-type ButtonProps = {
-    variant?: 'glass' | 'ghost'
-    size: 'sm' | 'md' | 'lg'
-    type: 'button' | 'submit' | 'reset'
-    disabled?: boolean
-}
+import type { ButtonProps } from '@/interfaces'
 
 const props = withDefaults(defineProps<ButtonProps>(), {
     size: 'md',

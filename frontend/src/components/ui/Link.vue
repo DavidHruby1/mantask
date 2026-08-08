@@ -1,13 +1,9 @@
 <script setup lang="ts">
 import { cva } from 'class-variance-authority'
-import { RouterLink, type RouteLocationRaw } from 'vue-router'
+import { RouterLink } from 'vue-router'
 import { cn } from '@/utils/cn'
 
-type LinkProps = {
-    to: RouteLocationRaw
-    color?: 'primary' | 'secondary'
-    size: 'xs' | 'sm' | 'md' | 'lg'
-}
+import type { LinkProps } from '@/interfaces'
 
 const props = withDefaults(defineProps<LinkProps>(), {
     color: 'primary',

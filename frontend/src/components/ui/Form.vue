@@ -2,11 +2,7 @@
 import { cva } from 'class-variance-authority'
 import { cn } from '@/utils/cn'
 
-type FormProps = {
-    variant?: 'transparent' | 'card'
-    loading?: boolean
-    novalidate?: boolean
-}
+import type { FormProps } from '@/interfaces'
 
 const props = withDefaults(defineProps<FormProps>(), {
     loading: false,

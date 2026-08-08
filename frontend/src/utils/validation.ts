@@ -1,4 +1,4 @@
-type FormErrors = Record<string, string>
+import type { FormErrors } from '@/interfaces'
 
 const PASSWORD_REGEX = /^[A-Za-z0-9_!@#$%^&*()[\]{};<>?/\\|~."+',`=:-]+$/
 const NAME_REGEX = /^[a-zA-Z0-9\-_: ]+$/
