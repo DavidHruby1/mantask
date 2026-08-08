@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { cva } from 'class-variance-authority'
+import { RouterLink, type RouteLocationRaw } from 'vue-router'
 import { cn } from '@/utils/cn'
 
 type LinkProps = {
-    href: string
+    to: RouteLocationRaw
     color?: 'primary' | 'secondary'
     size: 'xs' | 'sm' | 'md' | 'lg'
 }
@@ -34,8 +35,8 @@ const linkVariants = cva(
 </script>
 
 <template>
-    <a
-        :href="props.href"
+    <RouterLink
+        :to="props.to"
         :class="
             cn(
                 linkVariants({
@@ -46,5 +47,5 @@ const linkVariants = cva(
         "
     >
         <slot />
-    </a>
+    </RouterLink>
 </template>
