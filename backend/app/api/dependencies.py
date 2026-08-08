@@ -26,26 +26,26 @@ def get_current_session(
     if not session_token:
         raise NotAuthenticatedError()
 
-    session = session_auth_service.get_valid_session_by_token(db, session_token)
+    session, extended = session_auth_service.get_valid_session_by_token(db, session_token)
 
-    if session is None:
-        raise NotAuthenticatedError()
+    # in `get_valid_session_by_token`, expiry is extended only if older than one day and if so, extended is True
+    # therefore commit is made and cookie is set. This is to make the amount of commits lower
+    if extended:
+        try:
+            db.commit()
+        except SQLAlchemyError:
+            db.rollback()
+            raise ApiInternalServerError("Unable to renew the session")
 
-    try:
-        db.commit()
-    except SQLAlchemyError:
-        db.rollback()
-        raise ApiInternalServerError("Unable to renew the session")
-
-    response.set_cookie(
-        key=settings.SESSION_COOKIE_NAME,
-        value=session_token,
-        httponly=True,
-        secure=not settings.DEBUG,
-        samesite="lax",
-        max_age=60 * 60 * 24 * settings.SESSION_EXPIRE_DAYS,
-        path="/",
-    )
+        response.set_cookie(
+            key=settings.SESSION_COOKIE_NAME,
+            value=session_token,
+            httponly=True,
+            secure=not settings.DEBUG,
+            samesite="lax",
+            max_age=60 * 60 * 24 * settings.SESSION_EXPIRE_DAYS,
+            path="/",
+        )
 
     return session
 
