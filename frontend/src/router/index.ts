@@ -31,8 +31,6 @@ const router = createRouter({
 // Refreshes server-backed auth state before choosing the route.
 // Each auth state has one valid entry route, which prevents redirect loops.
 router.beforeEach(async (target) => {
-    if (target.name === 'bootstrap') return true
-
     const auth = useAuthStore()
     await auth.loadStatus()
 

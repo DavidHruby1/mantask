@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, useAttrs } from 'vue'
-import { cva } from 'class-variance-authority'
 import { cn } from '@/utils/cn'
 
 defineOptions({
@@ -15,15 +14,12 @@ const forwardedAttrs = computed(() => {
     return rest
 })
 
-const containerVariants = cva(
-    `relative min-h-screen flex items-center justify-center overflow-hidden px-4`,
-)
 </script>
 
 <template>
     <div
         v-bind="forwardedAttrs"
-        :class="cn(containerVariants(), attrs.class as string)"
+        :class="cn('relative flex min-h-screen items-center justify-center overflow-hidden px-4', attrs.class as string)"
     >
         <slot />
     </div>

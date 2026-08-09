@@ -11,13 +11,13 @@ const props = withDefaults(defineProps<LinkProps>(), {
 })
 
 const linkVariants = cva(
-    `text-white-text font-sans font-normal tracking-normal antialiased
+    `font-sans font-normal tracking-normal antialiased
     cursor-pointer transition-colors duration-200 hover:text-white-base`,
     {
         variants: {
             color: {
                 primary: 'text-dark-muted',
-                secondary: '',
+                secondary: 'text-white-text',
             },
             size: {
                 xs: 'text-[13px] leading-[18px]',

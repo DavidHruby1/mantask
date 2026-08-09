@@ -17,7 +17,7 @@ const props = withDefaults(defineProps<InputProps>(), {
 const inputModel = defineModel<string>()
 
 const inputVariants = cva(
-    `bg-input-black text-white-text
+    `w-full bg-input-black text-white-text
     font-normal outline-none
     border-1 border-white-surface rounded-lg
     placeholder:text-white-placeholder placeholder:font-normal
@@ -28,14 +28,10 @@ const inputVariants = cva(
     `,
     {
         variants: {
-            variant: {
-                underlined: '',
-                outlined: '',
-            },
             size: {
-                sm: 'w-full text-sm',
-                md: 'w-full text-base px-3 py-[10px]',
-                lg: 'w-full text-lg',
+                sm: 'px-2.5 py-2 text-sm',
+                md: 'px-3 py-2.5 text-base',
+                lg: 'px-4 py-3 text-lg',
             },
         },
     },
@@ -59,7 +55,6 @@ const togglePasswordVisibility = () => {
             :class="
                 cn(
                     inputVariants({
-                        variant: props.variant,
                         size: props.size,
                     }),
                     { 'pr-10' : props.type === 'password' }

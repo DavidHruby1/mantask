@@ -9,10 +9,10 @@ const props = withDefaults(defineProps<TextProps>(), {
     size: 'md',
 })
 
-const textVariants = cva(`text-white-text font-sans font-normal tracking-normal antialiased`, {
+const textVariants = cva(`font-sans font-normal tracking-normal antialiased`, {
     variants: {
         color: {
-            primary: '',
+            primary: 'text-white-text',
             secondary: 'text-white-muted',
         },
         size: {

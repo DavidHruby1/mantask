@@ -5,6 +5,7 @@ import { cn } from '@/utils/cn'
 import type { ButtonProps } from '@/interfaces'
 
 const props = withDefaults(defineProps<ButtonProps>(), {
+    variant: 'glass',
     size: 'md',
     type: 'button',
     disabled: false,

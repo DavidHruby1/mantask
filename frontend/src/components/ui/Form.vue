@@ -5,6 +5,7 @@ import { cn } from '@/utils/cn'
 import type { FormProps } from '@/interfaces'
 
 const props = withDefaults(defineProps<FormProps>(), {
+    variant: 'transparent',
     loading: false,
     novalidate: false,
 })

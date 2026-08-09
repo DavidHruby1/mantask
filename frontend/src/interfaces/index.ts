@@ -30,7 +30,7 @@ export interface FormErrors {
 
 export interface ButtonProps {
     variant?: 'glass' | 'ghost'
-    size: 'sm' | 'md' | 'lg'
+    size?: 'sm' | 'md' | 'lg'
     type?: 'button' | 'submit' | 'reset'
     disabled?: boolean
 }
@@ -47,9 +47,8 @@ export interface HeadingProps {
 }
 
 export interface InputProps {
-    variant?: 'underlined' | 'outlined'
-    size: 'sm' | 'md' | 'lg'
-    type: 'text' | 'number' | 'email' | 'password'
+    size?: 'sm' | 'md' | 'lg'
+    type?: 'text' | 'number' | 'email' | 'password'
     placeholder?: string
     disabled?: boolean
     required?: boolean
@@ -59,10 +58,10 @@ export interface InputProps {
 export interface LinkProps {
     to: RouteLocationRaw
     color?: 'primary' | 'secondary'
-    size: 'xs' | 'sm' | 'md' | 'lg'
+    size?: 'xs' | 'sm' | 'md' | 'lg'
 }
 
 export interface TextProps {
     color?: 'primary' | 'secondary'
-    size: 'xs' | 'sm' | 'md' | 'lg'
+    size?: 'xs' | 'sm' | 'md' | 'lg'
 }
