@@ -70,6 +70,7 @@ const togglePasswordVisibility = () => {
             :aria-label="isPasswordVisible ? 'Hide password' : 'Show password'"
             type='button'
             class="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer"
+            @pointerdown.prevent
             @click="togglePasswordVisibility"
         >
             <img

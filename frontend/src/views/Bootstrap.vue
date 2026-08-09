@@ -1,11 +1,6 @@
 <script setup lang="ts">
-import Button from '@/components/ui/Button.vue'
-import Container from '@/components/ui/Container.vue'
-import Link from '@/components/ui/Link.vue'
-import Input from '@/components/ui/Input.vue'
-import Text from '@/components/ui/Text.vue'
-import Heading from '@/components/ui/Heading.vue'
-import Form from '@/components/ui/Form.vue'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import {
     validateBootstrapSecret,
@@ -15,10 +10,16 @@ import {
     validateUsername,
 } from '@/utils/validation'
 
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import Button from '@/components/ui/Button.vue'
+import Container from '@/components/ui/Container.vue'
+import Link from '@/components/ui/Link.vue'
+import Input from '@/components/ui/Input.vue'
+import Text from '@/components/ui/Text.vue'
+import Heading from '@/components/ui/Heading.vue'
+import Form from '@/components/ui/Form.vue'
 
 import type { BootstrapSetup, FormErrors } from '@/interfaces'
+
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -76,9 +77,9 @@ async function handleBootstrapSubmit() {
             bootstrap_secret: bootstrapSecret.value,
         }
 
-        const succeeded = await authStore.bootstrap(payload)
+        const bootstrapSucceeded = await authStore.bootstrap(payload)
 
-        if (succeeded) {
+        if (bootstrapSucceeded) {
             await router.push({ name: 'dashboard' })
         }
     } finally {
