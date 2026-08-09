@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 
 import { authApi } from '@/api/auth'
-import type { BootstrapSetup } from '@/interfaces'
+import type { BootstrapSetup, LoginInput } from '@/interfaces'
 
 export const useAuthStore = defineStore('auth', () => {
     const bootstrapped = ref<boolean | null>(null)
@@ -23,10 +23,10 @@ export const useAuthStore = defineStore('auth', () => {
         }
 
         try {
-            const loginResult = await authApi.getLoginResult()
+            const authResult = await authApi.getAuthResult()
 
             bootstrapped.value = true
-            authenticated.value = loginResult.authenticated
+            authenticated.value = authResult.authenticated
         } catch (error) {
             if (axios.isAxiosError(error) && error.response?.status === 401) {
                 bootstrapped.value = true
@@ -61,10 +61,29 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
+    async function login(payload: LoginInput): Promise<boolean> {
+        try {
+            const result = await authApi.login(payload)
+
+            authenticated.value = result.authenticated
+
+            return result.authenticated
+        } catch (error) {
+            authenticated.value = false
+
+            console.error(
+                'Login failed:',
+                error instanceof Error ? error.message : 'Unknown error',
+            )
+            return false
+        }
+    }
+
     return {
         bootstrapped,
         authenticated,
         loadStatus,
         bootstrap,
+        login,
     }
 })

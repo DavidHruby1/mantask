@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { validateEmail, validatePassword } from '@/utils/validation'
+
 import Button from '@/components/ui/Button.vue'
 import Container from '@/components/ui/Container.vue'
 import Link from '@/components/ui/Link.vue'
@@ -6,6 +11,50 @@ import Input from '@/components/ui/Input.vue'
 import Text from '@/components/ui/Text.vue'
 import Heading from '@/components/ui/Heading.vue'
 import Form from '@/components/ui/Form.vue'
+
+import type { FormErrors, LoginInput } from '@/interfaces'
+
+
+const authStore = useAuthStore()
+const router = useRouter()
+const email = ref<string>('')
+const password = ref<string>('')
+const formErrors = ref<FormErrors>({
+    email: '',
+    password: '',
+})
+const isLoggingIn = ref<boolean>(false)
+
+
+function validateLoginForm(): boolean {
+    const results = [
+        validateEmail(email.value, formErrors.value),
+        validatePassword(password.value, formErrors.value),
+    ]
+
+    return results.every(Boolean)
+}
+
+async function handleLoginSubmit() {
+    if (isLoggingIn.value || !validateLoginForm()) return
+
+    isLoggingIn.value = true
+
+    try {
+        const payload: LoginInput = {
+            email: email.value.trim(),
+            password: password.value,
+        }
+
+        const loginSucceeded = await authStore.login(payload)
+
+        if (loginSucceeded) {
+            router.push({ name: 'dashboard' })
+        }
+    } finally {
+        isLoggingIn.value = false
+    }
+}
 </script>
 
 <template>
@@ -14,13 +63,43 @@ import Form from '@/components/ui/Form.vue'
         <div class="light-beam"></div>
         <div class="light-source"></div>
 
-        <Form variant="transparent">
+        <Form
+            variant="transparent"
+            novalidate
+            @submit-form="handleLoginSubmit"
+        >
             <img class="mb-4 h-16 w-16" src="/mantask-logo-svg.svg" alt="Mantask" />
 
             <Heading class="mb-5" variant="h3"> Sign in to Mantask </Heading>
 
-            <Input id="email" size="md" type="email" placeholder="Email address" />
-            <Input id="password" size="md" type="password" placeholder="Password" />
+            <Input
+                v-model="email"
+                id="email"
+                aria-label="Email address"
+                size="md"
+                type="email"
+                placeholder="Email address"
+                :error="formErrors.email"
+                @blur="
+                    email.trim() === ''
+                        ? (formErrors.email = '')
+                        : validateEmail(email, formErrors)
+                "
+            />
+            <Input
+                v-model="password"
+                id="password"
+                aria-label="Password"
+                size="md"
+                type="password"
+                placeholder="Password"
+                :error="formErrors.password"
+                @blur="
+                    password === ''
+                        ? (formErrors.password = '')
+                        : validatePassword(password, formErrors)
+                "
+            />
 
             <div class="flex w-full justify-end">
                 <Link class="mb-2 -mt-2" to="/" color="primary" size="xs">
@@ -28,7 +107,13 @@ import Form from '@/components/ui/Form.vue'
                 </Link>
             </div>
 
-            <Button variant="glass" size="lg"> Login </Button>
+            <Button
+                type="submit"
+                variant="glass"
+                size="lg"
+            >
+                {{isLoggingIn ? 'Logging in...' : 'Login'}}
+            </Button>
 
             <div class="flex w-full items-center gap-3 px-1 text-white-muted/35">
                 <span class="h-px flex-1 border-t border-dashed border-current"></span>
@@ -36,7 +121,11 @@ import Form from '@/components/ui/Form.vue'
                 <span class="h-px flex-1 border-t border-dashed border-current"></span>
             </div>
 
-            <Button type="button" variant="ghost" size="lg">
+            <Button
+                type="button"
+                variant="ghost"
+                size="lg"
+            >
                 <img class="h-5 w-5 shrink-0" src="/google-fill.svg" alt="" aria-hidden="true" />
                 <span>Sign in with Google</span>
             </Button>

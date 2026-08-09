@@ -18,6 +18,11 @@ export interface BootstrapResult {
     active_team_id: number | null
 }
 
+export interface LoginInput {
+    email: string
+    password: string
+}
+
 export interface LoginResult {
     authenticated: boolean
     active_team_id: number | null
