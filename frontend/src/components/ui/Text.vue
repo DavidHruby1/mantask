@@ -2,20 +2,17 @@
 import { cva } from 'class-variance-authority'
 import { cn } from '@/utils/cn'
 
-type TextProps = {
-    color?: 'primary' | 'secondary'
-    size: 'xs' | 'sm' | 'md' | 'lg'
-}
+import type { TextProps } from '@/interfaces'
 
 const props = withDefaults(defineProps<TextProps>(), {
     color: 'primary',
     size: 'md',
 })
 
-const textVariants = cva(`text-white-text font-sans font-normal tracking-normal antialiased`, {
+const textVariants = cva(`font-sans font-normal tracking-normal antialiased`, {
     variants: {
         color: {
-            primary: '',
+            primary: 'text-white-text',
             secondary: 'text-white-muted',
         },
         size: {

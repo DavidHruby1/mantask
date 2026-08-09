@@ -2,10 +2,7 @@
 import { cva } from 'class-variance-authority'
 import { cn } from '@/utils/cn'
 
-type HeadingProps = {
-    variant?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
-    color?: 'primary' | 'secondary'
-}
+import type { HeadingProps } from '@/interfaces'
 
 const props = withDefaults(defineProps<HeadingProps>(), {
     variant: 'h3',

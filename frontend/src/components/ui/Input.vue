@@ -3,14 +3,9 @@ import { ref } from 'vue'
 import { cva } from 'class-variance-authority'
 import { cn } from '@/utils/cn'
 
-type InputProps = {
-    variant?: 'underlined' | 'outlined'
-    size: 'sm' | 'md' | 'lg'
-    type: 'text' | 'number' | 'email' | 'password'
-    placeholder?: string
-    disabled?: boolean
-    required?: boolean
-}
+import type { InputProps } from '@/interfaces'
+
+defineOptions({ inheritAttrs: false })
 
 const props = withDefaults(defineProps<InputProps>(), {
     size: 'md',
@@ -19,8 +14,10 @@ const props = withDefaults(defineProps<InputProps>(), {
     required: false,
 })
 
+const inputModel = defineModel<string>()
+
 const inputVariants = cva(
-    `bg-input-black text-white-text
+    `w-full bg-input-black text-white-text
     font-normal outline-none
     border-1 border-white-surface rounded-lg
     placeholder:text-white-placeholder placeholder:font-normal
@@ -31,14 +28,10 @@ const inputVariants = cva(
     `,
     {
         variants: {
-            variant: {
-                underlined: '',
-                outlined: '',
-            },
             size: {
-                sm: 'w-full text-sm',
-                md: 'w-full text-base px-3 py-[10px]',
-                lg: 'w-full text-lg',
+                sm: 'px-2.5 py-2 text-sm',
+                md: 'px-3 py-2.5 text-base',
+                lg: 'px-4 py-3 text-lg',
             },
         },
     },
@@ -56,12 +49,12 @@ const togglePasswordVisibility = () => {
 <template>
     <span class="relative w-full">
         <input
+            v-model="inputModel"
             v-bind="$attrs"
             :type="inputType"
             :class="
                 cn(
                     inputVariants({
-                        variant: props.variant,
                         size: props.size,
                     }),
                     { 'pr-10' : props.type === 'password' }
@@ -70,6 +63,7 @@ const togglePasswordVisibility = () => {
             :placeholder="props.placeholder"
             :disabled="props.disabled"
             :required="props.required"
+            :aria-invalid="Boolean(props.error)"
         />
         <button
             v-if="props.type === 'password'"
@@ -84,6 +78,9 @@ const togglePasswordVisibility = () => {
                 alt=""
             >
         </button>
+        <p v-if="props.error" class="w-full text-sm text-red-700">
+            {{ props.error }}
+        </p>
     </span>
 </template>
 

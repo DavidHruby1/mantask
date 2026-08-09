@@ -23,7 +23,7 @@ import Form from '@/components/ui/Form.vue'
             <Input id="password" size="md" type="password" placeholder="Password" />
 
             <div class="flex w-full justify-end">
-                <Link class="mb-2 -mt-2" href="/" color="primary" size="xs">
+                <Link class="mb-2 -mt-2" to="/" color="primary" size="xs">
                     Forgot password?
                 </Link>
             </div>
@@ -43,7 +43,7 @@ import Form from '@/components/ui/Form.vue'
 
             <Text class="mt-2" color="secondary" size="xs">
                 Don't have an account?
-                <Link href="/" color="primary" size="xs"> Request an invite </Link>
+                <Link to="/" color="primary" size="xs"> Request an invite </Link>
             </Text>
         </Form>
     </Container>
