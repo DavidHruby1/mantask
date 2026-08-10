@@ -19,8 +19,8 @@ SessionTokenDep = Annotated[
 
 def get_current_session(
     db: DbSessionDep,
-    session_token: SessionTokenDep,
     response: Response,
+    session_token: SessionTokenDep = None,
 ) -> UserSession:
     """Authenticate activity and persist the renewed server and browser expiry."""
     if not session_token:
