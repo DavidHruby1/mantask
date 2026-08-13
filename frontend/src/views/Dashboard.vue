@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { TaskStatus, type TaskCreate, type TaskRead } from '@/interfaces'
 import { tasksStore } from '@/stores/tasks'
 
 const taskStore = tasksStore()
+const draggedTask = ref<TaskRead | null>(null)
+const dropTargetStatus = ref<TaskStatus | null>(null)
 
 type EntryTaskStatus = NonNullable<TaskCreate['status']>
 
@@ -51,6 +53,92 @@ async function deleteTask(task: TaskRead): Promise<void> {
     }
 
     await taskStore.deleteTask(task.id)
+}
+
+// Returns whether the board workflow permits dropping this task into a column.
+// Forward movement advances one applicable step, while movement back to an earlier
+// status is allowed. This prevents the browser from presenting drops the API rejects.
+function canMoveTask(task: TaskRead, targetStatus: TaskStatus): boolean {
+    if (task.status === targetStatus) {
+        return false
+    }
+
+    const sourceIndex = columns.findIndex((column) => column.status === task.status)
+    const targetIndex = columns.findIndex((column) => column.status === targetStatus)
+
+    if (targetIndex < sourceIndex) {
+        return true
+    }
+
+    if (targetStatus === TaskStatus.REVIEW && !task.should_review) {
+        return false
+    }
+
+    if (task.status === TaskStatus.IN_PROGRESS && !task.should_review) {
+        return targetStatus === TaskStatus.DONE
+    }
+
+    return targetIndex === sourceIndex + 1
+}
+
+// Records the one card carried by the browser's drag operation.
+// Keeping the task locally lets destination columns reject invalid workflow moves
+// before the drop; the ID is also written to DataTransfer for browser compatibility.
+function startDrag(event: DragEvent, task: TaskRead): void {
+    draggedTask.value = task
+    event.dataTransfer?.setData('text/plain', String(task.id))
+
+    if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = 'move'
+    }
+}
+
+// Makes a column a drop target only when it represents a valid workflow move.
+// This keeps the drop cursor and visual target aligned with the backend's movement policy.
+function allowDrop(event: DragEvent, targetStatus: TaskStatus): void {
+    if (!draggedTask.value || !canMoveTask(draggedTask.value, targetStatus)) {
+        return
+    }
+
+    event.preventDefault()
+    dropTargetStatus.value = targetStatus
+
+    if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = 'move'
+    }
+}
+
+// Moves the dragged card to the end of the target column through the move endpoint.
+// The last card supplies the predecessor anchor required for an append; a rejected or
+// conflicting move reloads the board so the local view matches the server.
+async function dropTask(event: DragEvent, targetStatus: TaskStatus): Promise<void> {
+    const task = draggedTask.value
+    dropTargetStatus.value = null
+    draggedTask.value = null
+
+    if (!task || !canMoveTask(task, targetStatus)) {
+        return
+    }
+
+    event.preventDefault()
+    const destinationTasks = taskStore.tasks.filter(
+        (candidate) => candidate.status === targetStatus && candidate.id !== task.id,
+    )
+    const lastDestinationTask = destinationTasks[destinationTasks.length - 1]
+    const movedTask = await taskStore.moveTask(task.id, {
+        target_status: targetStatus,
+        anchor_task_id: lastDestinationTask?.id ?? null,
+    })
+
+    if (!movedTask) {
+        await taskStore.getTasks()
+    }
+}
+
+// Clears temporary drag state when a drag is cancelled or completes without a drop.
+function endDrag(): void {
+    draggedTask.value = null
+    dropTargetStatus.value = null
 }
 
 onMounted(() => {
@@ -102,7 +190,14 @@ onMounted(() => {
                 </div>
 
                 <section class="kanban-board" aria-label="Kanban board">
-                    <article v-for="column in columns" :key="column.status" class="kanban-column">
+                    <article
+                        v-for="column in columns"
+                        :key="column.status"
+                        class="kanban-column"
+                        :class="{ 'kanban-column--drop-target': dropTargetStatus === column.status }"
+                        @dragover="allowDrop($event, column.status)"
+                        @drop="dropTask($event, column.status)"
+                    >
                         <header>
                             <h2>{{ column.title }}</h2>
                             <span>
@@ -126,6 +221,10 @@ onMounted(() => {
                             )"
                             :key="task.id"
                             class="task-card"
+                            :class="{ 'task-card--dragging': draggedTask?.id === task.id }"
+                            draggable="true"
+                            @dragstart="startDrag($event, task)"
+                            @dragend="endDrag"
                         >
                             <strong>{{ task.title }}</strong>
                             <div class="task-actions">
@@ -255,6 +354,11 @@ onMounted(() => {
     border: 1px solid rgba(235, 237, 242, 0.18);
 }
 
+.kanban-column--drop-target {
+    border-color: rgba(235, 237, 242, 0.7);
+    background: rgba(235, 237, 242, 0.06);
+}
+
 .kanban-column > header h2 {
     margin: 0;
     font-size: 1rem;
@@ -279,6 +383,11 @@ onMounted(() => {
     margin-top: 12px;
     padding: 12px;
     border: 1px solid rgba(235, 237, 242, 0.3);
+    cursor: grab;
+}
+
+.task-card--dragging {
+    opacity: 0.45;
 }
 
 .task-actions {
