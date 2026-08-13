@@ -6,6 +6,7 @@ import { tasksStore } from '@/stores/tasks'
 const taskStore = tasksStore()
 const draggedTask = ref<TaskRead | null>(null)
 const dropTargetStatus = ref<TaskStatus | null>(null)
+const dropTargetTask = ref<TaskRead | null>(null)
 
 type EntryTaskStatus = NonNullable<TaskCreate['status']>
 
@@ -60,7 +61,7 @@ async function deleteTask(task: TaskRead): Promise<void> {
 // status is allowed. This prevents the browser from presenting drops the API rejects.
 function canMoveTask(task: TaskRead, targetStatus: TaskStatus): boolean {
     if (task.status === targetStatus) {
-        return false
+        return true
     }
 
     const sourceIndex = columns.findIndex((column) => column.status === task.status)
@@ -96,38 +97,62 @@ function startDrag(event: DragEvent, task: TaskRead): void {
 // Makes a column a drop target only when it represents a valid workflow move.
 // This keeps the drop cursor and visual target aligned with the backend's movement policy.
 function allowDrop(event: DragEvent, targetStatus: TaskStatus): void {
-    if (!draggedTask.value || !canMoveTask(draggedTask.value, targetStatus)) {
+    if (
+        !draggedTask.value ||
+        draggedTask.value.status === targetStatus ||
+        !canMoveTask(draggedTask.value, targetStatus)
+    ) {
         return
     }
 
     event.preventDefault()
     dropTargetStatus.value = targetStatus
+    dropTargetTask.value = null
 
     if (event.dataTransfer) {
         event.dataTransfer.dropEffect = 'move'
     }
 }
 
-// Moves the dragged card to the end of the target column through the move endpoint.
-// The last card supplies the predecessor anchor required for an append; a rejected or
-// conflicting move reloads the board so the local view matches the server.
-async function dropTask(event: DragEvent, targetStatus: TaskStatus): Promise<void> {
-    const task = draggedTask.value
-    dropTargetStatus.value = null
-    draggedTask.value = null
-
-    if (!task || !canMoveTask(task, targetStatus)) {
+// Treat the card below the pointer as the insertion anchor instead of the column.
+function allowTaskDrop(event: DragEvent, targetTask: TaskRead): void {
+    if (!draggedTask.value || !canMoveTask(draggedTask.value, targetTask.status)) {
         return
     }
 
     event.preventDefault()
-    const destinationTasks = taskStore.tasks.filter(
-        (candidate) => candidate.status === targetStatus && candidate.id !== task.id,
-    )
-    const lastDestinationTask = destinationTasks[destinationTasks.length - 1]
+    event.stopPropagation()
+    dropTargetStatus.value = targetTask.status
+    dropTargetTask.value = targetTask
+
+    if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = 'move'
+    }
+}
+
+// Uses the card under the drop pointer as the predecessor anchor; dropping on the column
+// itself sends no anchor. A rejected or conflicting move reloads the board.
+async function dropTask(
+    event: DragEvent,
+    targetStatus: TaskStatus,
+): Promise<void> {
+    const task = draggedTask.value
+    const dropTarget = event.target instanceof Element
+        ? event.target.closest<HTMLElement>('[data-task-id]')
+        : null
+    const anchorTaskId = dropTarget ? Number(dropTarget.dataset.taskId) : null
+    dropTargetStatus.value = null
+    dropTargetTask.value = null
+    draggedTask.value = null
+
+    if (!task || (anchorTaskId === null && task.status === targetStatus) || !canMoveTask(task, targetStatus)) {
+        return
+    }
+
+    event.preventDefault()
     const movedTask = await taskStore.moveTask(task.id, {
         target_status: targetStatus,
-        anchor_task_id: lastDestinationTask?.id ?? null,
+        anchor_task_id: anchorTaskId,
     })
 
     if (!movedTask) {
@@ -139,6 +164,7 @@ async function dropTask(event: DragEvent, targetStatus: TaskStatus): Promise<voi
 function endDrag(): void {
     draggedTask.value = null
     dropTargetStatus.value = null
+    dropTargetTask.value = null
 }
 
 onMounted(() => {
@@ -218,13 +244,18 @@ onMounted(() => {
                         <div
                             v-for="task in taskStore.tasks.filter(
                                 (task) => task.status === column.status,
-                            )"
+                            ).sort((firstTask, secondTask) => firstTask.position - secondTask.position)"
                             :key="task.id"
+                            :data-task-id="task.id"
                             class="task-card"
-                            :class="{ 'task-card--dragging': draggedTask?.id === task.id }"
+                            :class="{
+                                'task-card--dragging': draggedTask?.id === task.id,
+                                'task-card--drop-target': dropTargetTask?.id === task.id,
+                            }"
                             draggable="true"
                             @dragstart="startDrag($event, task)"
                             @dragend="endDrag"
+                            @dragover.stop="allowTaskDrop($event, task)"
                         >
                             <strong>{{ task.title }}</strong>
                             <div class="task-actions">
@@ -388,6 +419,11 @@ onMounted(() => {
 
 .task-card--dragging {
     opacity: 0.45;
+}
+
+.task-card--drop-target {
+    border-color: rgba(235, 237, 242, 0.7);
+    background: rgba(235, 237, 242, 0.06);
 }
 
 .task-actions {
