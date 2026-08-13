@@ -11,7 +11,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     // Refreshes the bootstrap and authentication state used for routing.
     // Values are updated together so a failed request cannot leave a partial new state.
-    async function loadStatus() {
+    async function loadStatus(): Promise<void> {
         if (bootstrapped.value !== true) {
             const bootstrapStatus = await authApi.getBootstrapStatus()
 
@@ -24,7 +24,6 @@ export const useAuthStore = defineStore('auth', () => {
 
         try {
             const authResult = await authApi.getAuthResult()
-
             bootstrapped.value = true
             authenticated.value = authResult.authenticated
         } catch (error) {
@@ -33,12 +32,11 @@ export const useAuthStore = defineStore('auth', () => {
                 authenticated.value = false
                 return
             }
-
             console.error(
                 'Failed to load authentication status:',
                 error instanceof Error ? error.message : 'Unknown error',
             )
-            throw error
+            return
         }
     }
 
@@ -47,10 +45,8 @@ export const useAuthStore = defineStore('auth', () => {
     async function bootstrap(payload: BootstrapSetup): Promise<boolean> {
         try {
             const result = await authApi.bootstrapSetup(payload)
-
             bootstrapped.value = result.bootstrapped
             authenticated.value = true
-
             return true
         } catch (error) {
             console.error(
@@ -64,13 +60,10 @@ export const useAuthStore = defineStore('auth', () => {
     async function login(payload: LoginInput): Promise<boolean> {
         try {
             const result = await authApi.login(payload)
-
             authenticated.value = result.authenticated
-
             return result.authenticated
         } catch (error) {
             authenticated.value = false
-
             console.error(
                 'Login failed:',
                 error instanceof Error ? error.message : 'Unknown error',
