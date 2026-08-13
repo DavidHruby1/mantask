@@ -1,5 +1,3 @@
-import type { RouteLocationRaw } from 'vue-router'
-
 export interface BootstrapStatus {
     bootstrapped: boolean
 }
@@ -33,40 +31,83 @@ export interface FormErrors {
     [field: string]: string
 }
 
-export interface ButtonProps {
-    variant?: 'glass' | 'ghost'
-    size?: 'sm' | 'md' | 'lg'
-    type?: 'button' | 'submit' | 'reset'
-    disabled?: boolean
+export enum TaskPriority {
+    LOW = "low",
+    MEDIUM = "medium",
+    HIGH = "high",
+    URGENT = "urgent",
 }
 
-export interface FormProps {
-    variant?: 'transparent' | 'card'
-    loading?: boolean
-    novalidate?: boolean
+export enum TaskEffort {
+    XS = 1,
+    S = 2,
+    M = 3,
+    L = 5,
+    XL = 8,
 }
 
-export interface HeadingProps {
-    variant?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
-    color?: 'primary' | 'secondary'
+export enum TaskStatus {
+    BACKLOG = 'backlog',
+    TODO = 'todo',
+    IN_PROGRESS = 'in_progress',
+    REVIEW = 'review',
+    DONE = 'done',
 }
 
-export interface InputProps {
-    size?: 'sm' | 'md' | 'lg'
-    type?: 'text' | 'number' | 'email' | 'password'
-    placeholder?: string
-    disabled?: boolean
-    required?: boolean
-    error?: string
+export interface TaskCreate {
+    assignee_member_id?: number | null
+    reviewer_member_id?: number | null
+    title: string
+    description?: string | null
+    layer?: string | null
+    priority?: TaskPriority | null
+    review_date?: string | null
+    due_date?: string | null
+    effort?: TaskEffort | null
+    should_review?: boolean
+    status?: TaskStatus.BACKLOG | TaskStatus.TODO | TaskStatus.IN_PROGRESS
 }
 
-export interface LinkProps {
-    to: RouteLocationRaw
-    color?: 'primary' | 'secondary'
-    size?: 'xs' | 'sm' | 'md' | 'lg'
+export interface TaskUpdate {
+    assignee_member_id?: number | null
+    reviewer_member_id?: number | null
+    title?: string
+    description?: string | null
+    layer?: string | null
+    priority?: TaskPriority | null
+    review_date?: string | null
+    due_date?: string | null
+    effort?: TaskEffort | null
+    should_review?: boolean
 }
 
-export interface TextProps {
-    color?: 'primary' | 'secondary'
-    size?: 'xs' | 'sm' | 'md' | 'lg'
+export interface TaskRead {
+    id: number
+    team_id: number
+    creator_member_id: number
+    assignee_member_id: number | null
+    reviewer_member_id: number | null
+    title: string
+    description: string | null
+    layer: string | null
+    priority: TaskPriority | null
+    review_date: string | null
+    due_date: string | null
+    effort: TaskEffort | null
+    should_review: boolean
+    status: TaskStatus
+    position: number
+    created_at: string
+    updated_at: string
+    started_working_at: string | null
+    submitted_for_review_at: string | null
+    completed_at: string | null
+    returned_count: number
+    reopened_count: number
+    blocked_count: number
+}
+
+export interface TaskMove {
+    target_status: TaskStatus
+    anchor_task_id: number | null
 }

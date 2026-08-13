@@ -3,7 +3,14 @@ import { ref } from 'vue'
 import { cva } from 'class-variance-authority'
 import { cn } from '@/utils/cn'
 
-import type { InputProps } from '@/interfaces'
+interface InputProps {
+    size?: 'sm' | 'md' | 'lg'
+    type?: 'text' | 'number' | 'email' | 'password'
+    placeholder?: string
+    disabled?: boolean
+    required?: boolean
+    error?: string
+}
 
 defineOptions({ inheritAttrs: false })
 

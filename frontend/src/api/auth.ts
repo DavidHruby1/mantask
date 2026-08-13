@@ -1,4 +1,4 @@
-import axios from 'axios'
+import { api } from '@/api/client'
 
 import type {
     BootstrapResult,
@@ -8,10 +8,6 @@ import type {
     LoginResult,
 } from '@/interfaces'
 
-const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL,
-    withCredentials: true
-})
 
 export const authApi = {
     async getBootstrapStatus(): Promise<BootstrapStatus> {
