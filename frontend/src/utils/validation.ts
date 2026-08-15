@@ -1,7 +1,7 @@
 import type { FormErrors } from '@/interfaces'
 
 const PASSWORD_REGEX = /^[A-Za-z0-9_!@#$%^&*()[\]{};<>?/\\|~."+',`=:-]+$/
-const NAME_REGEX = /^[a-zA-Z0-9\-_: ]+$/
+const NAME_REGEX = /^[\p{L}\p{N}\-_:,. ]+$/u
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 // Validates username and stores its current error in the supplied error object.

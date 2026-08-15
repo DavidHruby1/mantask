@@ -6,9 +6,9 @@ from backend.app.schemas.team import TeamCreate, TeamUpdate
 
 @pytest.mark.parametrize("schema", [TeamCreate, TeamUpdate])
 def test_team_name_is_stripped(schema):
-    team = schema(name="  Team-name_1:  ")
+    team = schema(name="  Mandík, a.s.  ")
 
-    assert team.name == "Team-name_1:"
+    assert team.name == "Mandík, a.s."
 
 
 @pytest.mark.parametrize("schema", [TeamCreate, TeamUpdate])
