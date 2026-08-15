@@ -11,12 +11,7 @@ import {
 } from '@/utils/validation'
 
 import Button from '@/components/ui/Button.vue'
-import Container from '@/components/ui/Container.vue'
-import Link from '@/components/ui/Link.vue'
 import Input from '@/components/ui/Input.vue'
-import Text from '@/components/ui/Text.vue'
-import Heading from '@/components/ui/Heading.vue'
-import Form from '@/components/ui/Form.vue'
 
 import type { BootstrapSetup, FormErrors } from '@/interfaces'
 
@@ -89,26 +84,27 @@ async function handleBootstrapSubmit() {
 </script>
 
 <template>
-    <Container>
+    <div class="relative flex min-h-screen items-center justify-center overflow-hidden px-4">
         <div class="bootstrap-light-aura"></div>
         <div class="bootstrap-light-source"></div>
 
-        <Form
-            variant="card"
-            :loading="isSubmitting"
-            @submit-form="handleBootstrapSubmit"
+        <form
+            class="relative z-10 box-content flex w-[calc(100%_-_80px)] min-w-[240px] max-w-[380px] flex-col items-center gap-3 rounded-[24px] border border-white-surface bg-secondary-black p-10 [&>button]:mt-2"
+            :aria-busy="isSubmitting"
+            @submit.prevent="handleBootstrapSubmit"
         >
-            <Heading class="mb-0" variant="h3"> Set up Mantask </Heading>
+            <h3 class="mb-0 font-sans text-2xl font-semibold tracking-normal text-white-base antialiased">
+                Set up Mantask
+            </h3>
 
-            <Text class="mb-5 text-center" color="secondary" size="sm">
+            <p class="mb-5 text-center font-sans text-sm leading-5 font-normal tracking-normal text-white-muted antialiased">
                 Claim this Mantask instance and become owner.
-            </Text>
+            </p>
 
             <Input
                 v-model="username"
                 id="username"
                 aria-label="Username"
-                size="md"
                 type="text"
                 placeholder="Username"
                 :error="formErrors.username"
@@ -122,7 +118,6 @@ async function handleBootstrapSubmit() {
                 v-model="email"
                 id="email"
                 aria-label="Email address"
-                size="md"
                 type="email"
                 placeholder="Email address"
                 :error="formErrors.email"
@@ -136,7 +131,6 @@ async function handleBootstrapSubmit() {
                 v-model="password"
                 id="password"
                 aria-label="Password"
-                size="md"
                 type="password"
                 placeholder="Password"
                 :error="formErrors.password"
@@ -150,7 +144,6 @@ async function handleBootstrapSubmit() {
                 v-model="organization"
                 id="organization-name"
                 aria-label="Organization name"
-                size="md"
                 type="text"
                 placeholder="Organization name"
                 :error="formErrors.organization"
@@ -164,7 +157,6 @@ async function handleBootstrapSubmit() {
                 v-model="team"
                 id="team-name"
                 aria-label="Team name"
-                size="md"
                 type="text"
                 placeholder="Team name"
                 :error="formErrors.team"
@@ -178,7 +170,6 @@ async function handleBootstrapSubmit() {
                 v-model="bootstrapSecret"
                 id="bootstrap-secret"
                 aria-label="Bootstrap secret"
-                size="md"
                 type="password"
                 placeholder="Bootstrap secret"
                 :error="formErrors.bootstrapSecret"
@@ -197,13 +188,8 @@ async function handleBootstrapSubmit() {
             >
                 {{ isSubmitting ? 'Creating owner account...' : 'Create owner account' }}
             </Button>
-
-            <Text class="mt-2" color="secondary" size="xs">
-                Already have an account?
-                <Link :to="{ name: 'login' }" color="primary" size="xs"> Login </Link>
-            </Text>
-        </Form>
-    </Container>
+        </form>
+    </div>
 </template>
 
 <style scoped>
