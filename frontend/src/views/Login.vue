@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
+import { RiGoogleFill } from '@remixicon/vue'
 import { useAuthStore } from '@/stores/auth'
 import { validateEmail, validatePassword } from '@/utils/validation'
 
@@ -124,17 +125,22 @@ async function handleLoginSubmit() {
                 variant="ghost"
                 size="lg"
             >
-                <img class="h-5 w-5 shrink-0" src="/google-fill.svg" alt="" aria-hidden="true" />
+                <RiGoogleFill
+                    size="20px"
+                    color="rgba(255,255,255,0.58)"
+                    class="shrink-0"
+                    aria-hidden="true"
+                />
                 <span>Sign in with Google</span>
             </Button>
 
             <p class="mt-2 font-sans text-[13px] leading-4.5 font-normal tracking-normal text-white-muted antialiased">
                 Don't have an account?
                 <RouterLink
-                    class=`
+                    class="
                         cursor-pointer font-sans text-[13px] leading-4.5 font-normal tracking-normal
                         text-dark-muted antialiased transition-colors duration-200 hover:text-white-base
-                    `
+                    "
                     to="/"
                 >
                     Request an invite

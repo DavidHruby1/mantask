@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, type HTMLAttributes } from 'vue'
 import { cva } from 'class-variance-authority'
+import { RiEyeLine, RiEyeOffLine } from '@remixicon/vue'
 import { cn } from '@/utils/cn'
 
 interface InputProps {
@@ -88,11 +89,20 @@ const togglePasswordVisibility = () => {
             @pointerdown.prevent
             @click="togglePasswordVisibility"
         >
-            <img
-                :src="isPasswordVisible ? '/eye-line.svg' : '/eye-off-line.svg'"
-                class="h-5 w-5 shrink-0"
-                alt=""
-            >
+            <RiEyeLine
+                v-if="isPasswordVisible"
+                size="20px"
+                color="rgba(255,255,255,0.58)"
+                class="shrink-0"
+                aria-hidden="true"
+            />
+            <RiEyeOffLine
+                v-else
+                size="20px"
+                color="rgba(255,255,255,0.58)"
+                class="shrink-0"
+                aria-hidden="true"
+            />
         </button>
         <p v-if="props.error" class="w-full text-sm text-red-700">
             {{ props.error }}
