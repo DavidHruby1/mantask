@@ -1,17 +1,17 @@
 <script setup lang="ts">
+import type { HTMLAttributes } from 'vue'
 import { cva } from 'class-variance-authority'
 import { cn } from '@/utils/cn'
 
 interface ButtonProps {
     variant?: 'glass' | 'ghost'
     size?: 'sm' | 'md' | 'lg'
+    class?: HTMLAttributes['class']
     type?: 'button' | 'submit' | 'reset'
     disabled?: boolean
 }
 
 const props = withDefaults(defineProps<ButtonProps>(), {
-    variant: 'glass',
-    size: 'md',
     type: 'button',
     disabled: false,
 })
@@ -34,6 +34,10 @@ const buttonVariants = cva(
                 lg: 'w-full h-12 px-6 text-lg',
             },
         },
+        defaultVariants: {
+            variant: 'glass',
+            size: 'md',
+        },
     },
 )
 </script>
@@ -46,6 +50,7 @@ const buttonVariants = cva(
                     variant: props.variant,
                     size: props.size,
                 }),
+                props.class,
             )
         "
         :type="props.type"
