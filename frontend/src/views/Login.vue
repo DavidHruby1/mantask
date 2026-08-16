@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import { RiGoogleFill } from '@remixicon/vue'
+import { LogIn } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import { validateEmail, validatePassword } from '@/utils/validation'
 
@@ -125,8 +125,9 @@ async function handleLoginSubmit() {
                 variant="ghost"
                 size="lg"
             >
-                <RiGoogleFill
-                    size="20px"
+                <LogIn
+                    :size="20"
+                    :stroke-width="1.25"
                     color="rgba(255,255,255,0.58)"
                     class="shrink-0"
                     aria-hidden="true"

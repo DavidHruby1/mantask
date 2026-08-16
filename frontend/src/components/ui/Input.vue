@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, type HTMLAttributes } from 'vue'
 import { cva } from 'class-variance-authority'
-import { RiEyeLine, RiEyeOffLine } from '@remixicon/vue'
+import { Eye, EyeOff } from '@lucide/vue'
 import { cn } from '@/utils/cn'
 
 interface InputProps {
@@ -89,16 +89,18 @@ const togglePasswordVisibility = () => {
             @pointerdown.prevent
             @click="togglePasswordVisibility"
         >
-            <RiEyeLine
+            <Eye
                 v-if="isPasswordVisible"
-                size="20px"
+                :size="20"
+                :stroke-width="1.25"
                 color="rgba(255,255,255,0.58)"
                 class="shrink-0"
                 aria-hidden="true"
             />
-            <RiEyeOffLine
+            <EyeOff
                 v-else
-                size="20px"
+                :size="20"
+                :stroke-width="1.25"
                 color="rgba(255,255,255,0.58)"
                 class="shrink-0"
                 aria-hidden="true"
