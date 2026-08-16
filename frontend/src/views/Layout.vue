@@ -1,19 +1,21 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import { RouterView } from 'vue-router'
 import Sidebar from '@/components/Sidebar.vue'
 
-
-onMounted(() => {
-})
-//
+const isSidebarCollapsed = ref(false)
 </script>
 
 <template>
     <div class="flex w-full h-dvh p-1">
-        <Sidebar class="flex-[1_1_0%]"/>
+        <Sidebar
+            :collapsed="isSidebarCollapsed"
+            class="shrink-0 transition-[width] duration-200"
+            :class="isSidebarCollapsed ? 'w-12' : 'w-64'"
+            @toggle-sidebar="isSidebarCollapsed = !isSidebarCollapsed"
+        />
 
-        <main class="flex-[5_1_0%]">
+        <main class="flex-1 min-w-0">
             <RouterView />
         </main>
     </div>
