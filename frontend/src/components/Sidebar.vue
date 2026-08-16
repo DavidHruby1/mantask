@@ -51,7 +51,7 @@ function handleNavItemClick(event: MouseEvent) {
 </script>
 
 <template>
-    <div class="flex flex-col bg-atmosphere-gradient mx-2 my-2 rounded-lg p-1 overflow-hidden">
+    <div class="flex min-w-0 flex-col bg-atmosphere-gradient mx-2 my-2 rounded-lg p-1">
         <div
             class="flex items-center gap-3 mt-2 mb-4 px-1.5"
         >
@@ -60,7 +60,7 @@ function handleNavItemClick(event: MouseEvent) {
                 aria-hidden="true"
             ></div>
             <div
-                class="whitespace-nowrap transition-opacity duration-200"
+                class="min-w-0 overflow-hidden whitespace-nowrap transition-opacity duration-200"
                 :class="collapsed ? 'opacity-0' : 'opacity-100'"
             >
                 <span class="font-medium text-white-base">David Hruby</span>
