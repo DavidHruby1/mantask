@@ -80,6 +80,7 @@ function toggleDropdown() {
 
             <span
                 v-if="!props.iconOnly"
+                class="min-w-0 overflow-hidden whitespace-nowrap"
                 :style="{ color: props.textColor }"
             >
                 {{ props.text }}
