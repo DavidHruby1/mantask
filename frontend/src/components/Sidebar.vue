@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
+import { useAuthStore } from '@/stores/auth'
+import { useTeamsStore } from '@/stores/teams'
 import {
     LayoutDashboard,
     Users,
@@ -10,6 +14,7 @@ import {
     PanelLeftClose,
     PanelLeftOpen,
     Settings,
+    Power,
 } from '@lucide/vue'
 import DropdownMenu from '@/components/ui/DropdownMenu.vue'
 // Clicking on the user profile shows modal, therefore another emit is needed
@@ -37,8 +42,14 @@ defineProps<{
     collapsed: boolean
 }>()
 
+const authStore = useAuthStore()
+const teamsStore = useTeamsStore()
+const { currentUser } = storeToRefs(authStore)
+const { currentUserTeams } = storeToRefs(teamsStore)
+const router = useRouter()
+
 const selectedNavItem = ref<number>(0)
-const selectedTeam = ref<string>('Team A')
+const selectedTeam = ref<string>('')
 
 function handleNavItemClick(event: MouseEvent) {
     const button = event.currentTarget
@@ -47,6 +58,22 @@ function handleNavItemClick(event: MouseEvent) {
 
     selectedNavItem.value = Number(button.id)
 }
+
+async function logout() {
+    if (await authStore.logout()) {
+        await router.push({ name: 'login' })
+    }
+}
+
+onMounted(async () => {
+    const [user, teams] = await Promise.all([
+        authStore.getCurrentUser(),
+        teamsStore.getCurrentUserTeams()
+    ])
+    selectedTeam.value = teams.find(
+        (team) => team.id === user?.last_active_team_id
+    )?.name ?? ''
+})
 
 </script>
 
@@ -63,7 +90,11 @@ function handleNavItemClick(event: MouseEvent) {
                 class="min-w-0 overflow-hidden whitespace-nowrap transition-opacity duration-200"
                 :class="collapsed ? 'opacity-0' : 'opacity-100'"
             >
-                <span class="font-medium text-white-base">David Hruby</span>
+                <span
+                    class="font-medium text-white-base"
+                >
+                    {{ currentUser?.username ?? '' }}
+                </span>
             </div>
         </div>
 
@@ -209,7 +240,7 @@ function handleNavItemClick(event: MouseEvent) {
                 aria-label="Settings"
                 class="
                     w-full flex items-center gap-3 rounded-lg mt-auto py-1.5 px-2 overflow-hidden
-                    mb-2 hover:bg-atmosphere-light focus-within:bg-atmosphere-light
+                    hover:bg-atmosphere-light focus-within:bg-atmosphere-light
                 "
                 :class="selectedNavItem === 5 ? 'bg-atmosphere-light' : ''"
                 @click="handleNavItemClick"
@@ -224,6 +255,26 @@ function handleNavItemClick(event: MouseEvent) {
                     class="text-white-base whitespace-nowrap transition-opacity duration-200"
                     :class="collapsed ? 'opacity-0' : 'opacity-100'"
                 >Settings</span>
+            </button>
+            <button
+                type="button"
+                aria-label="Logout"
+                class="
+                    w-full flex items-center gap-3 rounded-lg mb-2 py-1.5 px-2 overflow-hidden
+                    hover:bg-atmosphere-light focus-visible:bg-atmosphere-light
+                "
+                @click="logout"
+            >
+                <Power
+                    :size="24"
+                    :stroke-width="1.5"
+                    color="var(--color-white-base)"
+                    class="shrink-0"
+                />
+                <span
+                    class="text-white-base whitespace-nowrap transition-opacity duration-200"
+                    :class="collapsed ? 'opacity-0' : 'opacity-100'"
+                >Logout</span>
             </button>
         </nav>
     </div>

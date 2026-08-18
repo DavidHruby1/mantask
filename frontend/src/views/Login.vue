@@ -45,7 +45,7 @@ async function handleLoginSubmit() {
         const loginSucceeded = await authStore.login(payload)
 
         if (loginSucceeded) {
-            router.push({ name: 'dashboard' })
+            router.push({ name: 'app' })
         }
     } finally {
         isLoggingIn.value = false

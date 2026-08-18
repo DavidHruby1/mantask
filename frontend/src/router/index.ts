@@ -39,7 +39,7 @@ router.beforeEach(async (target) => {
     }
 
     if (target.name === 'login' || target.name === 'bootstrap') {
-        return { name: 'dashboard' }
+        return { name: 'app' }
     }
 })
 
