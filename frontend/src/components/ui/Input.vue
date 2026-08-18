@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, type HTMLAttributes } from 'vue'
 import { cva } from 'class-variance-authority'
+import { Eye, EyeOff } from '@lucide/vue'
 import { cn } from '@/utils/cn'
 
 interface InputProps {
     size?: 'sm' | 'md' | 'lg'
+    class?: HTMLAttributes['class']
     type?: 'text' | 'number' | 'email' | 'password'
     placeholder?: string
     disabled?: boolean
@@ -15,7 +17,6 @@ interface InputProps {
 defineOptions({ inheritAttrs: false })
 
 const props = withDefaults(defineProps<InputProps>(), {
-    size: 'md',
     type: 'text',
     disabled: false,
     required: false,
@@ -40,6 +41,13 @@ const inputVariants = cva(
                 md: 'px-3 py-2.5 text-base',
                 lg: 'px-4 py-3 text-lg',
             },
+            hasPasswordToggle: {
+                true: 'pr-10',
+                false: null,
+            },
+        },
+        defaultVariants: {
+            size: 'md',
         },
     },
 )
@@ -63,8 +71,9 @@ const togglePasswordVisibility = () => {
                 cn(
                     inputVariants({
                         size: props.size,
+                        hasPasswordToggle: props.type === 'password',
                     }),
-                    { 'pr-10' : props.type === 'password' }
+                    props.class,
                 )
             "
             :placeholder="props.placeholder"
@@ -80,11 +89,22 @@ const togglePasswordVisibility = () => {
             @pointerdown.prevent
             @click="togglePasswordVisibility"
         >
-            <img
-                :src="isPasswordVisible ? '/eye-line.svg' : '/eye-off-line.svg'"
-                class="h-5 w-5 shrink-0"
-                alt=""
-            >
+            <Eye
+                v-if="isPasswordVisible"
+                :size="20"
+                :stroke-width="1.25"
+                color="rgba(255,255,255,0.58)"
+                class="shrink-0"
+                aria-hidden="true"
+            />
+            <EyeOff
+                v-else
+                :size="20"
+                :stroke-width="1.25"
+                color="rgba(255,255,255,0.58)"
+                class="shrink-0"
+                aria-hidden="true"
+            />
         </button>
         <p v-if="props.error" class="w-full text-sm text-red-700">
             {{ props.error }}

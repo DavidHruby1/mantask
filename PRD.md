@@ -94,6 +94,7 @@ This application is a specialized, developer-centric task and workflow managemen
     - `Roles`
 - Admin will also have more right than other members, like creating layers for example
 - Each menu button will be described later in this document
+- **Icon set:** The frontend uses **Lucide** via `@lucide/vue` for UI icons. New interface icons should use this set consistently.
 
 ### Account Settings
 - Change picture, username

@@ -3,10 +3,6 @@ import { useAuthStore } from '@/stores/auth'
 
 const routes = [
     {
-        path: '/',
-        redirect: { name: 'dashboard' },
-    },
-    {
         path: '/login',
         name: 'login',
         component: () => import('@/views/Login.vue'),
@@ -17,9 +13,9 @@ const routes = [
         component: () => import('@/views/Bootstrap.vue'),
     },
     {
-        path: '/dashboard',
-        name: 'dashboard',
-        component: () => import('@/views/Dashboard.vue'),
+        path: '/',
+        name: 'app',
+        component: () => import('@/views/Layout.vue'),
     },
 ]
 
@@ -43,7 +39,7 @@ router.beforeEach(async (target) => {
     }
 
     if (target.name === 'login' || target.name === 'bootstrap') {
-        return { name: 'dashboard' }
+        return { name: 'app' }
     }
 })
 

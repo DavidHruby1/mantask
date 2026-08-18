@@ -3,12 +3,13 @@ from datetime import datetime
 
 from pydantic import (
     BaseModel,
+    ConfigDict,
     Field,
     field_validator,
 )
 
 
-NAME_REGEX = re.compile(r"^[a-zA-Z0-9\-_: ]+$")
+NAME_REGEX = re.compile(r"^[\w\-:,. ]+$")
 
 
 class TeamCreate(BaseModel):
@@ -40,6 +41,8 @@ class TeamUpdate(BaseModel):
 
 
 class TeamRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     name: str
     created_at: datetime

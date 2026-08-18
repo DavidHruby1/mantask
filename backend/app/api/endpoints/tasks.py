@@ -16,7 +16,7 @@ from backend.app.services.tasks import task_service
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
 
-@router.get("/", response_model=list[TaskRead])
+@router.get("", response_model=list[TaskRead])
 def get_tasks(
     db: DbSessionDep,
     session: CurrentSessionDep,

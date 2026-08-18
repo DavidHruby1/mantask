@@ -1,9 +1,9 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     CheckConstraint,
     DateTime,
-    ForeignKey,
     Integer,
     Text,
     Boolean,
@@ -11,8 +11,12 @@ from sqlalchemy import (
     text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
 from backend.app.core.db import Base
+
+
+if TYPE_CHECKING:
+    from backend.app.models.team_member import TeamMember
+    from backend.app.models.user_session import UserSession
 
 
 class User(Base):
@@ -50,5 +54,5 @@ class User(Base):
     profile_picture_path: Mapped[str | None] = mapped_column(Text)
     last_active_team_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
-    team_members = relationship("TeamMember", back_populates="user")
-    sessions = relationship("UserSession", back_populates="user")
+    team_members: Mapped[list["TeamMember"]] = relationship(back_populates="user")
+    sessions: Mapped[list["UserSession"]] = relationship(back_populates="user")

@@ -1,16 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
+import { LogIn } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import { validateEmail, validatePassword } from '@/utils/validation'
 
 import Button from '@/components/ui/Button.vue'
-import Container from '@/components/ui/Container.vue'
-import Link from '@/components/ui/Link.vue'
 import Input from '@/components/ui/Input.vue'
-import Text from '@/components/ui/Text.vue'
-import Heading from '@/components/ui/Heading.vue'
-import Form from '@/components/ui/Form.vue'
 
 import type { FormErrors, LoginInput } from '@/interfaces'
 
@@ -49,7 +45,7 @@ async function handleLoginSubmit() {
         const loginSucceeded = await authStore.login(payload)
 
         if (loginSucceeded) {
-            router.push({ name: 'dashboard' })
+            router.push({ name: 'app' })
         }
     } finally {
         isLoggingIn.value = false
@@ -58,25 +54,26 @@ async function handleLoginSubmit() {
 </script>
 
 <template>
-    <Container>
+    <div class="relative flex min-h-screen items-center justify-center overflow-hidden px-4">
         <div class="light-aura"></div>
         <div class="light-beam"></div>
         <div class="light-source"></div>
 
-        <Form
-            variant="transparent"
+        <form
+            class="relative z-10 flex w-full max-w-[380px] flex-col items-center gap-3 bg-transparent"
             novalidate
-            @submit-form="handleLoginSubmit"
+            @submit.prevent="handleLoginSubmit"
         >
             <img class="mb-4 h-16 w-16" src="/mantask-logo-svg.svg" alt="Mantask" />
 
-            <Heading class="mb-5" variant="h3"> Sign in to Mantask </Heading>
+            <h3 class="mb-5 font-sans text-2xl font-semibold tracking-normal text-white-base antialiased">
+                Sign in to Mantask
+            </h3>
 
             <Input
                 v-model="email"
                 id="email"
                 aria-label="Email address"
-                size="md"
                 type="email"
                 placeholder="Email address"
                 :error="formErrors.email"
@@ -90,7 +87,6 @@ async function handleLoginSubmit() {
                 v-model="password"
                 id="password"
                 aria-label="Password"
-                size="md"
                 type="password"
                 placeholder="Password"
                 :error="formErrors.password"
@@ -102,9 +98,12 @@ async function handleLoginSubmit() {
             />
 
             <div class="flex w-full justify-end">
-                <Link class="mb-2 -mt-2" to="/" color="primary" size="xs">
+                <RouterLink
+                    class="mb-2 -mt-2 cursor-pointer font-sans text-[13px] leading-4.5 font-normal tracking-normal text-dark-muted antialiased transition-colors duration-200 hover:text-white-base"
+                    to="/"
+                >
                     Forgot password?
-                </Link>
+                </RouterLink>
             </div>
 
             <Button
@@ -126,16 +125,30 @@ async function handleLoginSubmit() {
                 variant="ghost"
                 size="lg"
             >
-                <img class="h-5 w-5 shrink-0" src="/google-fill.svg" alt="" aria-hidden="true" />
+                <LogIn
+                    :size="20"
+                    :stroke-width="1.25"
+                    color="rgba(255,255,255,0.58)"
+                    class="shrink-0"
+                    aria-hidden="true"
+                />
                 <span>Sign in with Google</span>
             </Button>
 
-            <Text class="mt-2" color="secondary" size="xs">
+            <p class="mt-2 font-sans text-[13px] leading-4.5 font-normal tracking-normal text-white-muted antialiased">
                 Don't have an account?
-                <Link to="/" color="primary" size="xs"> Request an invite </Link>
-            </Text>
-        </Form>
-    </Container>
+                <RouterLink
+                    class="
+                        cursor-pointer font-sans text-[13px] leading-4.5 font-normal tracking-normal
+                        text-dark-muted antialiased transition-colors duration-200 hover:text-white-base
+                    "
+                    to="/"
+                >
+                    Request an invite
+                </RouterLink>
+            </p>
+        </form>
+    </div>
 </template>
 
 <style scoped>

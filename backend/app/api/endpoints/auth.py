@@ -93,10 +93,6 @@ def logout(
 
 # Not in MVP scope for now
 """
-@router.post("/register", response_model=RegisterResult)
-def register():
-    pass
-
 @router.post("/change-password", response_model=ChangePasswordResult)
 def change_password():
     pass
@@ -105,4 +101,7 @@ def change_password():
 @router.post("/reset-password", response_model=ResetPasswordResult)
 def reset_password():
     pass
+
+
+Also /forgot-password
 """

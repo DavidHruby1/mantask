@@ -58,7 +58,7 @@ def test_bootstrap_accepts_valid_password():
     ("field", "name"),
     [
         ("team_name", "   "),
-        ("organization_name", "Org.name"),
+        ("organization_name", "Org/name"),
         ("team_name", "Team/name"),
     ],
 )
@@ -82,9 +82,9 @@ def test_bootstrap_strips_valid_organization_and_team_names():
         username="David123",
         email="hrubyd74@gmail.com",
         password="abcd12345efg",
-        organization_name=" Org-name_1: ",
-        team_name=" Team name-2_3: ",
+        organization_name=" Mandík, a.s. ",
+        team_name=" Team, a.s. ",
         bootstrap_secret="qwertyuiopasdfghjklzxcvbnm1234567890"
     )
-    assert bootstrap.organization_name == "Org-name_1:"
-    assert bootstrap.team_name == "Team name-2_3:"
+    assert bootstrap.organization_name == "Mandík, a.s."
+    assert bootstrap.team_name == "Team, a.s."

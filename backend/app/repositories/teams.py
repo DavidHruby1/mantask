@@ -5,6 +5,7 @@ from backend.app.models.team import Team
 from backend.app.models.enums import TeamType, UserRole
 from backend.app.models.user import User
 from backend.app.models.team_member import TeamMember
+from backend.app.repositories.users import get_user_by_id
 
 
 def create_team(db: Session, name: str) -> Team:
@@ -52,6 +53,15 @@ def get_private_team_id(db: Session, user: User) -> int | None:
 def get_team_by_id(db: Session, team_id: int) -> Team | None:
     team = db.get(Team, team_id)
     return team
+
+
+def get_teams_by_user_id(db: Session, user_id: int) -> list[Team]:
+    user = get_user_by_id(db, user_id)
+    if not user:
+        return []
+
+    team_members = user.team_members
+    return [tm.team for tm in team_members]
 
 
 def get_team_member(db: Session, team_id: int, user_id: int) -> TeamMember | None:
