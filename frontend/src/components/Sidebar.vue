@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, RouterLink } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/stores/auth'
 import { useTeamsStore } from '@/stores/teams'
@@ -48,7 +48,7 @@ const { currentUser } = storeToRefs(authStore)
 const { currentUserTeams } = storeToRefs(teamsStore)
 const router = useRouter()
 
-const selectedNavItem = ref<number>(0)
+const selectedNavItem = ref<number>(1)
 const selectedTeam = ref<string>('')
 
 function handleNavItemClick(event: MouseEvent) {
@@ -175,7 +175,9 @@ onMounted(async () => {
                 <span
                     class="text-white-base whitespace-nowrap transition-opacity duration-200"
                     :class="collapsed ? 'opacity-0' : 'opacity-100'"
-                >Kanban</span>
+                >
+                    <RouterLink :to="{ name: 'kanban' }">Kanban</RouterLink>
+                </span>
             </button>
             <button
                 id="2"
