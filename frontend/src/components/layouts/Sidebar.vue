@@ -78,7 +78,7 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="flex min-w-0 flex-col bg-atmosphere-gradient mx-2 my-2 rounded-lg p-1">
+    <div class="flex min-w-0 flex-col bg-atmosphere-gradient p-1 rounded-lg">
         <div
             class="flex items-center gap-3 mt-2 mb-4 px-1.5"
         >

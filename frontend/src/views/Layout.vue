@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { RouterView } from 'vue-router'
-import Sidebar from '@/components/Sidebar.vue'
+import Sidebar from '@/components/layouts/Sidebar.vue'
 
 const isSidebarCollapsed = ref(false)
 </script>
 
 <template>
-    <div class="flex w-full h-dvh p-1">
+    <div class="flex w-full h-dvh p-2">
         <Sidebar
             :collapsed="isSidebarCollapsed"
             class="shrink-0 transition-[width] duration-200"
