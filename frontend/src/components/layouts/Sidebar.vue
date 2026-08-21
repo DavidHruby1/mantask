@@ -130,12 +130,10 @@ onMounted(async () => {
             open-class="bg-atmosphere-light"
         >
             <!-- placeholder for teams (later use v-for and existing teams from db) -->
-            <div class="flex flex-col gap-2 py-3 px-4 bg-black w-32 rounded-lg">
-                <span class="text-white-base">Team 1</span>
-                <span class="text-white-base">Team 2</span>
-                <span class="text-white-base">Team 3</span>
-                <span class="text-white-base">Team 4</span>
-            </div>
+            <span class="text-white-base">Team 1</span>
+            <span class="text-white-base">Team 2</span>
+            <span class="text-white-base">Team 3</span>
+            <span class="text-white-base">Team 4</span>
         </DropdownMenu>
 
         <nav class="flex flex-col flex-1 gap-1 mt-32" aria-label="Dashboard navigation">

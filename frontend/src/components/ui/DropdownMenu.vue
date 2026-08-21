@@ -99,7 +99,10 @@ function toggleDropdown() {
 
         <div
             v-if="isOpen"
-            class="absolute z-50"
+            class="
+                absolute z-50 w-full min-w-max flex flex-col gap-2
+                py-2 px-3 bg-black rounded-lg
+            "
             :class="{
                 'top-full mt-1': !opensUpward,
                 'bottom-full mb-1': opensUpward,
