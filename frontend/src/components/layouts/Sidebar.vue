@@ -40,6 +40,7 @@ const emit = defineEmits<{
 
 defineProps<{
     collapsed: boolean
+    canExpand: boolean
 }>()
 
 const authStore = useAuthStore()
@@ -99,6 +100,7 @@ onMounted(async () => {
         </div>
 
         <button
+            v-if="canExpand"
             type="button"
             class="flex px-2"
             :aria-label="collapsed ? 'Expand sidebar' : 'Collapse sidebar'"
