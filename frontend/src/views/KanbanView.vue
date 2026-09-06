@@ -1,20 +1,35 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { tasksStore } from '@/stores/tasks'
 import { TaskStatus } from '@/interfaces'
+import type { AllowedStatus } from '@/interfaces'
+
+const emit = defineEmits<{
+    (e: 'add-task', status: AllowedStatus): void
+}>()
 
 const taskStore = tasksStore()
-const { tasks, isLoadingTasks } = storeToRefs(taskStore)
-const emit = defineEmits<{
-    (e: 'add-task', status: TaskStatus.BACKLOG): void
-}>()
-const statusColumns: Record<string, string> = {
-    backlog: 'Backlog',
-    todo: 'To do',
-    in_progress: 'In progress',
-    review: 'Review',
-    done: 'Done'
+const { tasks } = storeToRefs(taskStore)
+
+const statusColumns = [
+    { status: TaskStatus.BACKLOG, label: 'Backlog' },
+    { status: TaskStatus.TODO, label: 'To do' },
+    { status: TaskStatus.IN_PROGRESS, label: 'In progress' },
+    { status: TaskStatus.REVIEW, label: 'Review' },
+    { status: TaskStatus.DONE, label: 'Done' },
+] as const
+
+function isAllowedTaskStatus(status: TaskStatus): status is AllowedStatus {
+    return status !== TaskStatus.REVIEW && status !== TaskStatus.DONE
+}
+
+function addTask(status: TaskStatus): void {
+    if (!isAllowedTaskStatus(status)) {
+        return
+    }
+
+    emit('add-task', status)
 }
 
 onMounted(async () => {
@@ -49,18 +64,20 @@ onMounted(async () => {
 
         <!-- KanbanBoard -->
         <div class="kanban bg-white">
-            <div v-for="status in Object.keys(statusColumns)" :key="status">
-                <span>{{ statusColumns[status] }}</span>
+            <div v-for="column in statusColumns" :key="column.status">
+                <span>{{ column.label }}</span>
                 <button
-                    v-if="status === TaskStatus.BACKLOG"
+                    v-if="isAllowedTaskStatus(column.status)"
                     type="button"
-                    @click="emit('add-task', TaskStatus.BACKLOG)"
+                    @click="addTask(column.status)"
                 >
                     +
                 </button>
-                <div v-for="task in tasks" :key="task.id">
-                    <span>{{ task.status === status ? task.title : undefined }}</span>
-                </div>
+                <template v-for="task in tasks" :key="task.id">
+                    <div v-if="task.status === column.status">
+                        <span>{{ task.title }}</span>
+                    </div>
+                </template>
             </div>
         </div>
     </div>
