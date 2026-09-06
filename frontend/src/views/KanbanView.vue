@@ -2,9 +2,13 @@
 import { ref, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { tasksStore } from '@/stores/tasks'
+import { TaskStatus } from '@/interfaces'
 
 const taskStore = tasksStore()
 const { tasks, isLoadingTasks } = storeToRefs(taskStore)
+const emit = defineEmits<{
+    (e: 'add-task', status: TaskStatus.BACKLOG): void
+}>()
 const statusColumns: Record<string, string> = {
     backlog: 'Backlog',
     todo: 'To do',
@@ -47,6 +51,13 @@ onMounted(async () => {
         <div class="kanban bg-white">
             <div v-for="status in Object.keys(statusColumns)" :key="status">
                 <span>{{ statusColumns[status] }}</span>
+                <button
+                    v-if="status === TaskStatus.BACKLOG"
+                    type="button"
+                    @click="emit('add-task', TaskStatus.BACKLOG)"
+                >
+                    +
+                </button>
                 <div v-for="task in tasks" :key="task.id">
                     <span>{{ task.status === status ? task.title : undefined }}</span>
                 </div>
@@ -66,8 +77,7 @@ onMounted(async () => {
 }
 
 .kanban div {
-    min-width: 20vw;
-    height: 100%;
+    width: clamp(240px, 28vw, 340px);
     background: red;
 }
 </style>

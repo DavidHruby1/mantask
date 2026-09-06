@@ -17,6 +17,7 @@ import {
     Power,
 } from '@lucide/vue'
 import DropdownMenu from '@/components/ui/DropdownMenu.vue'
+import type { AllowedStatus } from '@/interfaces'
 // Clicking on the user profile shows modal, therefore another emit is needed
 // All the modals are in the Layout template, just invisible until called through emits
 
@@ -36,6 +37,7 @@ import DropdownMenu from '@/components/ui/DropdownMenu.vue'
 
 const emit = defineEmits<{
     (e: 'toggle-sidebar'): void
+    (e: 'add-task', status: AllowedStatus): void
 }>()
 
 defineProps<{
@@ -146,6 +148,7 @@ onMounted(async () => {
                     w-full flex items-center gap-3 rounded-lg py-1.5 px-2 overflow-hidden
                     hover:bg-atmosphere-light focus-visible:bg-atmosphere-light active:bg-atmosphere-light
                 "
+                @click="emit('add-task', null)"
             >
                 <CirclePlus
                     :size="24"

@@ -110,6 +110,7 @@ export const tasksStore = defineStore('tasks', () => {
 
     return {
         tasks,
+        isLoadingTasks,
         getTasks,
         getTask,
         createTask,

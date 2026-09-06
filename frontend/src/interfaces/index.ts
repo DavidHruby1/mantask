@@ -54,6 +54,11 @@ export enum TaskStatus {
     DONE = 'done',
 }
 
+export type AllowedStatus = Exclude<
+    TaskStatus,
+    TaskStatus.REVIEW | TaskStatus.DONE
+> | null
+
 export interface TaskCreate {
     assignee_member_id?: number | null
     reviewer_member_id?: number | null
