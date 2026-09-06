@@ -37,7 +37,7 @@ import type { AllowedStatus } from '@/interfaces'
 
 const emit = defineEmits<{
     (e: 'toggle-sidebar'): void
-    (e: 'add-task', status: AllowedStatus): void
+    (e: 'add-task', status: AllowedStatus | null): void
 }>()
 
 defineProps<{

@@ -12,17 +12,15 @@ const isUserCollapsed = ref<boolean>(false)
 const isSidebarCollapsed = computed<boolean>(() => !canExpandSidebar.value || isUserCollapsed.value)
 
 const isAddTaskModalOpen = ref<boolean>(false)
-const canSelectStatus = ref<boolean>(true)
+const addTaskStatus = ref<AllowedStatus | null>(null)
 
-function onAddTask(status: AllowedStatus): void {
-    if (status != null) {
-        canSelectStatus.value = false
-    }
+function onAddTask(status: AllowedStatus | null): void {
+    addTaskStatus.value = status
     isAddTaskModalOpen.value = true
 }
 
 function onCloseAddTaskModal(): void {
-    canSelectStatus.value = true
+    addTaskStatus.value = null
     isAddTaskModalOpen.value = false
 }
 
@@ -62,7 +60,7 @@ onBeforeUnmount(() => {
 
         <AddTaskModal
             :isOpen="isAddTaskModalOpen"
-            :canSelectStatus="canSelectStatus"
+            :addTaskStatus="addTaskStatus"
             @close-modal="onCloseAddTaskModal"
         />
     </div>

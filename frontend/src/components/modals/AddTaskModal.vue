@@ -1,13 +1,26 @@
 <script setup lang="ts">
+import { TaskStatus } from '@/interfaces'
+import type { AllowedStatus } from '@/interfaces'
+
 type Props = {
     isOpen: boolean
-    canSelectStatus: boolean
+    addTaskStatus: AllowedStatus | null
 }
 const props = defineProps<Props>()
 
 const emit = defineEmits<{
     (e: 'close-modal'): void
 }>()
+
+const statusOptions = [
+    { value: TaskStatus.BACKLOG, label: 'Backlog' },
+    { value: TaskStatus.TODO, label: 'To do' },
+    { value: TaskStatus.IN_PROGRESS, label: 'In progress' },
+] satisfies Array<{ value: AllowedStatus; label: string }>
+
+function getStatusLabel(status: AllowedStatus): string {
+    return statusOptions.find((option) => option.value === status)?.label ?? status
+}
 </script>
 
 <template>
@@ -46,19 +59,24 @@ const emit = defineEmits<{
                     <div>
                         <label for="task-status">Status</label>
                         <select
-                            v-if="props.canSelectStatus"
+                            v-if="props.addTaskStatus === null"
                             id="task-status"
                             name="status"
                         >
-                            <option value="backlog">Backlog</option>
-                            <option value="todo">To do</option>
-                            <option value="in_progress">In progress</option>
+                            <option
+                                v-for="option in statusOptions"
+                                :key="option.value"
+                                :value="option.value"
+                            >
+                                {{ option.label }}
+                            </option>
                         </select>
+                        <span v-else>{{ getStatusLabel(props.addTaskStatus) }}</span>
                     </div>
                 </div>
 
                 <div class="mt-auto">
-                    <button type="button" @click="$emit('close-modal')">Cancel</button>
+                    <button type="button" @click="emit('close-modal')">Cancel</button>
                     <button type="submit">Create task</button>
                 </div>
             </form>
