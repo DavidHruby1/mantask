@@ -1,4 +1,23 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
+import { tasksStore } from '@/stores/tasks'
+
+const taskStore = tasksStore()
+const { tasks, isLoadingTasks } = storeToRefs(taskStore)
+const statusColumns: Record<string, string> = {
+    backlog: 'Backlog',
+    todo: 'To do',
+    in_progress: 'In progress',
+    review: 'Review',
+    done: 'Done'
+}
+
+onMounted(async () => {
+    const tasksLog = await taskStore.getTasks()
+    console.log('Fetched tasks:', tasksLog)
+})
+
 // Get tasks and separate them into status columns
 </script>
 
@@ -26,11 +45,12 @@
 
         <!-- KanbanBoard -->
         <div class="kanban bg-white">
-            <div>Col 1</div>
-            <div>Col 2</div>
-            <div>Col 3</div>
-            <div>Col 4</div>
-            <div>Col 5</div>
+            <div v-for="status in Object.keys(statusColumns)" :key="status">
+                <span>{{ statusColumns[status] }}</span>
+                <div v-for="task in tasks" :key="task.id">
+                    <span>{{ task.status === status ? task.title : undefined }}</span>
+                </div>
+            </div>
         </div>
     </div>
 </template>
@@ -45,7 +65,7 @@
     overflow-x: auto;
 }
 
-.kanban > div {
+.kanban div {
     min-width: 20vw;
     height: 100%;
     background: red;
