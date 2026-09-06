@@ -73,6 +73,7 @@ onMounted(async () => {
                 >
                     +
                 </button>
+
                 <template v-for="task in tasks" :key="task.id">
                     <div v-if="task.status === column.status">
                         <span>{{ task.title }}</span>
@@ -93,8 +94,8 @@ onMounted(async () => {
     overflow-x: auto;
 }
 
-.kanban div {
-    width: clamp(240px, 28vw, 340px);
+.kanban > div {
+    flex: 0 0 clamp(240px, 28vw, 340px);
     background: red;
 }
 </style>
