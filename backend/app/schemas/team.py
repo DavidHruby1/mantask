@@ -8,7 +8,7 @@ from pydantic import (
 )
 
 
-NAME_REGEX = re.compile(r"^[a-zA-Z0-9\-_: ]+$")
+NAME_REGEX = re.compile(r"^[\w\-:,. ]+$")
 
 
 class TeamCreate(BaseModel):
