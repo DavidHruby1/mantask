@@ -22,3 +22,11 @@ error unless a task was created.
 
 Kanban renders Search, Sort, Filter, Layers, and My tasks controls without
 state or handlers. Hide them until their behavior is implemented.
+
+## MEDIUM: Session dependency test uses stale argument order
+
+`backend/tests/api/test_dependencies.py` calls `get_current_session()` with
+the session token before the `Response`. The dependency now accepts the
+`Response` before the token, so the test fails while trying to call
+`set_cookie()` on a string. Update the test invocation to match the current
+function signature.
