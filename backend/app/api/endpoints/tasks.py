@@ -37,7 +37,7 @@ def get_task(
     return TaskRead.model_validate(task)
 
 
-@router.post("/", response_model=TaskRead)
+@router.post("", response_model=TaskRead)
 def post_task(
     db: DbSessionDep,
     session: CurrentSessionDep,

@@ -1,6 +1,10 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { TaskStatus } from '@/interfaces'
-import type { AllowedStatus } from '@/interfaces'
+import { tasksStore } from '@/stores/tasks'
+import type { AllowedStatus, TaskCreate } from '@/interfaces'
+
+const taskStore = tasksStore()
 
 type Props = {
     isOpen: boolean
@@ -12,14 +16,30 @@ const emit = defineEmits<{
     (e: 'close-modal'): void
 }>()
 
-const statusOptions = [
+const title = ref<string>('')
+const status = ref<AllowedStatus>(props.addTaskStatus ?? TaskStatus.BACKLOG)
+const statusOptions: Array<{ value: AllowedStatus; label: string }> = [
     { value: TaskStatus.BACKLOG, label: 'Backlog' },
     { value: TaskStatus.TODO, label: 'To do' },
     { value: TaskStatus.IN_PROGRESS, label: 'In progress' },
-] satisfies Array<{ value: AllowedStatus; label: string }>
+]
 
 function getStatusLabel(status: AllowedStatus): string {
     return statusOptions.find((option) => option.value === status)?.label ?? status
+}
+
+async function onCreateTask() {
+    const payload: TaskCreate = {
+        title: title.value.trim(),
+        status: status.value,
+        should_review: false
+    }
+
+    await taskStore.createTask(payload)
+    await taskStore.getTasks()
+
+    title.value = ''
+    emit('close-modal')
 }
 </script>
 
@@ -39,7 +59,10 @@ function getStatusLabel(status: AllowedStatus): string {
                 h-[420px] w-[480px] bg-gray-400 p-6
             "
         >
-            <form class="flex h-full flex-col">
+            <form
+                class="flex h-full flex-col"
+                @submit.prevent="onCreateTask"
+            >
                 <div>
                     <h2 id="add-task-title">Add task</h2>
                 </div>
@@ -49,6 +72,7 @@ function getStatusLabel(status: AllowedStatus): string {
                         <label for="task-title">Title</label>
                         <input
                             id="task-title"
+                            v-model="title"
                             type="text"
                             name="title"
                             required
@@ -61,6 +85,7 @@ function getStatusLabel(status: AllowedStatus): string {
                         <select
                             v-if="props.addTaskStatus === null"
                             id="task-status"
+                            v-model="status"
                             name="status"
                         >
                             <option
@@ -76,8 +101,17 @@ function getStatusLabel(status: AllowedStatus): string {
                 </div>
 
                 <div class="mt-auto">
-                    <button type="button" @click="emit('close-modal')">Cancel</button>
-                    <button type="submit">Create task</button>
+                    <button
+                        type="button"
+                        @click="emit('close-modal')"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="submit"
+                    >
+                        Create task
+                    </button>
                 </div>
             </form>
         </div>
