@@ -111,3 +111,22 @@ export interface TaskMove {
     target_status: TaskStatus
     anchor_task_id: number | null
 }
+
+export interface UserRead {
+    id: number
+    username: string
+    email: string
+    is_active: boolean
+    profile_picture_path?: string | null
+    last_active_team_id?: number | null
+    created_at: string
+    updated_at: string
+}
+
+export interface TeamRead {
+    id: number
+    name: string
+    created_at: string
+    updated_at: string
+    is_active: boolean
+}

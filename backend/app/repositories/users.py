@@ -24,6 +24,14 @@ def create_user(
     return user
 
 
+def get_user_by_id(db: Session, user_id: int) -> User | None:
+    user = db.get(User, user_id)
+    if not user:
+        return None
+
+    return user
+
+
 def get_user_by_email(db: Session, email: str) -> User | None:
     user = db.scalar(select(User).filter_by(email=email))
     if not user:

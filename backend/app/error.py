@@ -63,7 +63,7 @@ class InvalidBootstrapSecretError(AppError):
 
 
 class InvalidSessionError(AppError):
-    status_code = 403
+    status_code = 401
     detail = "Invalid session"
 
 

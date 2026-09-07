@@ -2,7 +2,7 @@ from fastapi import FastAPI, APIRouter, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from backend.app.api.endpoints import auth, bootstrap, tasks
+from backend.app.api.endpoints import auth, bootstrap, tasks, teams, users
 from backend.app.core.config import settings
 from backend.app.error import AppError
 
@@ -11,6 +11,8 @@ api_router = APIRouter(prefix="/api")
 api_router.include_router(auth.router)
 api_router.include_router(bootstrap.router)
 api_router.include_router(tasks.router)
+api_router.include_router(teams.router)
+api_router.include_router(users.router)
 
 app = FastAPI(title=settings.APP_NAME)
 
