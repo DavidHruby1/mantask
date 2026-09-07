@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, RouterLink } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/stores/auth'
 import { useTeamsStore } from '@/stores/teams'
@@ -40,6 +40,7 @@ const emit = defineEmits<{
 
 defineProps<{
     collapsed: boolean
+    canExpand: boolean
 }>()
 
 const authStore = useAuthStore()
@@ -48,7 +49,7 @@ const { currentUser } = storeToRefs(authStore)
 const { currentUserTeams } = storeToRefs(teamsStore)
 const router = useRouter()
 
-const selectedNavItem = ref<number>(0)
+const selectedNavItem = ref<number>(1)
 const selectedTeam = ref<string>('')
 
 function handleNavItemClick(event: MouseEvent) {
@@ -78,7 +79,7 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="flex min-w-0 flex-col bg-atmosphere-gradient mx-2 my-2 rounded-lg p-1">
+    <div class="flex min-w-0 flex-col bg-atmosphere-gradient p-1 rounded-lg">
         <div
             class="flex items-center gap-3 mt-2 mb-4 px-1.5"
         >
@@ -99,6 +100,7 @@ onMounted(async () => {
         </div>
 
         <button
+            v-if="canExpand"
             type="button"
             class="flex px-2"
             :aria-label="collapsed ? 'Expand sidebar' : 'Collapse sidebar'"
@@ -130,12 +132,10 @@ onMounted(async () => {
             open-class="bg-atmosphere-light"
         >
             <!-- placeholder for teams (later use v-for and existing teams from db) -->
-            <div class="flex flex-col gap-2 py-3 px-4 bg-black w-32 rounded-lg">
-                <span class="text-white-base">Team 1</span>
-                <span class="text-white-base">Team 2</span>
-                <span class="text-white-base">Team 3</span>
-                <span class="text-white-base">Team 4</span>
-            </div>
+            <span class="text-white-base">Team 1</span>
+            <span class="text-white-base">Team 2</span>
+            <span class="text-white-base">Team 3</span>
+            <span class="text-white-base">Team 4</span>
         </DropdownMenu>
 
         <nav class="flex flex-col flex-1 gap-1 mt-32" aria-label="Dashboard navigation">
@@ -175,7 +175,9 @@ onMounted(async () => {
                 <span
                     class="text-white-base whitespace-nowrap transition-opacity duration-200"
                     :class="collapsed ? 'opacity-0' : 'opacity-100'"
-                >Kanban</span>
+                >
+                    <RouterLink :to="{ name: 'kanban' }">Kanban</RouterLink>
+                </span>
             </button>
             <button
                 id="2"

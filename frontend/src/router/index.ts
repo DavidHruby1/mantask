@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import KanbanView from '@/views/KanbanView.vue'
 
 const routes = [
     {
@@ -16,7 +17,15 @@ const routes = [
         path: '/',
         name: 'app',
         component: () => import('@/views/Layout.vue'),
-    },
+        redirect: { name: 'kanban' },
+        children: [
+            {
+                path: 'kanban',
+                name: 'kanban',
+                component: KanbanView,
+            },
+        ],
+    }
 ]
 
 const router = createRouter({
