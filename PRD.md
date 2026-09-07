@@ -1,7 +1,7 @@
 # Mantask Product Requirements Document
 
 **Status:** Product direction | **Audience:** Self-hosted delivery teams with 2-15
-members | **Updated:** 2026-08-20
+members | **Updated:** 2026-09-07
 
 ## 1. Product
 
@@ -41,7 +41,7 @@ resource planning, regulated accounting, payroll, or autonomous AI management.
 
 - Custom statuses, workflow builders, or per-project workflows.
 - Epics, initiatives, portfolios, or deep hierarchies.
-- Gantt charts, critical paths, dependencies, or resource leveling.
+- Roadmap timelines, Gantt charts, critical paths, automatic scheduling, or resource leveling.
 - Built-in chat or a general-purpose wiki/database builder.
 - Mandatory Scrum ceremonies or recurring sprint machinery.
 - Employee monitoring, payroll, invoices, taxes, or timesheet approvals.
@@ -54,9 +54,8 @@ resource planning, regulated accounting, payroll, or autonomous AI management.
 | --- | --- |
 | Team | Shared members, settings, and work |
 | Workspace | Selected Team or private work context |
-| Layer | Persistent workstream or tag, such as `#client-acme` or `#frontend` |
+| Layer | Shared organization of work, with optional nesting and Milestone Mode |
 | Task | Smallest owned unit of executable work |
-| Milestone | Optional time-bounded delivery package inside one Layer |
 | Scratchpad | Shared or private Markdown documents linked to work |
 | Time Entry | Billable or non-billable time recorded against a Task |
 | Worklog | Immutable history of meaningful events |
@@ -65,11 +64,10 @@ resource planning, regulated accounting, payroll, or autonomous AI management.
 Rules:
 
 - A Task belongs to one Workspace and may have multiple Layers.
-- A Task belongs to at most one Milestone.
-- A Milestone has one home Layer and may contain many Tasks.
-- Assigning a Task to a Milestone adds its home Layer to the Task.
-- Multiple Milestones may run concurrently and involve multiple people.
-- Milestones never create a second Task workflow.
+- Milestone Mode extends a Layer; it is not a separate entity or Task workflow.
+- A Task may belong to ordinary Layers and at most one Layer in Milestone Mode.
+- Multiple Layers in Milestone Mode may be active concurrently.
+- Task dependencies are independent of Layer membership and presentation.
 
 ## 6. Core Work
 
@@ -88,8 +86,11 @@ Backlog -> To do -> In progress -> Review -> Done
 ### Tasks
 
 A Task has a title, status, creator, and Workspace. Optional properties are Markdown
-description, assignee, reviewer, Layers, priority, relative effort, dates, Milestone,
+description, assignee, reviewer, Layers, priority, relative effort, dates, dependencies,
 planned hours, comments, attachments, and activity.
+
+Effort expresses relative difficulty, not calendar duration. It is not automatically
+converted into hours, dates, or graphical bar lengths.
 
 A Task has one assignee. Review-required work must have one reviewer before entering
 Review. Other work may move directly from In progress to Done.
@@ -106,9 +107,20 @@ separately because Review can become the bottleneck.
 
 ### Layers
 
-Layers organize work without separate boards or project hierarchies. A Layer belongs
-to one Team, can label many Tasks, and can contain multiple Milestones. Archiving a
-Layer preserves its Tasks, Milestones, and history.
+Layers belong to one Workspace and organize its existing Tasks without separate boards.
+The initial hierarchy has two levels: root Layers can represent projects, while child
+Layers represent local tags or areas. Hierarchy determines placement, not a separate
+project/tag entity type. `#eshop/backend` and `#crm/backend` are distinct Layers.
+
+- Selecting a parent includes Tasks from its children, with each Task shown once.
+- Ordinary Layers support multi-selection. A Layer in Milestone Mode is selected alone
+    in the initial UI; this filter rule is separate from Task membership.
+- `See all tasks` includes Tasks in Layers with Milestone Mode. Their Layer badges
+    remain visible; milestone-specific controls appear only on explicit selection.
+- Milestone Mode stays in the same Layer navigation, distinguished by color and an
+    icon or text label, never color alone. No separate Milestones navigation is needed.
+- Archiving a Layer preserves its Tasks and history. Parent inclusion is derived from
+    the hierarchy rather than requiring duplicate Task membership in the parent.
 
 ## 7. Coordination
 
@@ -141,7 +153,7 @@ does not gain a separate chat thread.
 ### Debrief
 
 A Debrief may follow repeated Review returns, reopened work, a long Blocker, or a
-completed Milestone. It asks:
+completed Layer in Milestone Mode. It asks:
 
 1. What did we expect?
 2. What actually happened?
@@ -152,38 +164,63 @@ decision that no change is needed. Debriefs are concise, asynchronous, and blame
 
 ## 8. Planning Module
 
-Planning is optional and disabled by default. It adds Milestones, Roadmap, and
-Scratchpad planning without changing the Kanban.
+Planning is optional and disabled by default. It adds Milestone Mode, Task dependencies,
+their graph view, and Scratchpad planning without changing the Kanban. Disabling it
+hides planning controls, not Tasks or their Layer membership, and preserves planning data.
 
-### Milestones
+### Milestone Mode
 
-A Milestone is a short time-bounded delivery package, not a Scrum sprint. It has a
-name, outcome, home Layer, owner, start and end dates, status, Tasks, and optional
-planned-hour budget and Scratchpad plan.
+A Layer such as `#checkout-mvp` can enable Milestone Mode to coordinate a delivery goal,
+not a Scrum sprint. It retains its Layer identity, hierarchy, and Task membership.
+It adds an outcome, owner, optional target date, delivery status, and optional hour
+budget and primary Scratchpad plan. No planned start date is required.
+
+The outcome states what should be achieved, such as "Customers can pay by card."
+The owner coordinates scope, obstacles, and closure, and is not automatically the
+assignee of its Tasks. The target date describes the delivery goal, not a Task schedule.
 
 Statuses are `Draft`, `Active`, `Completed`, and `Cancelled`.
 
 Activation preserves the original Task scope, estimates, dates, and owner. Later
 changes remain allowed but are shown as changes to the plan.
 
-Progress shows Task states, original versus current scope, remaining time, waiting or
-blocked work, and planned versus actual hours when available. Logged hours are never
-presented as percentage completion.
+On explicit selection, a compact header shows completed versus total member Tasks
+(for example, `6/10 done`), waiting or blocked work, scope changes, and the target date
+when set. Completion counts are not estimates of remaining effort or proof that the
+outcome was achieved. Planned versus actual hours are optional, never percentage completion.
 
-Before completion, unfinished Tasks must be completed, moved to Backlog, or moved to
-another Milestone. Closing records the outcome and a short Debrief.
+Before completion, unfinished Tasks must be explicitly resolved: finish them or remove
+them from the delivery scope, recording whether they return to Backlog or move to
+another Layer in Milestone Mode. Closing records the outcome and a short Debrief.
+Scope history survives membership changes, archival, or disabling Milestone Mode.
 
-### Roadmap
+### Task Dependencies
 
-Roadmap is a derived timeline, not a separate planning database:
+- A Task may have multiple predecessors and successors within the same Workspace.
+- Task detail provides `Waiting on` with searchable add/remove controls and a derived
+    `Blocks` list. Dependencies must be useful without opening a graph.
+- Prerequisites are satisfied only when every predecessor is `Done`. An unfinished
+    or reopened predecessor shows a warning, but does not block Kanban transitions
+    or automatically change the successor's state.
+- Dependencies do not create Blocker Handshakes or additional workflow states.
+- The server rejects self-links, duplicate links, cross-Workspace links, and cycles,
+    including under concurrent changes. Layer membership changes preserve dependencies.
 
-- Rows are Layers and bars are Milestones.
-- Bars show dates, status, progress, scope change, and blocked or overdue signals.
-- Selecting a bar opens the Milestone.
-- Filters include Layer, owner, date range, and status.
+### Dependency Graph MVP
 
-Roadmap excludes Task-level Gantt bars, dependencies, critical path, automatic
-rescheduling, and resource leveling.
+Selecting one Layer in Milestone Mode exposes `Kanban | Dependencies` in the existing
+board area. Both views use the same Tasks and states. There is no Roadmap or Gantt view.
+
+- Automatic left-to-right layout shows predecessor-to-successor arrows. Distance is
+    not time. Nodes show title, status, assignee, and accessible prerequisite warnings.
+- Include all member Tasks, including completed and unconnected ones. Clicking a
+    node opens the existing Task detail; relationships are edited there, not by drawing.
+- Direct predecessors outside the selected Layer appear as labeled external nodes.
+    Do not recursively expand their graph or include them in the Layer's progress.
+- Provide pan, zoom, and fit-to-view. Task details and dependency controls remain
+    keyboard accessible without requiring graph interaction.
+- Layout is derived, not a saved plan. Exclude manual node positioning, graphical
+    link editing, date axes, effort-to-time conversion, and automatic rescheduling.
 
 ## 9. Scratchpad
 
@@ -191,10 +228,10 @@ Scratchpad contains collaborative Markdown documents for ideas, plans, decisions
 research, and Debriefs.
 
 Documents support Team or private scope, authorship, version history, Layers, stable
-links, search, Task/Milestone backlinks, and non-destructive conversion of selected
+links, search, Task/Layer backlinks, and non-destructive conversion of selected
 text or checklist items into Tasks.
 
-Each Milestone may have one primary plan:
+Each Layer in Milestone Mode may have one primary plan:
 
 ```markdown
 ## Outcome
@@ -204,7 +241,7 @@ Each Milestone may have one primary plan:
 ## Plan
 ```
 
-Tasks created from this plan inherit the Milestone and home Layer and retain a source
+Tasks created from this plan join its Layer and retain a source
 backlink. Scratchpad has no formulas, relational properties, custom schemas, plugins,
 or autonomous content generation.
 
@@ -213,11 +250,12 @@ or autonomous content generation.
 Time Tracking is optional and disabled by default. It supports plan-versus-actual
 analysis and external client billing.
 
-- Tasks may have planned hours; Milestones may have an hour budget.
+- Tasks may have planned hours; Layers in Milestone Mode may have an hour budget.
 - A Time Entry records Task, user, date, duration, billable state, and optional note.
 - Manual entry is the initial input method.
-- Entries roll up by Task, Milestone, Layer, user, and date.
-- Timesheets provide personal, weekly, Team, Milestone, and Layer views.
+- Entries roll up by Task, Layer, user, and date, including Layers in Milestone Mode.
+- Timesheets provide personal, weekly, Team, and Layer views. Combined Layer totals
+    count each Time Entry once even when its Task belongs to multiple selected Layers.
 - Billable records can be exported as CSV.
 - Changes to Time Entries are auditable.
 
@@ -226,11 +264,11 @@ payroll, or approval chains. Hours are never used as an employee performance sco
 
 ## 11. Worklog And Analytics
 
-Worklog preserves meaningful Task, Review, Blocker, Milestone, Debrief, and Time Entry
-events. System events are immutable; corrections create new events.
+Worklog preserves meaningful Task, dependency, Layer, Milestone Mode, Review, Blocker,
+Debrief, and Time Entry events. System events are immutable; corrections create new events.
 
 Team analytics may include throughput, cycle time, work age, Review wait, blocked
-time, return/reopen rate, Milestone scope change, planned versus actual hours,
+time, return/reopen rate, delivery scope change, planned versus actual hours,
 billable time, and repeated Debrief causes.
 
 Mantask must not provide employee leaderboards, productivity scores, presence
@@ -258,12 +296,13 @@ Later users join by invitation; public registration remains disabled.
 
 ## 14. Delivery Direction
 
-1. **Core:** bootstrap, Teams, private Workspace, Kanban, Tasks, Layers, WIP,
-   filtering, and Review.
+1. **Core:** bootstrap, Teams, private Workspace, Kanban, Tasks, real Layer identities,
+    multi-Layer membership, shallow hierarchy, filtering, WIP, and Review.
 2. **Coordination:** Review Feedback, Inbox, Blocker Handshake, and Worklog.
-3. **Planning:** Milestones, Scratchpad planning, Task conversion, and Roadmap.
+3. **Planning:** Milestone Mode and progress first; Task dependency controls before
+    their graph view; Scratchpad planning and Task conversion. No scheduling engine.
 4. **Time and learning:** planned hours, Time Entries, Timesheets, CSV export,
-   Milestone close, Debriefs, and Team analytics.
+    delivery close, Debriefs, and Team analytics.
 
 The Core must remain complete when every optional module is disabled.
 
@@ -273,7 +312,7 @@ The Core must remain complete when every optional module is disabled.
 - Retention of pilot Teams.
 - Cycle time and age of active work.
 - Review and Blocker waiting time.
-- Milestones closed with explicit scope resolution.
+- Layers in Milestone Mode closed with explicit scope resolution.
 - Original versus final scope and planned versus actual hours.
 - Repeated rework causes and completed Debrief actions.
 - Qualitative reduction in time spent maintaining the PM tool.
