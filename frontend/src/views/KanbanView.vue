@@ -63,8 +63,11 @@ onMounted(async () => {
         </div>
 
         <!-- KanbanBoard -->
-        <div class="kanban bg-white">
-            <div v-for="column in statusColumns" :key="column.status">
+        <div class="kanban">
+            <div
+                v-for="column in statusColumns" :key="column.status"
+                class="bg-zinc-900 rounded-lg p-2"
+            >
                 <span>{{ column.label }}</span>
                 <button
                     v-if="isAllowedTaskStatus(column.status)"
@@ -89,13 +92,13 @@ onMounted(async () => {
     display: flex;
     min-height: 0;
     flex: 1;
-    gap: 12px;
+    gap: 0.75rem;
     margin-top: 0.5rem;
     overflow-x: auto;
+    color: white;
 }
 
 .kanban > div {
     flex: 0 0 clamp(240px, 28vw, 340px);
-    background: red;
 }
 </style>
