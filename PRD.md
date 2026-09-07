@@ -1,465 +1,330 @@
-# Mantask (working name)
-Task management software for small teams
+# Mantask Product Requirements Document
 
-## Overview
-This application is a specialized, developer-centric task and workflow management tool designed for teams. It emphasizes minimizing workflow friction through structured triage (Inbox), actionable "Debriefs" for state regressions, strict Work-in-Progress (WIP) tracking, and deep system integrations (GitLab). It is designed to be lightweight, fast, keyboard oriented, and capable of running efficiently on small self-hosted environments.
+**Status:** Product direction | **Audience:** Self-hosted delivery teams with 2-15
+members | **Updated:** 2026-09-07
 
----
+## 1. Product
 
-## User Flows
-1. **Onboarding** (admin creates org/workspace -> invite user -> user accepts invite -> selects/joins team -> **private workspace automatically created** -> lands on default kanban -> empty-state shows hotkeys + "create first task" CTA -> user can open Inbox to see "mailbox" empty-state)
+Mantask is a radically simple project-management tool for small teams. It combines a
+fixed Kanban with optional short-term planning, collaborative Markdown notes, time
+tracking, and structured learning.
 
-2. **Task Triage** (create task -> defaults to Todo -> optionally add description/effort/dates/priority/layers -> assign to someone -> assignee receives Inbox notify (assignee can't clear unclaimed inbox notificaitons) -> assignee can claim it -> task moves to Todo -> task appears in Kanban and List views)
+> Plan briefly. Finish clearly. Learn from reality.
 
-3. **Bulk Triage Mode** - use case: I want to assign multiple different tasks to one person (press bulk mode when creating task -> select assignee -> type many task titles in a queue below each other -> optionally each title has three dots to expand into detail task view: it's gonna be a modal transition -> apply -> tasks are sent into Inbox of the asignee)
+Mantask occupies the space between simple task tools that lack coordination and broad
+PM suites that require teams to configure and maintain their own system. It should be
+useful within minutes, without custom statuses, views, fields, or methodology setup.
 
-4. **Filters Workflow** (click on filter button -> open right sidebar -> apply filters (by layers, state, assignee, etc.) -> clear filters -> return to default kanban view)
+## 2. Users
 
-5. **Start Work + NOW (first task in WIP)** (Todo -> move task to WIP -> task becomes NOW automatically if it's first in order -> defaultlimit is 2 (can be changed by admin) -> if task moved to WIP when WIP full, rejection and error toast shows -> kanban "Now" status automatically updates)
+The primary customer is a 3-12 person team that regularly plans, executes, and reviews
+shared work. Mantask supports roughly 2-15 members per team.
 
-6. **Submit for Review** (WIP -> Review -> reviewer(s) receive Inbox notification "Task X needs review" -> task shows in Review column -> developer waits)
+Initial users include small software teams, agencies, design and content teams,
+internal operations teams, and privacy-conscious teams preferring self-hosting.
 
-7a. **Review Approve Path** (reviewer opens Inbox row -> opens task -> approves -> task moves to Done -> developer receives grouped Inbox update -> task shows Done + timestamps recorded)
+Mantask is not designed for enterprise portfolios, arbitrary workflows, large-scale
+resource planning, regulated accounting, payroll, or autonomous AI management.
 
-7b. **Review Return + Debrief Lifecycle** (reviewer moves Review -> Todo or WIP -> must choose return reason (debrief) + optional note -> active debrief created/attached to task -> developer receives Inbox update -> developer works -> when moving WIP -> Review again -> debrief modal forces acknowledgement (Space) -> on successful resubmit -> debrief marked resolved/inactive (history kept, active cleared))
+## 3. Principles
 
-8. **Blocker Handshake** (assignee presses Block -> chooses reason (note) + optional @mention -> task shows blocked flag in its current column -> mentioned person gets exactly one Inbox ping -> mentioned person resolves/unblocks + adds 1-line resolution note -> assignee notified to resume + blocker notified that loop is closed)
+1. **Simplicity is the edge.** Every concept must justify its mental cost.
+2. **The core is fixed.** Teams use Mantask instead of configuring Mantask.
+3. **Advanced features are optional.** Disabled modules remain invisible.
+4. **Coordination loops close.** Reviews and blockers have a next actor and outcome.
+5. **Plans meet reality.** Original scope and estimates remain visible.
+6. **Analytics describe work, not workers.** No employee productivity rankings.
+7. **Teams own their data.** Self-hosting, backup, and export are first-class.
+8. **Frequent actions are fast.** The product is keyboard-oriented and low-friction.
 
-9. **Subtasks (Checkbox Extension)** (open task detail -> add subtasks as checkboxes -> check/uncheck as work progresses -> completion updates activity feed -> no state changes required - can not be move to Review/Done if not all subtasks completed)
+## 4. Non-Goals
 
-10. **Reopen Done Task** (user moves Done -> Todo -> must add reopen reason -> "Reopened" badge pinned -> the person who finished it receives Inbox notification (and optionally last reviewer) -> task returns to planning pool)
+- Custom statuses, workflow builders, or per-project workflows.
+- Epics, initiatives, portfolios, or deep hierarchies.
+- Roadmap timelines, Gantt charts, critical paths, automatic scheduling, or resource leveling.
+- Built-in chat or a general-purpose wiki/database builder.
+- Mandatory Scrum ceremonies or recurring sprint machinery.
+- Employee monitoring, payroll, invoices, taxes, or timesheet approvals.
+- AI features in the active roadmap.
+- An automation or plugin marketplace.
 
-11. **Inbox Triage Actions** (Inbox row appears grouped by Task ID -> user can Open Task -> Acknowledge/Clear (marks handled) -> Approve (for review items) -> Snooze 1 day (hides row until snoozed_until) -> snoozed row reappears later at top)
+## 5. Product Model
 
-12. **Focus Mode Notifications** (user enables Focus Mode -> no toast notifications -> all events still go to Inbox -> only exception: if explicitly @mentioned as a Blocker -> silent red badge on Inbox icon appears)
+| Concept | Purpose |
+| --- | --- |
+| Team | Shared members, settings, and work |
+| Workspace | Selected Team or private work context |
+| Layer | Shared organization of work, with optional nesting and Milestone Mode |
+| Task | Smallest owned unit of executable work |
+| Scratchpad | Shared or private Markdown documents linked to work |
+| Time Entry | Billable or non-billable time recorded against a Task |
+| Worklog | Immutable history of meaningful events |
+| Debrief | Short reflection producing one learning action |
 
----
+Rules:
 
-## Functionality 
+- A Task belongs to one Workspace and may have multiple Layers.
+- Milestone Mode extends a Layer; it is not a separate entity or Task workflow.
+- A Task may belong to ordinary Layers and at most one Layer in Milestone Mode.
+- Multiple Layers in Milestone Mode may be active concurrently.
+- Task dependencies are independent of Layer membership and presentation.
 
-### Multiple language support
-- English (default)
-- There will be translation function that will pull text from database
+## 6. Core Work
 
-### Hierarchy
-- Organization is the one instance of the app running on a certain VPS and domain
-- Each organization can have teams that are isolated from each other and have different members
-- Each team has one shared kanban board that displays all tasks
-- Layers are a flexible tagging/filtering system applied to tasks (e.g., #frontend, #api, #devops, #docs) to organize work without requiring rigid project structures
+### Fixed Kanban
 
-### Setup
-### Instance Bootstrap (First-Time Setup)
-- One domain = one Organization (one installation equals one workspace)
-- When the app is deployed on a fresh VPS and database contains zero users, the instance is considered "unclaimed"
-- If `users_count == 0`, the root URL shows **Create Owner Account** screen instead of Login
-- First registered user automatically becomes `Owner` (Admin role with full permissions)
-- During first registration:
-    - Organization record is created (singleton, exactly one per install) if it does not already exist
-    - Owner is linked to this Organization
-    - Default Team (e.g. "Main") is automatically created
-    - Owner is automatically added as a member of the default Team
-- After the first user is created, public registration is permanently disabled
-- From that moment on, new users can only join via invitation links generated by an Admin
-- **Private workspace is automatically created for each user during bootstrap or when accepting an invite**
-- If database already contains at least one user, accessing `/register` redirects to Login
-- Organization-level settings (name, logo, global WIP limit, timezone, integrations) are stored in a singleton Organization record
+```text
+Backlog -> To do -> In progress -> Review -> Done
+```
 
-### Register & Login
-- Owner must have VPS and domain to run this app on
-- In the team management settings, admin can create invitation link that can be used to invite new person to the organization
-    - Admin can also invite a member of one team to another
-- Since this app is self-hosted, user will have to create new account for each organization
-- User has to type email and password for creation
-- There is gonna be 'forgot password' feature to renew the password if forgotten
-- After successful operation, user will be prompted to enter his username that others will see
-- After making new account using the link for joining the organization, user will see the main kanban of the team that he was invited to
-- If user doesn't logout, the session is active for 30 days. After that if there is no activity - logout. Each time user opens the app and is active, the timer resets to 30 days.
+- Columns cannot be added, renamed, removed, or reordered.
+- The board shows one Workspace at a time.
+- Drag and drop changes state or shared manual order.
+- Local filters and sorting never overwrite shared order.
+- Completed Tasks remain searchable and are never silently deleted.
 
-### Menu
-- Top-left is gonna be a small card with user's profile picture, name and organization he is in
-- Under that there is a small tab with text "Teams" and rolldown button that expands the tab
-- There user can switch teams and admin can manage teams
-- **Private Workspace** is also accessible from here - listed alongside teams
-- Menu is gonna be in a form of buttons with icons and tooltips on hover
-- In the menu there is these buttons:
-    - `Add Task`
-    - `Inbox`
-    - `Layers`
-    - `Scratchpad`
-    - `Worklog`
-    - `Analytics`
-    - `Settings`
-- Admin will also see some more options:
-    - `Integrations`
-    - `Roles`
-- Admin will also have more right than other members, like creating layers for example
-- Each menu button will be described later in this document
+### Tasks
 
-### Account Settings
-- Change picture, username
-- Logout
-- Delete account
-- Select default team/layer, default view
-- Light / Dark mode
+A Task has a title, status, creator, and Workspace. Optional properties are Markdown
+description, assignee, reviewer, Layers, priority, relative effort, dates, dependencies,
+planned hours, comments, attachments, and activity.
 
-### Kanban / List
-- There is 5 columns: 'Backlog', 'Todo', 'In Progress (WIP)', 'Review', 'Done'
-- **Backlog** column is for storing future tasks that are not immediate and may be worked on later - just to remember them. Tasks in Backlog don't count toward WIP limits and are not expected to be actively worked on.
-- User won't be able to create more or delete one
-- When it grows too large, scrollbars will appear
-- Moving tasks in different state is used by mouse dragging or keyboard shortcut - user must focus the task first tho
-- Tasks are displayed across all layers in a single unified kanban; use the Filters sidebar to narrow by layer or chips
-- After 24 hours of being Done, tasks are automatically archived and removed from the kanban; they remain accessible in the Worklog and Analytics for historical reference
+Effort expresses relative difficulty, not calendar duration. It is not automatically
+converted into hours, dates, or graphical bar lengths.
 
-### Adding a Task
-- There is gonna be 2 ways to create a task:
-    - 1. Pressing the menu button
-    - 2. Keyboard shortcut
+A Task has one assignee. Review-required work must have one reviewer before entering
+Review. Other work may move directly from In progress to Done.
 
-**Pressing the menu button:**
-- It will show modal in the middle with Title and option to add description below
-- Then priority (optional) -> Low, Medium, High, Urgent). Each priority gives a color distinciton. If none selected, color is gonna be neutral (gray)
-- Two optional dates:
-    - Review Date: Date at which the task has to be prepared for review in 'Review'
-    - Due Date: Hard limit of when the task has to be in 'Done'
-- Assignee - choose who will be the task send to. If omitted, it's gonna be assigned to the creator
-- Layers (optional, multi-select) - tag the task with one or more layers (e.g., #frontend, #api) for organization and filtering
-- There can be also note added which is a text field for the creator to pass any meaningful info
-- User can choose where the task should go to: 'Backlog', 'Todo', WIP or 'Review', default is 'Todo'. 'Done' is not possible
-- There is also possibility turning off the need to be reviewed, because standard behaviour of the app is that every task needs to be first approved in 'Review' to then go to 'Done', but omitting this in the task creation, it can be placed to 'Done' right away from WIP
-- Possibility to add comments or attach files
+### Work-In-Progress
 
-**Keyboard shortcut:**
-- It shows the same modal, just the trigger event is different
-- User can bind it himself, but default is 'n' as 'new'
+WIP counts In progress Tasks per assignee. Teams configure one shared limit:
 
-**Bulk Triage Mode:**
-- Button in task creation modal
-- Switches to a Modal that has only one text field for adding task title
-- First has to select assignee, because this is used when there is a need for multiple task for specific person. If not assigned, it's assigned to the creator.
-- Optionally select layer(s) to apply to all tasks in the batch
-- Then creator can start typing titles and on pressing 'Enter' another text field for another title creates below and so on
-- There is three dots on the right side of each text field enabling creator to go in detail for that prompt
-- There is gonna be animation that makes the modal grow and switches the content for the settings of that particular task, just like it was described in the task creation
-- There will also be a button to go back (arrow) that will make the modal shrink back to its original size and switch content for the bulk triage mode
-- When all done, tasks are sent into the Inbox of the assignee, and if its assigned to the creator, they end up in 'Todo'
+- `Warn` displays overload but permits the move.
+- `Enforce` blocks the move unless an authorized override includes a reason.
 
-### Inbox
-- Central system and communication layer for this app
-- Each notificatoin is one row, it's exactly like an email inbox
-- Assigned tasks are there and can be claimed
-- Its divided into two panels. Left one is smaller and is the email inbox. Right one shows the opened row in detail so user can read the full message there, see the full task, etc.
-- Once the notification is resolved, it is removed and archived. User can view the archive when switching to archive tab
-
-### Roles
-- Admin, Member, Reviewer, Guest
-- Horoable mention: Owener - is one layer above admin; owner is automatically admin; can create more admins
-
-**Admin (Owner / Manager):**
-- Full system access. Sees "Roles" and "Integrations" in the Settings page 
-​- Tasks: Can create, edit, delete, assign, and force-move any task across any layer
-- Settings: Can invite/revoke users, change user roles, set global WIP limits, create/manage layers, and configure GitLab webhooks/integrations
-- Overrides: Can bypass system guardrails (e.g., forcing a blocked task to move or overriding a debrief loop with an admin note)
-​
-**Member (Standard Developer):**
-- Standard workspace access (Inbox, Kanban, Layers, Scratchpad, Worklog, Analytics)
-- Tasks: Can create tasks, use Bulk Triage, edit task details, assign tasks to themselves or others, and tag tasks with layers
-- Workflow: Can move tasks through all standard states (Todo → WIP → Review → Done) and trigger Debriefs or Blockers
-- Restrictions: Cannot access system integrations, invite new users, or change global team settings (like WIP limits), create layers
-
-**Reviewer (External Contractor / QA):**
-- Limited workspace access. Can view kanban, tasks, and Inbox notifications filtered by assigned layers
-- Tasks: Cannot create new tasks or use Bulk Triage
-​- Workflow: Strictly limited to the "Review" phase. Can approve tasks (Review → Done) or reject tasks triggering a Debrief (Review → Todo/WIP). Cannot move tasks into WIP or pull tasks from Todo
-- Interaction: Can comment on tasks and participate in Blocker handshakes if @mentioned
-​
-**Guest (Client / Stakeholder):**
-- Strictly read-only
-- Visibility: Can view the Kanban/List boards filtered by assigned layers, task details, and public comments to track progress
-- Restrictions: Cannot create, edit, assign, or move tasks. Cannot comment, approve reviews, or interact with Blockers. Does not receive Inbox notifications for workflow state changes
+WIP is a coordination policy, not an employee score. Review waiting is tracked
+separately because Review can become the bottleneck.
 
 ### Layers
-- Flexible tagging system that organizes tasks within a team's kanban without creating separate boards
-- Admin can create, rename, and archive layers
-- Tasks can be tagged with only one layer
-- For quick filtering, layers are shown as chips above the kanban to cycle through quickly
-- They can also be selected and filtered from the right sidebar 
-- Default layer view can be set per user (selected by default when opening kanban)
 
-### Private Workspace
-- Every user automatically gets a private workspace for personal tasks that only they can see
-- Created automatically after bootstrap (first user registration) or when accepting an invite (i.e., whenever a user account is created)
-- Private workspace is isolated from all team boards - no other user can view, edit, or interact with tasks in it
-- Tasks in private workspace follow the same kanban structure (Backlog, Todo, WIP, Review, Done) but are completely personal
-- Useful for tracking personal todos, learning goals, or work that shouldn't be visible to the team
-- Private workspace can be accessed from the menu alongside team switching
+Layers belong to one Workspace and organize its existing Tasks without separate boards.
+The initial hierarchy has two levels: root Layers can represent projects, while child
+Layers represent local tags or areas. Hierarchy determines placement, not a separate
+project/tag entity type. `#eshop/backend` and `#crm/backend` are distinct Layers.
 
-### Scratchpad
-- Private sandbox to dump unstructured thoughts during meetings or brainstorming, which can later be converted into tasks
-- Acts as a simple, persistent, personal Markdown text editor
-- One-liner with limited amount of words
-- On the right, there is button "Convert" which will open Add Task modal
-- Note that it will be placed into the active team and can be tagged with layers during conversion!
+- Selecting a parent includes Tasks from its children, with each Task shown once.
+- Ordinary Layers support multi-selection. A Layer in Milestone Mode is selected alone
+    in the initial UI; this filter rule is separate from Task membership.
+- `See all tasks` includes Tasks in Layers with Milestone Mode. Their Layer badges
+    remain visible; milestone-specific controls appear only on explicit selection.
+- Milestone Mode stays in the same Layer navigation, distinguished by color and an
+    icon or text label, never color alone. No separate Milestones navigation is needed.
+- Archiving a Layer preserves its Tasks and history. Parent inclusion is derived from
+    the hierarchy rather than requiring duplicate Task membership in the parent.
+
+## 7. Coordination
+
+### Review Feedback
+
+- Entering Review creates an action for the reviewer.
+- Approval moves the Task to Done.
+- Returning work requires a reason and a concrete expected correction.
+- Feedback remains visible when the Task is resubmitted.
+- Repeated returns may trigger a Debrief.
+
+Review Feedback fixes the current Task. A Debrief changes future team behavior.
+
+### Action-Only Inbox
+
+Inbox contains only required actions: assignments, reviews, Blocker responses,
+Debriefs, and significant reopened work. Informational events belong to activity.
+Completing the underlying action resolves the Inbox item automatically.
 
 ### Blocker Handshake
-- Triggered by pressing 'b' on a focused task or clicking the "Block" button
-- User must write a 1-line note as a reason of why it is blocked
-- Optional: @mention someone who needs to unblock it
-- Once blocked, a red badge appear on the task card without changing its column. On hover over the badge shows the reason note
-- The @mentioned person gets an Inbox ping (bypasses standard Focus Mode silence) and the whole team gets a batched update
-- System logs a blocked_at timestamp to quietly calculate total block duration without active timers
-- Blocked tasks show up under the global "Blocked" filter
-- Anyone can unblock the task, but they are forced to write a short resolution note (min 1 word)
-- Unblocking logs the unblocked_at timestamp and pins the resolution note to the task history
-- The original assignee and the person who created the block both receive an unblock notification to resume work
-- Total blocked_time per task is shown in the task details, and weekly block counts will show in Analytics (deep reason-analytics are out of scope for V1)
 
-### Focus Mode
-- When focus mode is on, user won't get notified. The inbox is still active, user just won't be interrupted
-- User can turn it on in the top bar - simple toggle or keyboard shortcut
-- Exception (Blockers): If the user is explicitly @mentioned in a Blocker Handshake, the system still does not show a toast, but it forces a silent red badge to appear on the left-nav Inbox icon, signaling that a teammate is hard-blocked waiting on them.
-- Other members see the user is using focus mode
+```text
+Open -> Acknowledged -> Resolved
+```
 
-### Review
-- Strict quality gate between 'WIP' and 'Done' - every task requires explicit approval unless "No Review Required" was set during creation  
-- Moving `WIP → Review` logs `submitted_for_review_at`, frees WIP slot, makes task structurally read-only, and sends Inbox notification to assigned reviewer (reviewer can be anyone who gets set by admin) 
-- Only Reviewer and Admin can decide outcome: `Approve (Review → Done)` or `Return (Review → Todo/WIP)`  
-- Approve logs `approved_at` + `approved_by`, moves task to `Done`, and notifies original assignee with grouped Inbox update  
-- Return requires selecting structured reason (debrief) and optional note; logs `returned_at`, moves task back, and creates exactly one active Debrief attached to the task  
-- Active Debrief must be acknowledged (Space confirmation modal) before task can be resubmitted `WIP → Review`; on resubmit, Debrief is marked resolved (history preserved)  
-- Review decisions are binary - no soft states, no partial approvals, no silent edits; comments allowed but do not replace decision  
-- Review tasks show reviewer avatar(s), submission timestamp, and "Returned X times" badge; 'Done' shows approval metadata  
-- Review items appear in Inbox grouped by Task ID; reviewers can Open, Approve, or Clear after decision  
-- Admin can override `Review → Done` with mandatory visible admin note (fully logged in task history)  
+A Blocker records the problem, requested action, responder, acknowledgement, and
+resolution. The Task remains in its current state, may have one active Blocker, and
+does not gain a separate chat thread.
 
-### Debrief System
-- Records exactly why a task gets sent backwards the moment it happens, so the team stops making the same mistakes without needing meetings
+### Debrief
 
-**Review Return (Review → Todo/WIP):** 
-- Solves the silent rework loop by forcing clear feedback
-- Reviewer must pick a reason (Missing tests, Spec unclear, Edge cases, Style) + optional 1-line note
-- Reason pins permanently to the task as a banner
-- Developer must hit `[Space]` to explicitly acknowledge the debrief before resubmitting
-- Guardrail can only be bypassed by an Admin override with a written note
+A Debrief may follow repeated Review returns, reopened work, a long Blocker, or a
+completed Layer in Milestone Mode. It asks:
 
-**Blocker Debrief (Press 'b'):** 
-- Exposes hidden waiting time by forcing dependencies into the open
-- Assignee selects a reason (Waiting for review, Dependency, CI broken) + optional @mention and note
-- Places a visible red flag on the task board
-- @mentioned user gets exactly 1 Inbox ping and resolves it via a 1-line reply from their Inbox (strictly no chat threads)
+1. What did we expect?
+2. What actually happened?
+3. What one thing should change next time?
 
-**Reopen Debrief (Done → Todo):** 
-- Tracks quality blindness by categorizing why finished work bounced back
-- User must pick a reopen reason (Bug remains, Regression, Missing requirement) + optional 1-line note
-- Permanently pins a "Reopened" badge to the task card
+The outcome is one improvement Task, one working-agreement change, or an explicit
+decision that no change is needed. Debriefs are concise, asynchronous, and blameless.
 
-### Worklog
-- A simple timeline showing exactly what was finished, who did it, and when
-- Strictly a history log, not an analytics or math tool. The original task is always the source of truth
-- Automatically creates a permanent entry only when a task reaches 'Done' (from Review, or straight from WIP)
-- Saves the task link, layers, finisher's name, exact time, if it was reviewed, and how many times it bounced back
-- Entries are completely locked (immutable) and cannot be edited
-- Displays as a Calendar view (day, week, or month)
-- Can be quickly filtered by user, layer, or date
-- Clicking any log entry opens the full task details
-- At the end of each day, completed tasks in 'Done' and tasks in 'Review' will be logged in the Worklog and removed from kanban
+## 8. Planning Module
 
-### Analytics
-- Built entirely from `task_events` log (state changes, review transitions, block/unblock) - no metrics stored statically; all values calculated at query time  
-- Core timestamps tracked:
-    - `created_at (t1)`
-    - `wip_entered_at (t2)`
-    - `review_entered_at (t3)` 
-    - `done_at (t4)`, plus `blocked_at / unblocked_at` per cycle  
-- Time metrics: 
-    - `coding_time (t3 - t2)`,
-    - `cycle_time (t4 - t2)`
-    - `lead_time (t4 - t1)`
-    - `review_wait` (total time in Review)
-    - `blocked_time` (sum of all block intervals)  
-- Quality metrics: `rework_count` (number of Review → WIP/Todo returns per task) and weekly `avg_rework_count` to expose instability  
-- Effort system: XS / S / M / L / XL mapped to `1 / 2 / 3 / 5 / 8` points (relative effort, not hours)  
-- Weekly commitment tracking: `effort_committed_per_week` (points entering WIP) vs `effort_delivered_per_week` (points reaching Done)  
-- `over_commitment_ratio = committed / delivered` (>1.0 signals over-promising; visible as warning indicator)  
-- Throughput metrics: raw `throughput_per_week` (tasks completed) and `avg_cycle_time` across tasks done that week  
-- Velocity chart: X-axis = week number, Y-axis = effort_delivered_per_week, with rolling N-week average line as baseline for forecasting  
-- Forecasting rule: large features estimated by dividing total effort points by rolling average velocity (e.g., 36 points / 12 pts/week ≈ 3 weeks)  
+Planning is optional and disabled by default. It adds Milestone Mode, Task dependencies,
+their graph view, and Scratchpad planning without changing the Kanban. Disabling it
+hides planning controls, not Tasks or their Layer membership, and preserves planning data.
 
-### Filters & Sort
-- Opens as a right sidebar in the kanban view
-- Filters are single seleciton by default
-- Filters can be combined if user holds Shift or Ctrl
--> There will be informational tooltip showing this to the user
-- Clear filters resets to default kanban state
-- When filtering by state, non-selected columns are hidden and remaining columns align from the right
-- User can create their favorite filters that will be placed at the top
+### Milestone Mode
 
-#### Single Filters
-- By status
-    - Backlog
-    - Todo
-    - WIP / In Progress
-    - Review
-    - Done
-- By derived state / overlays
-    - Now
-    - Blocked now
-    - Ever blocked
-    - Returned at least once
-    - Never returned
-    - Reopened
-- By creator
-    - Select from list
-    - Search by name / username / email
-- By assignee
-    - Select from list
-    - Search by name / username / email
-    - Unassigned
-- By reviewer
-    - Select from list
-    - Search by name / username / email
-    - No reviewer
-- By effort
-    - 1
-    - 2
-    - 3
-    - 5
-    - 8
-    - No effort set
-- By creation date
-    - Exact date
-    - Before
-    - After
-    - Between range
-    - Older than X
-    - Created today
-    - Created yesterday
-    - Created last week
-    - Created last month
-- By review date
-    - Exact date
-    - Before
-    - After
-    - Between range
-    - Review due today
-    - Review due this week
-    - Review overdue
-    - No review date
-- By due date
-    - Exact date
-    - Before
-    - After
-    - Between range
-    - Due today
-    - Due this week
-    - Overdue
-    - No due date
-- By completion
-    - Completed today
-    - Completed yesterday
-    - Completed last week
-    - Completed last month
-    - Completed in date range
-- By priority
-    - None
-    - Low
-    - Medium
-    - High
-    - Urgent
-    - No priority set
-- By review flag
-    - Review required
-    - No review required
-- By time in WIP
-    - Greater than X
-    - Less than X
-    - Between range
-- By time in review
-    - Greater than X
-    - Less than X
-    - Between range
-- By layer
-    - Exact layer
-    - Multiple layers
-    - No layer
-- By returned and reopen count
-    - Returned once
-    - Returned 2 times
-    - Returned more than X times
-    - Returned exactly N times
-    - Returned at least N times
-- By text search
-    - Title
-    - Description
-    - Title + description
+A Layer such as `#checkout-mvp` can enable Milestone Mode to coordinate a delivery goal,
+not a Scrum sprint. It retains its Layer identity, hierarchy, and Task membership.
+It adds an outcome, owner, optional target date, delivery status, and optional hour
+budget and primary Scratchpad plan. No planned start date is required.
 
-#### Combined Filters
-- Mixing status and derived state filters will be forbidden
-- Predicted most used combinations (for composite indexes):
-    - 2 Branches: 1. Starting with status filter, 2. Not starting with status filter
-    - Second will be often creator/assignee/reviewer
-    - Third will be often time filtering
+The outcome states what should be achieved, such as "Customers can pay by card."
+The owner coordinates scope, obstacles, and closure, and is not automatically the
+assignee of its Tasks. The target date describes the delivery goal, not a Task schedule.
 
-### Settings
-- Central configuration hub divided into: General, Teams, Layers, Roles, Integrations (Admin only where applicable)
+Statuses are `Draft`, `Active`, `Completed`, and `Cancelled`.
 
-- **General**
-    - Organization name and branding (logo upload)
-    - Global WIP limit (default = 2, adjustable by Admin)
-    - Default task behavior (Review required by default: On/Off)
-    - Timezone and week start day (affects Worklog & Analytics aggregation)
+Activation preserves the original Task scope, estimates, dates, and owner. Later
+changes remain allowed but are shown as changes to the plan.
 
-- **Teams**
-    - Create / rename / archive teams    - Set default reviewer(s) per team
-    - Move members between teamse default landing layer for new members
-    - Set default reviewer(s) per team
-    - Define default landing view for new members
+On explicit selection, a compact header shows completed versus total member Tasks
+(for example, `6/10 done`), waiting or blocked work, scope changes, and the target date
+when set. Completion counts are not estimates of remaining effort or proof that the
+outcome was achieved. Planned versus actual hours are optional, never percentage completion.
 
-- **Layers**    - Set layer visibility and permissions (if needed)
-    - Create / rename / archive layersyers into groups (optional)
-    - Set layer descriptions and color coding
-    - Organize layers hierarchically (optional parent-child relationships)
-    - Configure visibility per team Member / Reviewer / Guest)
-    - Grant or revoke Reviewer capability per team
-- **Roles**ead-only overview)
-    - Assign and change user roles (Admin / Member / Reviewer / Guest)
-    - Grant or revoke Reviewer capability per team
-    - View role permission matrix (read-only overview)vite links
+Before completion, unfinished Tasks must be explicitly resolved: finish them or remove
+them from the delivery scope, recording whether they return to Backlog or move to
+another Layer in Milestone Mode. Closing records the outcome and a short Debrief.
+Scope history survives membership changes, archival, or disabling Milestone Mode.
 
-- **Invitations**    - View pending invites and their status
-    - Generate time-limited invite links
-    - Revoke active invitation links
-    - View pending invites and their status picture
-    - Select default team / layer view / view type (Kanban or List)
-- **Account Preferences (Personal)**ight / Dark mode
-    - Change username and profile picturee Focus Mode by default
-    - Select default team / project / view (Kanban or List)
-    - Toggle Light / Dark mode
-    - Enable / disable Focus Mode by default
-    - Set default snooze duration
-- **Notifications**
-    - Configure Inbox grouping behavior
-    - Set default snooze duration
+### Task Dependencies
 
-- **Security**    - Force logout from all devices
-    - Change passwordversible, requires password confirmation)
-    - View active sessions
-    - Force logout from all devices
-    - Delete account (irreversible, requires password confirmation)
-    - Export Analytics data (CSV)
-- **Data & Logs (Admin)**estore database snapshot (manual trigger)
-    - View system event logs (task_events stream)
+- A Task may have multiple predecessors and successors within the same Workspace.
+- Task detail provides `Waiting on` with searchable add/remove controls and a derived
+    `Blocks` list. Dependencies must be useful without opening a graph.
+- Prerequisites are satisfied only when every predecessor is `Done`. An unfinished
+    or reopened predecessor shows a warning, but does not block Kanban transitions
+    or automatically change the successor's state.
+- Dependencies do not create Blocker Handshakes or additional workflow states.
+- The server rejects self-links, duplicate links, cross-Workspace links, and cycles,
+    including under concurrent changes. Layer membership changes preserve dependencies.
 
-### Integrations
-- *Not a priority for now, will be added as the last feature*
+### Dependency Graph MVP
 
-## MVP
+Selecting one Layer in Milestone Mode exposes `Kanban | Dependencies` in the existing
+board area. Both views use the same Tasks and states. There is no Roadmap or Gantt view.
 
-### 1st Version of MVP
-For my first version of the MVP I wanna focus on three steps:
-1. First startup of the app and registering the first user (owner) + creating first team
-2. After creation, seeing the dashboard with empty kanban
-3. Creating a task and seeing it in the kanban, performing basic operations with it (moving, editing, etc.)
+- Automatic left-to-right layout shows predecessor-to-successor arrows. Distance is
+    not time. Nodes show title, status, assignee, and accessible prerequisite warnings.
+- Include all member Tasks, including completed and unconnected ones. Clicking a
+    node opens the existing Task detail; relationships are edited there, not by drawing.
+- Direct predecessors outside the selected Layer appear as labeled external nodes.
+    Do not recursively expand their graph or include them in the Layer's progress.
+- Provide pan, zoom, and fit-to-view. Task details and dependency controls remain
+    keyboard accessible without requiring graph interaction.
+- Layout is derived, not a saved plan. Exclude manual node positioning, graphical
+    link editing, date axes, effort-to-time conversion, and automatic rescheduling.
 
-### 2nd Version of MVP
-- to be done
+## 9. Scratchpad
+
+Scratchpad contains collaborative Markdown documents for ideas, plans, decisions,
+research, and Debriefs.
+
+Documents support Team or private scope, authorship, version history, Layers, stable
+links, search, Task/Layer backlinks, and non-destructive conversion of selected
+text or checklist items into Tasks.
+
+Each Layer in Milestone Mode may have one primary plan:
+
+```markdown
+## Outcome
+## Scope
+## Out of scope
+## Risks and unknowns
+## Plan
+```
+
+Tasks created from this plan join its Layer and retain a source
+backlink. Scratchpad has no formulas, relational properties, custom schemas, plugins,
+or autonomous content generation.
+
+## 10. Time Tracking Module
+
+Time Tracking is optional and disabled by default. It supports plan-versus-actual
+analysis and external client billing.
+
+- Tasks may have planned hours; Layers in Milestone Mode may have an hour budget.
+- A Time Entry records Task, user, date, duration, billable state, and optional note.
+- Manual entry is the initial input method.
+- Entries roll up by Task, Layer, user, and date, including Layers in Milestone Mode.
+- Timesheets provide personal, weekly, Team, and Layer views. Combined Layer totals
+    count each Time Entry once even when its Task belongs to multiple selected Layers.
+- Billable records can be exported as CSV.
+- Changes to Time Entries are auditable.
+
+Mantask does not initially manage rates, currencies, taxes, invoices, payments,
+payroll, or approval chains. Hours are never used as an employee performance score.
+
+## 11. Worklog And Analytics
+
+Worklog preserves meaningful Task, dependency, Layer, Milestone Mode, Review, Blocker,
+Debrief, and Time Entry events. System events are immutable; corrections create new events.
+
+Team analytics may include throughput, cycle time, work age, Review wait, blocked
+time, return/reopen rate, delivery scope change, planned versus actual hours,
+billable time, and repeated Debrief causes.
+
+Mantask must not provide employee leaderboards, productivity scores, presence
+tracking, response-time rankings, or conclusions equating hours with value.
+
+## 12. Roles And Access
+
+- `Owner`: instance ownership and global settings.
+- `Admin`: membership, Layers, modules, and Team policy.
+- `Member`: normal work within joined Teams.
+
+Every user has one private Workspace excluded from Team access and reporting. The
+first deployment creates an Owner and default Team through protected bootstrap.
+Later users join by invitation; public registration remains disabled.
+
+## 13. Quality Requirements
+
+- Common actions feel immediate on modest self-hosted infrastructure.
+- Core workflows are keyboard accessible and do not rely on color alone.
+- Team and private data isolation is enforced on the server.
+- Workflow mutations are transactional and recover cleanly from conflicts.
+- Operators can back up, restore, and export their data.
+- PostgreSQL is authoritative and upgrades use versioned migrations.
+- The initial product is desktop-first.
+
+## 14. Delivery Direction
+
+1. **Core:** bootstrap, Teams, private Workspace, Kanban, Tasks, real Layer identities,
+    multi-Layer membership, shallow hierarchy, filtering, WIP, and Review.
+2. **Coordination:** Review Feedback, Inbox, Blocker Handshake, and Worklog.
+3. **Planning:** Milestone Mode and progress first; Task dependency controls before
+    their graph view; Scratchpad planning and Task conversion. No scheduling engine.
+4. **Time and learning:** planned hours, Time Entries, Timesheets, CSV export,
+    delivery close, Debriefs, and Team analytics.
+
+The Core must remain complete when every optional module is disabled.
+
+## 15. Success Measures
+
+- Time from setup to first useful Task.
+- Retention of pilot Teams.
+- Cycle time and age of active work.
+- Review and Blocker waiting time.
+- Layers in Milestone Mode closed with explicit scope resolution.
+- Original versus final scope and planned versus actual hours.
+- Repeated rework causes and completed Debrief actions.
+- Qualitative reduction in time spent maintaining the PM tool.
+
+Task count, hours per employee, individual completion totals, and online time are not
+success measures.
+
+## 16. Future
+
+Potential integrations include GitHub, GitLab, email capture, calendar export,
+webhooks, and an API.
+
+AI is excluded from the active roadmap. If considered later, it must operate through
+existing Tasks, Scratchpad, Review, Inbox, and Worklog. Consequential actions require
+a human owner and must remain scoped, attributable, reviewable, and reversible.
