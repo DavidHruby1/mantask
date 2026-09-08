@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { TaskStatus } from '@/interfaces'
 import { tasksStore } from '@/stores/tasks'
 import type { AllowedStatus, TaskCreate } from '@/interfaces'
@@ -18,24 +18,38 @@ const emit = defineEmits<{
 
 const title = ref<string>('')
 const status = ref<AllowedStatus>(props.addTaskStatus ?? TaskStatus.BACKLOG)
+const errorMessage = ref('')
 const statusOptions: Array<{ value: AllowedStatus; label: string }> = [
     { value: TaskStatus.BACKLOG, label: 'Backlog' },
     { value: TaskStatus.TODO, label: 'To do' },
     { value: TaskStatus.IN_PROGRESS, label: 'In progress' },
 ]
 
+watch(() => props.isOpen, (isOpen) => {
+    if (isOpen) {
+        status.value = props.addTaskStatus ?? TaskStatus.BACKLOG
+        errorMessage.value = ''
+    }
+})
+
 function getStatusLabel(status: AllowedStatus): string {
     return statusOptions.find((option) => option.value === status)?.label ?? status
 }
 
 async function onCreateTask() {
+    errorMessage.value = ''
     const payload: TaskCreate = {
         title: title.value.trim(),
         status: status.value,
         should_review: false
     }
 
-    await taskStore.createTask(payload)
+    const createdTask = await taskStore.createTask(payload)
+    if (!createdTask) {
+        errorMessage.value = 'Unable to create task. Please try again.'
+        return
+    }
+
     await taskStore.getTasks()
 
     title.value = ''
@@ -99,6 +113,8 @@ async function onCreateTask() {
                         <span v-else>{{ getStatusLabel(props.addTaskStatus) }}</span>
                     </div>
                 </div>
+
+                <p v-if="errorMessage" role="alert">{{ errorMessage }}</p>
 
                 <div class="mt-auto">
                     <button
