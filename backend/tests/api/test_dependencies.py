@@ -21,9 +21,9 @@ def test_get_current_session_persists_expiry_and_renews_cookie(monkeypatch):
     )
 
     result = dependencies.get_current_session(
-        db,
-        "plain-session-token",
-        response,
+        db=db,
+        response=response,
+        session_token="plain-session-token",
     )
 
     db.commit.assert_called_once_with()
@@ -52,9 +52,9 @@ def test_get_current_session_rolls_back_failed_expiry_renewal(monkeypatch):
 
     with pytest.raises(ApiInternalServerError, match="Unable to renew the session"):
         dependencies.get_current_session(
-            db,
-            "plain-session-token",
-            response,
+            db=db,
+            response=response,
+            session_token="plain-session-token",
         )
 
     db.rollback.assert_called_once_with()
@@ -72,9 +72,9 @@ def test_get_current_session_does_not_persist_unmodified_expiry(monkeypatch):
     )
 
     result = dependencies.get_current_session(
-        db,
-        "plain-session-token",
-        response,
+        db=db,
+        response=response,
+        session_token="plain-session-token",
     )
 
     db.commit.assert_not_called()

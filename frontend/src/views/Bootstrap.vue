@@ -56,7 +56,6 @@ function validateBootstrapForm(): boolean {
     return results.every(Boolean)
 }
 
-// Submits the validated bootstrap form and navigates to the dashboard after the server creates the account.
 async function handleBootstrapSubmit() {
     if (isSubmitting.value || !validateBootstrapForm()) return
 
@@ -75,7 +74,7 @@ async function handleBootstrapSubmit() {
         const bootstrapSucceeded = await authStore.bootstrap(payload)
 
         if (bootstrapSucceeded) {
-            await router.push({ name: 'dashboard' })
+            await router.push({ name: 'app' })
         }
     } finally {
         isSubmitting.value = false
