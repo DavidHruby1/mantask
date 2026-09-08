@@ -3,6 +3,10 @@ import { onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { tasksStore } from '@/stores/tasks'
 import { TaskStatus } from '@/interfaces'
+import {
+    CirclePlus,
+    Ellipsis
+} from '@lucide/vue'
 import type { AllowedStatus } from '@/interfaces'
 
 const emit = defineEmits<{
@@ -68,14 +72,35 @@ onMounted(async () => {
                 v-for="column in statusColumns" :key="column.status"
                 class="bg-zinc-900 rounded-lg p-2"
             >
-                <span>{{ column.label }}</span>
-                <button
-                    v-if="isAllowedTaskStatus(column.status)"
-                    type="button"
-                    @click="addTask(column.status)"
-                >
-                    +
-                </button>
+                <div class="flex justify-between items-center px-1">
+                    <span class="text-lg">{{ column.label }}</span>
+
+                    <div class="flex gap-2">
+                        <button
+                            v-if="isAllowedTaskStatus(column.status)"
+                            type="button"
+                            @click="addTask(column.status)"
+                        >
+                            <CirclePlus
+                                :size="20"
+                                :stroke-width="1.5"
+                                color="var(--color-white-base)"
+                                class="shrink-0 cursor-pointer"
+                            />
+                        </button>
+
+                        <button
+                            type="button"
+                        >
+                            <Ellipsis
+                                :size="20"
+                                :stroke-width="1.5"
+                                color="var(--color-white-base)"
+                                class="shrink-0 cursor-pointer"
+                            />
+                        </button>
+                    </div>
+                </div>
 
                 <template v-for="task in tasks" :key="task.id">
                     <div v-if="task.status === column.status">
