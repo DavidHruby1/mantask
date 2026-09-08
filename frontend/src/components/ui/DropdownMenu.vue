@@ -97,11 +97,11 @@ function toggleDropdown() {
             />
         </button>
 
-        <div
+        <ul
             v-if="isOpen"
             class="
                 absolute z-50 w-full min-w-max flex flex-col gap-2
-                py-2 px-3 bg-black rounded-lg
+                py-2 px-3 bg-black rounded-lg list-none
             "
             :class="{
                 'top-full mt-1': !opensUpward,
@@ -111,6 +111,6 @@ function toggleDropdown() {
             }"
         >
             <slot />
-        </div>
+        </ul>
     </div>
 </template>

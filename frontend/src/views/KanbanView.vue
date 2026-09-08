@@ -1,11 +1,16 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { tasksStore } from '@/stores/tasks'
 import { TaskStatus } from '@/interfaces'
+import DropdownMenu from '@/components/ui/DropdownMenu.vue'
 import {
     CirclePlus,
-    Ellipsis
+    Ellipsis,
+    ListSortDescending,
+    Funnel,
+    MoveUp,
+    MoveDown,
 } from '@lucide/vue'
 import type { AllowedStatus } from '@/interfaces'
 
@@ -15,6 +20,8 @@ const emit = defineEmits<{
 
 const taskStore = tasksStore()
 const { tasks } = storeToRefs(taskStore)
+
+const isSortAscending = ref<boolean>(true)
 
 const statusColumns = [
     { status: TaskStatus.BACKLOG, label: 'Backlog' },
@@ -32,7 +39,6 @@ function addTask(status: TaskStatus): void {
     if (!isAllowedTaskStatus(status)) {
         return
     }
-
     emit('add-task', status)
 }
 
@@ -41,26 +47,67 @@ onMounted(async () => {
     console.log('Fetched tasks:', tasksLog)
 })
 
-// Get tasks and separate them into status columns
 </script>
 
 <template>
     <div class="box-border overflow-hidden flex flex-col min-h-0 h-full pl-2">
         <!-- KanbanControls -->
         <div>
-            <div class="flex justify-between items-center bg-white p-4">
+            <div class="flex justify-between items-center px-3 py-1 text-white-base">
                 <div>
                     <span>Selected Layers</span>
                 </div>
 
-                <div class="flex gap-3">
-                    <input class="bg-gray-300"/>
-                    <button type="button">Sort</button>
-                    <button type="button">Filter</button>
+
+                <div class="flex justify-center items-center gap-2">
+                    <input class="bg-gray-300 mr-6 min-w-80 p-1 rounded-lg"/>
+
+                    <DropdownMenu
+                        text="Sort"
+                        :icon="ListSortDescending"
+                        :icon-only="true"
+                        :icon-stroke-width="2"
+                        :hide-chevron="true"
+                    >
+                        <li class="text-white-base">Priority</li>
+                        <li class="text-white-base">Effort</li>
+                        <li class="text-white-base">Due date</li>
+                        <li class="text-white-base">Review date</li>
+                    </DropdownMenu>
+
+                    <button
+                        type="button"
+                        @click="isSortAscending = !isSortAscending"
+                    >
+                        <MoveUp
+                            v-if="isSortAscending"
+                            :size="24"
+                            :stroke-width="2"
+                            class="shrink-0 cursor-pointer"
+                        />
+                        <MoveDown
+                            v-else
+                            :size="24"
+                            :stroke-width="2"
+                            class="shrink-0 cursor-pointer"
+                        />
+                    </button>
+
+                    <button
+                        type="button"
+                    >
+                        <Funnel
+                            :size="24"
+                            :stroke-width="2"
+                            class="shrink-0 cursor-pointer"
+                        />
+                    </button>
                 </div>
             </div>
 
-            <div class="flex justify-start items-center gap-3 bg-white p-4 mt-2">
+            <div
+                class="flex justify-start items-center gap-3 rounded-lg bg-zinc-900 p-3 mt-2 text-white-base"
+            >
                 <button type="button">Layers</button>
                 <button type="button">My tasks</button>
             </div>
