@@ -18,22 +18,6 @@ import {
 } from '@lucide/vue'
 import DropdownMenu from '@/components/ui/DropdownMenu.vue'
 import type { AllowedStatus } from '@/interfaces'
-// Clicking on the user profile shows modal, therefore another emit is needed
-// All the modals are in the Layout template, just invisible until called through emits
-
-// Clicking the sidebar expand button emits event to the parent
-// The parent then changes the flex values
-
-// Switching teams also emits event
-// The parent then changes loaded tasks
-// **I need to adjust backend endpoint for this**
-
-// Clicking on the "Add task" button also emits event, that opens modal
-// The parent then sends the task data to the backend and store gets updated,
-// which will show the new tasks in Kanban
-
-// Clicking on the nav items emits it to the parent
-// Then the RouterView changes the view according to the button
 
 const emit = defineEmits<{
     (e: 'toggle-sidebar'): void
@@ -54,12 +38,17 @@ const router = useRouter()
 const selectedNavItem = ref<number>(1)
 const selectedTeam = ref<string>('')
 
-function handleNavItemClick(event: MouseEvent) {
-    const button = event.currentTarget
+const navItems = [
+    { id: 1, label: 'Kanban', icon: LayoutDashboard, to: { name: 'kanban' } },
+    { id: 2, label: 'Inbox', icon: Inbox },
+    { id: 3, label: 'Scratchpad', icon: NotebookPen },
+    { id: 4, label: 'Analytics', icon: ChartLine },
+    { id: 5, label: 'Settings', icon: Settings },
+]
 
-    if (!(button instanceof HTMLButtonElement)) return
-
-    selectedNavItem.value = Number(button.id)
+function onSelectTeam(teamName: string) {
+    if (teamName === selectedTeam.value) return
+    selectedTeam.value = teamName
 }
 
 async function logout() {
@@ -133,11 +122,16 @@ onMounted(async () => {
             "
             open-class="bg-atmosphere-light"
         >
-            <!-- placeholder for teams (later use v-for and existing teams from db) -->
-            <li class="text-white-base">Team 1</li>
-            <li class="text-white-base">Team 2</li>
-            <li class="text-white-base">Team 3</li>
-            <li class="text-white-base">Team 4</li>
+            <li
+                v-for="team in currentUserTeams"
+                :key="team.id"
+                @click="onSelectTeam(team.name)"
+            >
+                {{ team.name }}
+            </li>
+            <li v-if="currentUserTeams.length === 0" class="text-white-base/60">
+                No teams yet.
+            </li>
         </DropdownMenu>
 
         <nav class="flex flex-col flex-1 gap-1 mt-32" aria-label="Dashboard navigation">
@@ -161,106 +155,36 @@ onMounted(async () => {
                     :class="collapsed ? 'opacity-0' : 'opacity-100'"
                 >Add task</span>
             </button>
-            <button
-                id="1"
-                type="button"
-                aria-label="Kanban"
-                class="w-full flex items-center gap-3 rounded-lg py-1.5 px-2 overflow-hidden hover:bg-atmosphere-light focus-within:bg-atmosphere-light"
-                :class="selectedNavItem === 1 ? 'bg-atmosphere-light' : ''"
-                @click="handleNavItemClick"
-            >
-                <LayoutDashboard
-                    :size="24"
-                    :stroke-width="1.5"
-                    color="var(--color-white-base)"
-                    class="shrink-0"
-                />
-                <span
-                    class="text-white-base whitespace-nowrap transition-opacity duration-200"
-                    :class="collapsed ? 'opacity-0' : 'opacity-100'"
-                >
-                    <RouterLink :to="{ name: 'kanban' }">Kanban</RouterLink>
-                </span>
-            </button>
-            <button
-                id="2"
-                type="button"
-                aria-label="Inbox"
-                class="w-full flex items-center gap-3 rounded-lg py-1.5 px-2 overflow-hidden hover:bg-atmosphere-light focus-within:bg-atmosphere-light"
-                :class="selectedNavItem === 2 ? 'bg-atmosphere-light' : ''"
-                @click="handleNavItemClick"
-            >
-                <Inbox
-                    :size="24"
-                    :stroke-width="1.5"
-                    color="var(--color-white-base)"
-                    class="shrink-0"
-                />
-                <span
-                    class="text-white-base whitespace-nowrap transition-opacity duration-200"
-                    :class="collapsed ? 'opacity-0' : 'opacity-100'"
-                >Inbox</span>
-            </button>
-            <button
-                id="3"
-                type="button"
-                aria-label="Scratchpad"
-                class="w-full flex items-center gap-3 rounded-lg py-1.5 px-2 overflow-hidden hover:bg-atmosphere-light focus-within:bg-atmosphere-light"
-                :class="selectedNavItem === 3 ? 'bg-atmosphere-light' : ''"
-                @click="handleNavItemClick"
-            >
-                <NotebookPen
-                    :size="24"
-                    :stroke-width="1.5"
-                    color="var(--color-white-base)"
-                    class="shrink-0"
-                />
-                <span
-                    class="text-white-base whitespace-nowrap transition-opacity duration-200"
-                    :class="collapsed ? 'opacity-0' : 'opacity-100'"
-                >Scratchpad</span>
-            </button>
-            <button
-                id="4"
-                type="button"
-                aria-label="Analytics"
-                class="w-full flex items-center gap-3 rounded-lg py-1.5 px-2 overflow-hidden hover:bg-atmosphere-light focus-within:bg-atmosphere-light"
-                :class="selectedNavItem === 4 ? 'bg-atmosphere-light' : ''"
-                @click="handleNavItemClick"
-            >
-                <ChartLine
-                    :size="24"
-                    :stroke-width="1.5"
-                    color="var(--color-white-base)"
-                    class="shrink-0"
-                />
-                <span
-                    class="text-white-base whitespace-nowrap transition-opacity duration-200"
-                    :class="collapsed ? 'opacity-0' : 'opacity-100'"
-                >Analytics</span>
-            </button>
-            <button
-                id="5"
-                type="button"
-                aria-label="Settings"
+            <component
+                v-for="item in navItems"
+                :key="item.id"
+                :is="item.to ? RouterLink : 'button'"
+                v-bind="item.to
+                    ? { to: item.to }
+                    : { type: 'button' }"
+                :aria-label="item.label"
                 class="
-                    w-full flex items-center gap-3 rounded-lg mt-auto py-1.5 px-2 overflow-hidden
-                    hover:bg-atmosphere-light focus-within:bg-atmosphere-light
+                    w-full flex items-center gap-3 rounded-lg py-1.5 px-2 overflow-hidden
+                    text-white-base hover:bg-atmosphere-light focus-visible:bg-atmosphere-light
                 "
-                :class="selectedNavItem === 5 ? 'bg-atmosphere-light' : ''"
-                @click="handleNavItemClick"
+                :class="{
+                    'bg-atmosphere-light': selectedNavItem === item.id,
+                    'mt-auto': item.id === 5,
+                }"
+                @click="selectedNavItem = item.id"
             >
-                <Settings
+                <component
+                    :is="item.icon"
                     :size="24"
                     :stroke-width="1.5"
-                    color="var(--color-white-base)"
                     class="shrink-0"
+                    aria-hidden="true"
                 />
                 <span
-                    class="text-white-base whitespace-nowrap transition-opacity duration-200"
+                    class="whitespace-nowrap transition-opacity duration-200"
                     :class="collapsed ? 'opacity-0' : 'opacity-100'"
-                >Settings</span>
-            </button>
+                >{{ item.label }}</span>
+            </component>
             <button
                 type="button"
                 aria-label="Logout"
