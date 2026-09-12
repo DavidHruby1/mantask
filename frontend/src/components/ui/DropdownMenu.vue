@@ -7,6 +7,7 @@ import type { HTMLAttributes, Component } from 'vue'
 
 interface DropdownMenuProps {
     text: string
+    hideOnClick?: boolean
     textColor?: string
     iconOnly?: boolean
     hideChevron?: boolean
@@ -26,6 +27,7 @@ const buttonVariants = cva(
 const props = withDefaults(defineProps<DropdownMenuProps>(), {
     iconOnly: false,
     hideChevron: false,
+    hideOnClick: true,
     iconSize: 24,
     iconColor: 'currentColor',
     iconStrokeWidth: 1.5,
@@ -98,10 +100,24 @@ function toggleDropdown() {
         </button>
 
         <div
+            id="dropdown-overlay"
+            v-if="isOpen && props.hideOnClick"
+            class="fixed inset-0 z-40"
+            aria-hidden="true"
+            @click="isOpen = false"
+        >
+
+        </div>
+
+        <ul
             v-if="isOpen"
             class="
-                absolute z-50 w-full min-w-max flex flex-col gap-2
-                py-2 px-3 bg-black rounded-lg
+                absolute z-50 w-max min-w-full max-w-[calc(100vw-2rem)] max-h-80
+                flex flex-col gap-1 overflow-y-auto p-1 text-base text-white-base
+                bg-[#202124] border border-[#9AA1AE]/18 rounded-lg shadow-lg shadow-black/25 list-none
+                [&>li]:rounded-md [&>li]:px-2 [&>li]:py-1.5 [&>li]:wrap-break-word
+                [&>li]:transition-colors [&>li:hover]:bg-color-dark-surface-active
+                [&>li:focus-within]:bg-color-dark-surface-active
             "
             :class="{
                 'top-full mt-1': !opensUpward,
@@ -109,8 +125,15 @@ function toggleDropdown() {
                 'left-0': opensRight,
                 'right-0': !opensRight,
             }"
+            @click="props.hideOnClick ? isOpen = false : undefined"
         >
             <slot />
-        </div>
+        </ul>
     </div>
 </template>
+
+<style scoped>
+ul, ul * {
+    cursor: pointer;
+}
+</style>
