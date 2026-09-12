@@ -131,3 +131,9 @@ function toggleDropdown() {
         </ul>
     </div>
 </template>
+
+<style scoped>
+ul, ul * {
+    cursor: pointer;
+}
+</style>

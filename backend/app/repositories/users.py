@@ -33,7 +33,12 @@ def get_user_by_id(db: Session, user_id: int) -> User | None:
 
 
 def get_user_by_email(db: Session, email: str) -> User | None:
-    user = db.scalar(select(User).filter_by(email=email))
+    user = db.scalar(
+        select(User).where(
+            User.email == email, 
+            User.is_active.is_(True)
+        )
+    )
     if not user:
         return None
 

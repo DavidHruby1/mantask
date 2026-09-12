@@ -83,6 +83,18 @@ Backlog -> To do -> In progress -> Review -> Done
 - Local filters and sorting never overwrite shared order.
 - Completed Tasks remain searchable and are never silently deleted.
 
+The Search Bar finds Tasks by title or a stable, Workspace-scoped Task number.
+Task numbers are never reused; internal database identifiers are not user-facing.
+
+### Task Archive
+
+Archive is a dedicated navigation view for completed Tasks. Archiving preserves the
+Task, its relationships, history, and analytics data; it is not deletion.
+
+The archive trigger, how long Tasks remain in `Done`, restoration behavior, deletion
+permissions, and retention rules remain open decisions to resolve before implementation.
+No Task is automatically deleted in the meantime.
+
 ### Saved Views
 
 A saved View is a named, shared template for a Workspace's Task filters and sort. It
@@ -166,6 +178,9 @@ A Blocker records the problem, requested action, responder, acknowledgement, and
 resolution. The Task remains in its current state, may have one active Blocker, and
 does not gain a separate chat thread.
 
+A dependency represents planned ordering between Tasks; a Blocker represents an
+unexpected impediment during active work and does not create a Task dependency.
+
 ### Debrief
 
 A Debrief may follow repeated Review returns, reopened work, a long Blocker, or a
@@ -215,9 +230,11 @@ Scope history survives membership changes, archival, or disabling Milestone Mode
 - A Task may have multiple predecessors and successors within the same Workspace.
 - Task detail provides `Waiting on` with searchable add/remove controls and a derived
     `Blocks` list. Dependencies must be useful without opening a graph.
-- Prerequisites are satisfied only when every predecessor is `Done`. An unfinished
-    or reopened predecessor shows a warning, but does not block Kanban transitions
-    or automatically change the successor's state.
+- Prerequisites are satisfied only when every predecessor is `Done`. A Task cannot
+    enter `In progress` while a prerequisite is unfinished. Reopening a predecessor
+    marks the dependency unsatisfied but does not automatically rewind its successors.
+- A Task referenced as a predecessor cannot be hard-deleted until its dependency
+    links are removed.
 - Dependencies do not create Blocker Handshakes or additional workflow states.
 - The server rejects self-links, duplicate links, cross-Workspace links, and cycles,
     including under concurrent changes. Layer membership changes preserve dependencies.
