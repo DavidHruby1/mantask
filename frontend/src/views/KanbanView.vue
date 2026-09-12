@@ -11,6 +11,7 @@ import {
     Funnel,
     MoveUp,
     MoveDown,
+    Search
 } from '@lucide/vue'
 import type { TaskRead, AllowedStatus } from '@/interfaces'
 
@@ -25,6 +26,7 @@ const { tasks } = storeToRefs(taskStore)
 
 const sortKey = ref<SortKey>('manual')
 const isSortAscending = ref<boolean>(true)
+const searchQuery = ref<string>('')
 
 const statusColumns: Array<{ status: TaskStatus; label: string }> = [
     { status: TaskStatus.BACKLOG, label: 'Backlog' },
@@ -69,9 +71,12 @@ watch([sortKey, isSortAscending], ([key, ascending]) => {
     }
 })
 
+// Used for sorting
 const tasksToRender = computed<TaskRead[]>(() => {
     // Returning [...tasks.value] to avoid mutating the original array
-    return [...tasks.value].sort((a, b): number => {
+    return [...tasks.value]
+        .filter(task => task.title.toLowerCase().includes(searchQuery.value.toLowerCase()))
+        .sort((a, b): number => {
         switch (sortKey.value) {
             case 'manual':
                 return 0
@@ -146,7 +151,26 @@ onMounted(async () => {
 
 
                 <div class="flex justify-center items-center gap-2">
-                    <input class="bg-gray-300 mr-6 min-w-80 p-1 rounded-lg"/>
+                    <div class="relative">
+                        <input
+                            v-model="searchQuery"
+                            class="
+                                bg-gray-200 mr-6 min-w-80 p-1 rounded-lg outline-none border-none
+                                placeholder:text-dark-surface-active/60 text-accent-black pl-2 pr-8
+                            "
+                            type="text"
+                            placeholder="Search tasks here..."
+                        />
+                        <Search
+                            :size="22"
+                            :stroke-width="1.75"
+                            color="var(--color-dark-surface-active)"
+                            class="
+                                absolute right-8 top-1/2 -translate-y-1/2 shrink-0
+                                cursor-pointer opacity-60
+                            "
+                        />
+                    </div>
 
                     <DropdownMenu
                         text="Sort"
@@ -158,7 +182,7 @@ onMounted(async () => {
                         <li
                             v-for="option in sortOptions"
                             :key="option.value"
-                            :class="option.value === sortKey ? 'bg-[#2D2F34]' : ''"
+                            :class="option.value === sortKey ? 'bg-dark-surface-active' : ''"
                             class="text-white-base"
                         >
                             <button

@@ -29,6 +29,7 @@
     --color-atmosphere-light: #354A62;
     --color-dark-surface: rgba(255, 255, 255, 0.06);
     --color-dark-surface-focus: rgba(255, 255, 255, 0.09);
+    --color-dark-surface-active: #2D2F34;
     --color-dark-muted: rgba(255, 255, 255, 0.5);
 
     --color-white-base: rgba(235, 237, 242, 1);
