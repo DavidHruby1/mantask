@@ -15,7 +15,7 @@
 | `#` | Layer |
 | `@` | Člověk napříč rolemi: assignee, reviewer nebo creator |
 | `/` | Effort |
-| `>` | Priority |
+| `!` | Priority |
 | `<` | Due date |
 
 - Status se filtrovat nebude, protože jej reprezentují sloupce Kanbanu.

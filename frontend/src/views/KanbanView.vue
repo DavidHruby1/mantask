@@ -74,48 +74,58 @@ watch([sortKey, isSortAscending], ([key, ascending]) => {
 // Used for sorting
 const tasksToRender = computed<TaskRead[]>(() => {
     // Returning [...tasks.value] to avoid mutating the original array
+    const query = searchQuery.value.trim()
     return [...tasks.value]
-        .filter(task => task.title.toLowerCase().includes(searchQuery.value.toLowerCase()))
-        .sort((a, b): number => {
-        switch (sortKey.value) {
-            case 'manual':
-                return 0
-
-            case 'priority':
-                if (a.priority == null || b.priority == null) {
-                    return 0
-                }
-                return isSortAscending.value
-                    ? priorityRank[a.priority] - priorityRank[b.priority]
-                    : priorityRank[b.priority] - priorityRank[a.priority]
-
-            case 'effort':
-                if (a.effort == null || b.effort == null) {
-                    return 0
-                }
-                return isSortAscending.value
-                    ? a.effort - b.effort
-                    : b.effort - a.effort
-
-            case 'due_date':
-            case 'review_date':
-            case 'created_at': {
-                const dateA = a[sortKey.value]
-                const dateB = b[sortKey.value]
-
-                if (dateA == null || dateB == null) {
-                    return 0
-                }
-
-                return isSortAscending.value
-                    ? new Date(dateA).getTime() - new Date(dateB).getTime()
-                    : new Date(dateB).getTime() - new Date(dateA).getTime()
+        .filter(task => {
+            if (query.length === 1 && ':!<#@/'.includes(query)) {
+                return true
             }
+            if (query.startsWith(':')) {
+                if (isNaN(Number(query.slice(1)))) return false
+                return task.id === Number(query.slice(1))
+            }
+            return task.title.toLowerCase().includes(searchQuery.value.toLowerCase())
+        })
+        .sort((a, b): number => {
+            switch (sortKey.value) {
+                case 'manual':
+                    return 0
 
-            default:
-                return 0
-        }
-    })
+                case 'priority':
+                    if (a.priority == null || b.priority == null) {
+                        return 0
+                    }
+                    return isSortAscending.value
+                        ? priorityRank[a.priority] - priorityRank[b.priority]
+                        : priorityRank[b.priority] - priorityRank[a.priority]
+
+                case 'effort':
+                    if (a.effort == null || b.effort == null) {
+                        return 0
+                    }
+                    return isSortAscending.value
+                        ? a.effort - b.effort
+                        : b.effort - a.effort
+
+                case 'due_date':
+                case 'review_date':
+                case 'created_at': {
+                    const dateA = a[sortKey.value]
+                    const dateB = b[sortKey.value]
+
+                    if (dateA == null || dateB == null) {
+                        return 0
+                    }
+
+                    return isSortAscending.value
+                        ? new Date(dateA).getTime() - new Date(dateB).getTime()
+                        : new Date(dateB).getTime() - new Date(dateA).getTime()
+                }
+
+                default:
+                    return 0
+            }
+        })
 })
 
 function onSortChange(key: SortKey): void {

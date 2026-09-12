@@ -93,7 +93,7 @@ onMounted(async () => {
         <button
             v-if="canExpand"
             type="button"
-            class="flex px-2"
+            class="inline-flex self-start px-2"
             :aria-label="collapsed ? 'Expand sidebar' : 'Collapse sidebar'"
             @click="emit('toggle-sidebar')"
         >

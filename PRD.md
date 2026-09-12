@@ -1,7 +1,7 @@
 # Mantask Product Requirements Document
 
 **Status:** Product direction | **Audience:** Self-hosted delivery teams with 2-15
-members | **Updated:** 2026-09-07
+members | **Updated:** 2026-09-12
 
 ## 1. Product
 
@@ -13,7 +13,7 @@ tracking, and structured learning.
 
 Mantask occupies the space between simple task tools that lack coordination and broad
 PM suites that require teams to configure and maintain their own system. It should be
-useful within minutes, without custom statuses, views, fields, or methodology setup.
+useful within minutes, without custom statuses, layouts, fields, or methodology setup.
 
 ## 2. Users
 
@@ -82,6 +82,22 @@ Backlog -> To do -> In progress -> Review -> Done
 - Drag and drop changes state or shared manual order.
 - Local filters and sorting never overwrite shared order.
 - Completed Tasks remain searchable and are never silently deleted.
+
+### Saved Views
+
+A saved View is a named, shared template for a Workspace's Task filters and sort. It
+lets a Team preserve a useful board state, such as work assigned to one member ordered
+by priority, and lets other members open the same View.
+
+- A View stores only the selected filters and sort criterion; it does not store a fixed
+  Task list, Task copies, or a separate manual order.
+- Opening a View makes the server apply its stored filters and sort to current Tasks.
+  Users therefore see the same filtering and ordering rules while the displayed Tasks
+  remain current.
+- Views in a Team Workspace are available to its members. A private Workspace View
+  remains private with its Workspace.
+- Views use the existing fixed Kanban and available Task filter and sort options. They
+  do not introduce custom fields, statuses, board layouts, or workflows.
 
 ### Tasks
 

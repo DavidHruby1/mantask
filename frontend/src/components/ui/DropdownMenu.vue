@@ -116,8 +116,8 @@ function toggleDropdown() {
                 flex flex-col gap-1 overflow-y-auto p-1 text-base text-white-base
                 bg-[#202124] border border-[#9AA1AE]/18 rounded-lg shadow-lg shadow-black/25 list-none
                 [&>li]:rounded-md [&>li]:px-2 [&>li]:py-1.5 [&>li]:wrap-break-word
-                [&>li]:transition-colors [&>li:hover]:bg-[var(--color-dark-surface-active)]
-                [&>li:focus-within]:bg-[var(--color-dark-surface-active)]
+                [&>li]:transition-colors [&>li:hover]:bg-color-dark-surface-active
+                [&>li:focus-within]:bg-color-dark-surface-active
             "
             :class="{
                 'top-full mt-1': !opensUpward,
