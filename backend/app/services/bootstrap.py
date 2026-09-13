@@ -50,5 +50,4 @@ def bootstrap_application(db: Session, input_data: BootstrapSetup) -> User:
         role=UserRole.OWNER,
     )
 
-    user.last_active_team_id = private_team.id
     return user

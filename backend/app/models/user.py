@@ -65,7 +65,5 @@ class User(Base):
         onupdate=func.now(),
     )
     profile_picture_path: Mapped[str | None] = mapped_column(Text)
-    last_active_team_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
-
     team_members: Mapped[list["TeamMember"]] = relationship(back_populates="user")
     sessions: Mapped[list["UserSession"]] = relationship(back_populates="user")

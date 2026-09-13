@@ -15,7 +15,6 @@ def test_get_current_user_returns_authenticated_user(monkeypatch):
         email="alice@example.com",
         is_active=True,
         profile_picture_path=None,
-        last_active_team_id=3,
         created_at=now,
         updated_at=now,
     )
@@ -27,7 +26,6 @@ def test_get_current_user_returns_authenticated_user(monkeypatch):
 
     assert result.id == 7
     assert result.email == "alice@example.com"
-    assert result.last_active_team_id == 3
 
 
 def test_get_current_user_rejects_missing_session_user(monkeypatch):

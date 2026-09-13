@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { tasksStore } from '@/stores/tasks'
+import { useTeamsStore } from '@/stores/teams'
 import { TaskStatus, TaskPriority } from '@/interfaces'
 import DropdownMenu from '@/components/ui/DropdownMenu.vue'
 import {
@@ -22,7 +23,9 @@ const emit = defineEmits<{
 type SortKey = 'manual' | 'priority' | 'effort' | 'due_date' | 'review_date' | 'created_at'
 
 const taskStore = tasksStore()
+const teamsStore = useTeamsStore()
 const { tasks } = storeToRefs(taskStore)
+const { selectedTeamId } = storeToRefs(teamsStore)
 
 const sortKey = ref<SortKey>('manual')
 const isSortAscending = ref<boolean>(true)
@@ -143,10 +146,12 @@ function addTask(status: TaskStatus): void {
     emit('add-task', status)
 }
 
-onMounted(async () => {
-    const tasksLog = await taskStore.getTasks()
-    console.log('Fetched tasks:', tasksLog)
-})
+watch(selectedTeamId, async (teamId) => {
+    taskStore.clearTasks()
+    if (teamId === null) return
+
+    await taskStore.getTasks(teamId)
+}, { immediate: true })
 
 </script>
 

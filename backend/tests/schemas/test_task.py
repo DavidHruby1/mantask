@@ -4,12 +4,13 @@ import pytest
 from pydantic import ValidationError
 
 from backend.app.models.enums import TaskStatus
-from backend.app.schemas.task import TaskCreate, TaskUpdate, TaskFilterFields
+from backend.app.schemas.task import TaskCreate, TaskUpdate, TaskFilterFields, TaskQuery
 
 
 # TaskCreate schema testing
 def test_task_create_strips_title_and_normalizes_layer():
     task = TaskCreate(
+        team_id=20,
         title="  Fix login  ",
         description=None,
         layer="  Backend  ",
@@ -24,6 +25,7 @@ def test_task_create_strips_title_and_normalizes_layer():
 def test_task_create_rejects_blank_title():
     with pytest.raises(ValidationError):
         TaskCreate(
+            team_id=20,
             title="   ", 
             description=None,
             layer=None,
@@ -34,6 +36,7 @@ def test_task_create_rejects_blank_title():
 def test_task_create_rejects_blank_layer():
     with pytest.raises(ValidationError):
         TaskCreate(
+            team_id=20,
             title=" Add layer tests", 
             description=None,
             layer="     ",
@@ -44,6 +47,7 @@ def test_task_create_rejects_blank_layer():
 def test_task_create_validates_date():
     with pytest.raises(ValidationError):
         TaskCreate(
+            team_id=20,
             title="Add layer tests", 
             description=None,
             layer=None,
@@ -54,6 +58,7 @@ def test_task_create_validates_date():
 
     with pytest.raises(ValidationError):
         TaskCreate(
+            team_id=20,
             title="Add layer tests", 
             description=None,
             layer=None,
@@ -62,6 +67,7 @@ def test_task_create_validates_date():
         )
 
     TaskCreate(
+        team_id=20,
         title="Add layer tests", 
         description=None,
         layer=None,
@@ -71,6 +77,7 @@ def test_task_create_validates_date():
     )
 
     TaskCreate(
+        team_id=20,
         title="Add layer tests", 
         description=None,
         layer=None,
@@ -83,6 +90,7 @@ def test_task_create_validates_date():
 def test_task_create_validates_status():
     with pytest.raises(ValidationError):
         TaskCreate.model_validate({
+            "team_id": 20,
             "title": "Add task tests",
             "description": None,
             "layer": None,
@@ -92,6 +100,7 @@ def test_task_create_validates_status():
 
     with pytest.raises(ValidationError):
         TaskCreate(
+            team_id=20,
             title="Add task tests",
             description=None,
             layer=None,
@@ -100,6 +109,7 @@ def test_task_create_validates_status():
         )
 
     TaskCreate(
+        team_id=20,
         title="Add task tests",
         description=None,
         layer=None,
@@ -111,6 +121,7 @@ def test_task_create_validates_status():
 def test_task_create_validates_review_rules():
     with pytest.raises(ValidationError):
         TaskCreate(
+            team_id=20,
             title="Add task tests",
             description=None,
             layer=None,
@@ -120,6 +131,7 @@ def test_task_create_validates_review_rules():
 
     with pytest.raises(ValidationError):
         TaskCreate(
+            team_id=20,
             title="Add task tests",
             description=None,
             layer=None,
@@ -129,6 +141,7 @@ def test_task_create_validates_review_rules():
 
     with pytest.raises(ValidationError):
         TaskCreate(
+            team_id=20,
             title="Add task tests",
             description=None,
             layer=None,
@@ -137,6 +150,7 @@ def test_task_create_validates_review_rules():
         )
 
     TaskCreate(
+        team_id=20,
         title="Add task tests",
         description=None,
         layer=None,
@@ -145,12 +159,23 @@ def test_task_create_validates_review_rules():
     )
 
     TaskCreate(
+        team_id=20,
         title="Add task tests",
         description=None,
         layer=None,
         should_review=False,
         reviewer_member_id=None
     )
+
+
+def test_task_create_requires_team_id():
+    with pytest.raises(ValidationError):
+        TaskCreate(title="Missing team", should_review=False)
+
+
+def test_task_query_requires_team_id():
+    with pytest.raises(ValidationError):
+        TaskQuery()
 
 
 # TaskUpdate schema testing

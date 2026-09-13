@@ -11,6 +11,5 @@ class UserRead(BaseModel):
     email: str
     is_active: bool
     profile_picture_path: str | None
-    last_active_team_id: int | None
     created_at: datetime
     updated_at: datetime

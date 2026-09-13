@@ -13,7 +13,6 @@ export interface BootstrapSetup {
 
 export interface BootstrapResult {
     bootstrapped: boolean
-    active_team_id: number | null
 }
 
 export interface LoginInput {
@@ -23,7 +22,6 @@ export interface LoginInput {
 
 export interface LoginResult {
     authenticated: boolean
-    active_team_id: number | null
     session_token: string | null
 }
 
@@ -60,6 +58,7 @@ export type AllowedStatus = Exclude<
 >
 
 export interface TaskCreate {
+    team_id: number
     assignee_member_id?: number | null
     reviewer_member_id?: number | null
     title: string
@@ -123,7 +122,6 @@ export interface UserRead {
     email: string
     is_active: boolean
     profile_picture_path?: string | null
-    last_active_team_id?: number | null
     created_at: string
     updated_at: string
 }
@@ -131,6 +129,7 @@ export interface UserRead {
 export interface TeamRead {
     id: number
     name: string
+    type: 'private' | 'team'
     created_at: string
     updated_at: string
     is_active: boolean

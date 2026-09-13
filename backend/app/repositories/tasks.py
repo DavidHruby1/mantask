@@ -163,7 +163,7 @@ def insert_task(
     started_working_at: datetime | None
 ) -> Task:
     task = Task(
-        **payload.model_dump(),
+        **payload.model_dump(exclude={"team_id"}),
         team_id=team_id,
         creator_member_id=creator_member_id,
         position=position,

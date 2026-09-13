@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import { RouterView } from 'vue-router'
 import Sidebar from '@/components/Sidebar.vue'
 import AddTaskModal from '@/components/modals/AddTaskModal.vue'
+import { useTeamsStore } from '@/stores/teams'
 import type { AllowedStatus } from '@/interfaces'
 
 // Matches the expanded width clamp(10rem, 16vw, 16rem): 10rem / 0.16 = 62.5rem.
@@ -13,16 +15,27 @@ const isSidebarCollapsed = computed<boolean>(() => !canExpandSidebar.value || is
 
 const isAddTaskModalOpen = ref<boolean>(false)
 const addTaskStatus = ref<AllowedStatus | null>(null)
+const addTaskTeamId = ref<number | null>(null)
+const teamsStore = useTeamsStore()
+const { selectedTeamId } = storeToRefs(teamsStore)
 
 function onAddTask(status: AllowedStatus | null): void {
+    if (selectedTeamId.value === null) return
+
     addTaskStatus.value = status
+    addTaskTeamId.value = selectedTeamId.value
     isAddTaskModalOpen.value = true
 }
 
 function onCloseAddTaskModal(): void {
     addTaskStatus.value = null
+    addTaskTeamId.value = null
     isAddTaskModalOpen.value = false
 }
+
+watch(selectedTeamId, () => {
+    onCloseAddTaskModal()
+})
 
 function updateSidebarState(event: MediaQueryListEvent) {
     canExpandSidebar.value = event.matches
@@ -59,8 +72,10 @@ onBeforeUnmount(() => {
         </main>
 
         <AddTaskModal
+            v-if="addTaskTeamId !== null"
             :isOpen="isAddTaskModalOpen"
             :addTaskStatus="addTaskStatus"
+            :teamId="addTaskTeamId"
             @close-modal="onCloseAddTaskModal"
         />
     </div>

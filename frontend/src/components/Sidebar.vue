@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/stores/auth'
@@ -32,11 +32,18 @@ defineProps<{
 const authStore = useAuthStore()
 const teamsStore = useTeamsStore()
 const { currentUser } = storeToRefs(authStore)
-const { currentUserTeams } = storeToRefs(teamsStore)
+const { currentUserTeams, selectedTeamId } = storeToRefs(teamsStore)
 const router = useRouter()
 
 const selectedNavItem = ref<number>(1)
-const selectedTeam = ref<string>('')
+const activeTeams = computed(() => {
+    return currentUserTeams.value.filter((team) => team.is_active)
+})
+const selectedTeamName = computed<string>(() => {
+    return activeTeams.value.find(
+        (team) => team.id === selectedTeamId.value
+    )?.name ?? ''
+})
 
 const navItems = [
     { id: 1, label: 'Kanban', icon: LayoutDashboard, to: { name: 'kanban' } },
@@ -46,9 +53,9 @@ const navItems = [
     { id: 5, label: 'Settings', icon: Settings },
 ]
 
-function onSelectTeam(teamName: string) {
-    if (teamName === selectedTeam.value) return
-    selectedTeam.value = teamName
+function onSelectTeam(teamId: number) {
+    if (teamId === selectedTeamId.value) return
+    selectedTeamId.value = teamId
 }
 
 async function logout() {
@@ -62,9 +69,9 @@ onMounted(async () => {
         authStore.getCurrentUser(),
         teamsStore.getCurrentUserTeams()
     ])
-    selectedTeam.value = teams.find(
-        (team) => team.id === user?.last_active_team_id
-    )?.name ?? ''
+    if (user) {
+        teamsStore.initializeSelectedTeam(user.id, teams)
+    }
 })
 
 </script>
@@ -108,7 +115,7 @@ onMounted(async () => {
         </button>
 
         <DropdownMenu
-            :text="selectedTeam"
+            :text="selectedTeamName"
             :icon-only="collapsed"
             :hide-chevron="collapsed"
             text-color="var(--color-text-primary)"
@@ -123,13 +130,13 @@ onMounted(async () => {
             open-class="bg-sidebar-highlight"
         >
             <li
-                v-for="team in currentUserTeams"
+                v-for="team in activeTeams"
                 :key="team.id"
-                @click="onSelectTeam(team.name)"
+                @click="onSelectTeam(team.id)"
             >
                 {{ team.name }}
             </li>
-            <li v-if="currentUserTeams.length === 0" class="text-text-primary/60">
+            <li v-if="activeTeams.length === 0" class="text-text-primary/60">
                 No teams yet.
             </li>
         </DropdownMenu>

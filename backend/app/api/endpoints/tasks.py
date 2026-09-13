@@ -9,7 +9,6 @@ from backend.app.error import (
     ApiInternalServerError,
 )
 from backend.app.schemas.task import TaskQuery, TaskRead, TaskCreate, TaskUpdate, TaskMove
-from backend.app.services.auth import get_last_active_team_id
 from backend.app.services.tasks import task_service
 
 
@@ -45,11 +44,7 @@ def post_task(
 ) -> TaskRead:
     # TODO: Task doesn't have to have assignee, it can be picked up by anyone if nobody is assigned
     # TODO: Should I prevent duplicate titles of tasks?
-    user = session.user
-    user_id = user.id
-
-    active_team_id = get_last_active_team_id(db, user)
-    created_task = task_service.create_task(db, active_team_id, user_id, payload)
+    created_task = task_service.create_task(db, session.user_id, payload)
 
     try: 
         db.commit()

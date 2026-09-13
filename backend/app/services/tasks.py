@@ -30,7 +30,6 @@ from backend.app.error import (
     ApiInternalServerError,
     ApiConflictError,
     InvalidTaskError,
-    NoActiveTeamSelectedError,
     TeamInactiveError,
     TeamNotFoundError,
     TeamMembershipError,
@@ -56,7 +55,6 @@ class TaskService:
     def create_task(
         self,
         db: Session,
-        active_team_id: int, 
         user_id: int,
         payload: TaskCreate
     ) -> Task:
@@ -65,8 +63,14 @@ class TaskService:
         The team lock is acquired only after member checks and remains owned by the
         endpoint's transaction through commit or rollback.
         """
-        # Ensure the creator is a member of the active team.
-        creator_member = get_team_member(db, active_team_id, user_id)    
+        team_id = payload.team_id
+        team = get_team_by_id(db, team_id)
+        if team is None:
+            raise TeamNotFoundError()
+        if not team.is_active:
+            raise TeamInactiveError()
+
+        creator_member = get_team_member(db, team_id, user_id)
         if creator_member is None:
             raise TeamMembershipError()
         creator_member_id = creator_member.id
@@ -76,23 +80,23 @@ class TaskService:
                 update={"assignee_member_id": creator_member_id}
             )
         else:
-            assignee_member = get_team_member_by_id(db, active_team_id, payload.assignee_member_id)
+            assignee_member = get_team_member_by_id(db, team_id, payload.assignee_member_id)
             if assignee_member is None:
                 raise TeamMembershipError("Invalid assignee")
 
         if payload.reviewer_member_id is not None:
-            reviewer_member = get_team_member_by_id(db, active_team_id, payload.reviewer_member_id)
+            reviewer_member = get_team_member_by_id(db, team_id, payload.reviewer_member_id)
             if reviewer_member is None:
                 raise TeamMembershipError("Invalid reviewer")
 
         # Capacity and append-position reads must observe one serialized team state.
-        lock_task_positions(db, active_team_id)
+        lock_task_positions(db, team_id)
         if payload.status == TaskStatus.IN_PROGRESS:
-            if not self._can_create_in_progress_task(db, active_team_id):
+            if not self._can_create_in_progress_task(db, team_id):
                 raise ApiConflictError("IN_PROGRESS limit reached")
 
         filters = TaskFilters(
-            team_id=active_team_id, 
+            team_id=team_id,
             statuses=[payload.status],
             assignee_member_id=None
         )
@@ -110,7 +114,7 @@ class TaskService:
 
         return insert_task(
             db,
-            active_team_id, 
+            team_id,
             creator_member_id, 
             payload, 
             position, 
@@ -185,11 +189,6 @@ class TaskService:
     ) -> TaskFilters:
         team_id = query.team_id
         user_id = session.user_id
-
-        if team_id is None:
-            if not session.user.last_active_team_id:
-                raise NoActiveTeamSelectedError()
-            team_id = session.user.last_active_team_id
 
         team = get_team_by_id(db, team_id)
         if (

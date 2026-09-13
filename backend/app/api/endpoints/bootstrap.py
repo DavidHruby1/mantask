@@ -62,4 +62,4 @@ def bootstrap_setup(
         path="/",
     )
 
-    return BootstrapResult(bootstrapped=True, active_team_id=user.last_active_team_id)
+    return BootstrapResult(bootstrapped=True)

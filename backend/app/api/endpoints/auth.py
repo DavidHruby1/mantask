@@ -12,7 +12,6 @@ from backend.app.schemas.auth import LoginInput, LoginResult
 from backend.app.services.auth import (
     login_service,
     session_auth_service,
-    ensure_active_team_id,
 )
 
 
@@ -29,7 +28,6 @@ def login(
 
     try:
         session_token = login_service.create_session(db, user_id=user.id)
-        active_team_id = ensure_active_team_id(db, user)
         db.commit()
     except SQLAlchemyError:
         db.rollback()
@@ -47,26 +45,13 @@ def login(
 
     return LoginResult(
         authenticated=True,
-        active_team_id=active_team_id,
         session_token=session_token,
     )
 
 
 @router.get("/me", response_model=LoginResult)
-def auth_user(
-    db: DbSessionDep, session: CurrentSessionDep
-) -> LoginResult:
-    previous_team_id = session.user.last_active_team_id
-    active_team_id = ensure_active_team_id(db, session.user)
-
-    if active_team_id != previous_team_id:
-        try:
-            db.commit()
-        except SQLAlchemyError:
-            db.rollback()
-            raise ApiInternalServerError("Unable to complete the request right now. Please try again.")
-
-    return LoginResult(authenticated=True, active_team_id=active_team_id)
+def auth_user(session: CurrentSessionDep) -> LoginResult:
+    return LoginResult(authenticated=True)
 
 
 @router.post("/logout", response_model=LoginResult)

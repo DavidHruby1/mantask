@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from types import SimpleNamespace
 
 from backend.app.api.endpoints import teams
+from backend.app.models.enums import TeamType
 
 
 def test_get_current_user_teams_returns_repository_teams(monkeypatch):
@@ -9,6 +10,7 @@ def test_get_current_user_teams_returns_repository_teams(monkeypatch):
     team = SimpleNamespace(
         id=3,
         name="Engineering",
+        type=TeamType.TEAM,
         created_at=now,
         updated_at=now,
         is_active=True,
@@ -26,3 +28,4 @@ def test_get_current_user_teams_returns_repository_teams(monkeypatch):
     assert len(result) == 1
     assert result[0].id == 3
     assert result[0].name == "Engineering"
+    assert result[0].type == TeamType.TEAM

@@ -15,7 +15,7 @@ This module covers task read/write flows for a team-scoped task table. The main 
 
 ### Listing tasks
 
-`GET /tasks/` accepts `TaskQuery` as query parameters. `TaskService._resolve_task_filters()` chooses `query.team_id` when present; otherwise it falls back to `session.user.last_active_team_id` and raises `NoActiveTeamSelectedError` if that is missing. It then verifies that the team exists, is active, and that the requester belongs to it. If `assignee_member_id` is provided, the service validates that the member belongs to the same team. The repository then runs `find_tasks()` with the resolved `TaskFilters` and returns tasks ordered by `status`, `position`, and `id`.
+`GET /tasks/?team_id={id}` requires `team_id` in `TaskQuery`. `TaskService._resolve_task_filters()` verifies that the team exists, is active, and that the requester belongs to it. If `assignee_member_id` is provided, the service validates that the member belongs to the same team. The repository then runs `find_tasks()` with the resolved `TaskFilters` and returns tasks ordered by `status`, `position`, and `id`.
 
 ### Reading one task
 
@@ -23,7 +23,7 @@ This module covers task read/write flows for a team-scoped task table. The main 
 
 ### Creating tasks
 
-`TaskCreate` normalizes `title` and `layer`, rejects past `review_date`/`due_date`, defaults to `BACKLOG`, and allows creation in `BACKLOG`, `TODO`, or `IN_PROGRESS`. The creator must be a member of the active team, and optional assignee/reviewer members must also belong to that team. Before reading either capacity or the append position, `create_task()` acquires the same transaction-scoped team advisory lock used by movement. An `IN_PROGRESS` payload then calls `_can_create_in_progress_task()`, which counts current `IN_PROGRESS` tasks for the team and compares that count to `get_in_progress_limit()`. New tasks append in their team/status column at `1000` or the last position plus `1000`; creation returns a safe conflict when that append would exceed PostgreSQL `INTEGER`. `started_working_at` is set when a task is created in progress.
+`TaskCreate` requires `team_id`, normalizes `title` and `layer`, rejects past `review_date`/`due_date`, defaults to `BACKLOG`, and allows creation in `BACKLOG`, `TODO`, or `IN_PROGRESS`. The service verifies that the target team exists and is active for every status. The creator must be a member of that team, and optional assignee/reviewer members must also belong to it. Before reading either capacity or the append position, `create_task()` acquires the same transaction-scoped team advisory lock used by movement. An `IN_PROGRESS` payload then calls `_can_create_in_progress_task()`, which counts current `IN_PROGRESS` tasks for the team and compares that count to `get_in_progress_limit()`. New tasks append in their team/status column at `1000` or the last position plus `1000`; creation returns a safe conflict when that append would exceed PostgreSQL `INTEGER`. `started_working_at` is set when a task is created in progress.
 
 ### Updating tasks
 
@@ -55,7 +55,7 @@ The persisted upgrade has two revisions because PostgreSQL 11 requires enum addi
 
 ### Schemas
 
-`TaskFilters` is the repository shape with a required `team_id`; `TaskQuery` adds an optional `team_id` for request parsing. `TaskFilterFields.normalize_statuses()` collapses an empty list to `None`. `TaskMove` supplies the required destination status and optional predecessor anchor.
+`TaskFilters`, `TaskQuery`, and `TaskCreate` require `team_id`. `TaskFilterFields.normalize_statuses()` collapses an empty list to `None`. `TaskMove` supplies the required destination status and optional predecessor anchor.
 
 ## Data Flow
 
@@ -66,7 +66,6 @@ The persisted upgrade has two revisions because PostgreSQL 11 requires enum addi
 
 ## Key Dependencies
 
-- `get_last_active_team_id()` from `app/services/auth.py`.
 - Team access helpers from `app/repositories/teams.py` (`get_team_by_id()`, `get_team_member()`, `get_team_member_by_id()`, `is_team_member()`).
 - `get_in_progress_limit()` from `app/repositories/bootstraps.py`.
 - `TaskStatus`, `TaskPriority`, `TaskEffort`, and `IntEnumType` from `app/models/enums.py`.

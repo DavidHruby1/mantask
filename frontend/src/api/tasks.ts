@@ -8,8 +8,11 @@ import type {
 } from '@/interfaces/index'
 
 export const tasksApi = {
-    async getTasks(): Promise<TaskRead[]> {
-        const response = await api.get<TaskRead[]>('/api/tasks')
+    async getTasks(teamId: number, signal: AbortSignal): Promise<TaskRead[]> {
+        const response = await api.get<TaskRead[]>('/api/tasks', {
+            params: { team_id: teamId },
+            signal,
+        })
         return response.data
     },
     async getTaskById(id: number): Promise<TaskRead> {

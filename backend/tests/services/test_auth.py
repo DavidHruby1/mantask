@@ -13,8 +13,6 @@ from sqlalchemy.orm import Session
 from backend.app.error import (
     AuthenticationFailedError,
     InvalidSessionError,
-    NoActiveTeamSelectedError,
-    TeamNotFoundError,
 )
 from backend.app.services import auth as auth_service
 from backend.app.services.auth import (
@@ -22,8 +20,6 @@ from backend.app.services.auth import (
     LoginService,
     SESSION_TOKEN_BYTES,
     SessionAuthService,
-    ensure_active_team_id,
-    get_last_active_team_id,
     hash_session_token,
 )
 
@@ -321,109 +317,3 @@ def test_revoke_session_by_token_keeps_existing_revocation_time(monkeypatch):
 
     assert session.revoked_at == revoked_at
     assert result is True
-
-
-def test_get_last_active_team_id_returns_active_member_team(monkeypatch):
-    db = Mock(spec=Session)
-    team = SimpleNamespace(id=20, is_active=True)
-    user = SimpleNamespace(id=10, last_active_team_id=20)
-    db.get.return_value = team
-    is_member = Mock(return_value=True)
-    monkeypatch.setattr(auth_service, "is_team_member", is_member)
-
-    result = get_last_active_team_id(db, user)
-
-    db.get.assert_called_once_with(auth_service.Team, 20)
-    is_member.assert_called_once_with(db, 20, 10)
-    assert result == 20
-
-
-def test_get_last_active_team_id_rejects_missing_selection():
-    db = Mock(spec=Session)
-    user = SimpleNamespace(id=10, last_active_team_id=None)
-
-    with pytest.raises(TeamNotFoundError):
-        get_last_active_team_id(db, user)
-
-    db.get.assert_not_called()
-
-
-@pytest.mark.parametrize(
-    ("team", "is_member"),
-    [
-        (None, True),
-        (SimpleNamespace(id=20, is_active=False), True),
-        (SimpleNamespace(id=20, is_active=True), False),
-    ],
-    ids=["missing-team", "inactive-team", "not-a-member"],
-)
-def test_get_last_active_team_id_rejects_unusable_team(
-    monkeypatch,
-    team,
-    is_member,
-):
-    db = Mock(spec=Session)
-    user = SimpleNamespace(id=10, last_active_team_id=20)
-    db.get.return_value = team
-    monkeypatch.setattr(
-        auth_service,
-        "is_team_member",
-        Mock(return_value=is_member),
-    )
-
-    with pytest.raises(NoActiveTeamSelectedError):
-        get_last_active_team_id(db, user)
-
-
-def test_ensure_active_team_id_keeps_valid_selection(monkeypatch):
-    db = Mock(spec=Session)
-    user = SimpleNamespace(id=10, last_active_team_id=20)
-    get_private_team = Mock()
-    monkeypatch.setattr(
-        auth_service,
-        "get_last_active_team_id",
-        Mock(return_value=20),
-    )
-    monkeypatch.setattr(
-        auth_service,
-        "get_private_team_id",
-        get_private_team,
-    )
-
-    result = ensure_active_team_id(db, user)
-
-    get_private_team.assert_not_called()
-    assert user.last_active_team_id == 20
-    assert result == 20
-
-
-@pytest.mark.parametrize(
-    "selection_error",
-    [TeamNotFoundError(), NoActiveTeamSelectedError()],
-    ids=["missing-selection", "unusable-selection"],
-)
-def test_ensure_active_team_id_falls_back_to_private_team(
-    monkeypatch,
-    selection_error,
-):
-    db = Mock(spec=Session)
-    user = SimpleNamespace(id=10, last_active_team_id=20)
-    get_private_team = Mock(return_value=30)
-    monkeypatch.setattr(
-        auth_service,
-        "get_last_active_team_id",
-        Mock(side_effect=selection_error),
-    )
-    monkeypatch.setattr(
-        auth_service,
-        "get_private_team_id",
-        get_private_team,
-    )
-
-    result = ensure_active_team_id(db, user)
-
-    get_private_team.assert_called_once_with(db, user)
-    assert user.last_active_team_id == 30
-    assert result == 30
-    db.commit.assert_not_called()
-    db.rollback.assert_not_called()
