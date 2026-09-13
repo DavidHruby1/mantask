@@ -70,12 +70,12 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="flex min-w-0 flex-col bg-atmosphere-gradient p-1 rounded-lg">
+    <div class="flex min-w-0 flex-col bg-sidebar-gradient p-1 rounded-lg">
         <div
             class="flex items-center gap-3 mt-2 mb-4 px-1.5"
         >
             <div
-                class="w-7 h-7 shrink-0 rounded-sm bg-white-base"
+                class="w-7 h-7 shrink-0 rounded-sm bg-text-primary"
                 aria-hidden="true"
             ></div>
             <div
@@ -83,7 +83,7 @@ onMounted(async () => {
                 :class="collapsed ? 'opacity-0' : 'opacity-100'"
             >
                 <span
-                    class="font-medium text-white-base"
+                    class="font-medium text-text-primary"
                 >
                     {{ currentUser?.username ?? '' }}
                 </span>
@@ -101,7 +101,7 @@ onMounted(async () => {
                 :is="collapsed ? PanelLeftOpen : PanelLeftClose"
                 :size="24"
                 :stroke-width="1.5"
-                color="var(--color-white-base)"
+                color="var(--color-text-primary)"
                 class="shrink-0"
                 aria-hidden="true"
             />
@@ -111,16 +111,16 @@ onMounted(async () => {
             :text="selectedTeam"
             :icon-only="collapsed"
             :hide-chevron="collapsed"
-            text-color="var(--color-white-base)"
+            text-color="var(--color-text-primary)"
             :icon="Users"
             :icon-size="24"
             :icon-stroke-width="1.5"
-            icon-color="var(--color-white-base)"
+            icon-color="var(--color-text-primary)"
             class="
-                w-full mt-2 rounded-lg py-1.5 px-2 text-white-base
-                hover:bg-atmosphere-light focus-visible:bg-atmosphere-light
+                w-full mt-2 rounded-lg py-1.5 px-2 text-text-primary
+                hover:bg-sidebar-highlight focus-visible:bg-sidebar-highlight
             "
-            open-class="bg-atmosphere-light"
+            open-class="bg-sidebar-highlight"
         >
             <li
                 v-for="team in currentUserTeams"
@@ -129,7 +129,7 @@ onMounted(async () => {
             >
                 {{ team.name }}
             </li>
-            <li v-if="currentUserTeams.length === 0" class="text-white-base/60">
+            <li v-if="currentUserTeams.length === 0" class="text-text-primary/60">
                 No teams yet.
             </li>
         </DropdownMenu>
@@ -140,18 +140,18 @@ onMounted(async () => {
                 aria-label="Add task"
                 class="
                     w-full flex items-center gap-3 rounded-lg py-1.5 px-2 overflow-hidden
-                    hover:bg-atmosphere-light focus-visible:bg-atmosphere-light active:bg-atmosphere-light
+                    hover:bg-sidebar-highlight focus-visible:bg-sidebar-highlight active:bg-sidebar-highlight
                 "
                 @click="emit('add-task', null)"
             >
                 <CirclePlus
                     :size="24"
                     :stroke-width="1.5"
-                    color="var(--color-white-base)"
+                    color="var(--color-text-primary)"
                     class="shrink-0"
                 />
                 <span
-                    class="text-white-base whitespace-nowrap transition-opacity duration-200"
+                    class="text-text-primary whitespace-nowrap transition-opacity duration-200"
                     :class="collapsed ? 'opacity-0' : 'opacity-100'"
                 >Add task</span>
             </button>
@@ -165,10 +165,10 @@ onMounted(async () => {
                 :aria-label="item.label"
                 class="
                     w-full flex items-center gap-3 rounded-lg py-1.5 px-2 overflow-hidden
-                    text-white-base hover:bg-atmosphere-light focus-visible:bg-atmosphere-light
+                    text-text-primary hover:bg-sidebar-highlight focus-visible:bg-sidebar-highlight
                 "
                 :class="{
-                    'bg-atmosphere-light': selectedNavItem === item.id,
+                    'bg-sidebar-highlight': selectedNavItem === item.id,
                     'mt-auto': item.id === 5,
                 }"
                 @click="selectedNavItem = item.id"
@@ -190,18 +190,18 @@ onMounted(async () => {
                 aria-label="Logout"
                 class="
                     w-full flex items-center gap-3 rounded-lg mb-2 py-1.5 px-2 overflow-hidden
-                    hover:bg-atmosphere-light focus-visible:bg-atmosphere-light
+                    hover:bg-sidebar-highlight focus-visible:bg-sidebar-highlight
                 "
                 @click="logout"
             >
                 <Power
                     :size="24"
                     :stroke-width="1.5"
-                    color="var(--color-white-base)"
+                    color="var(--color-text-primary)"
                     class="shrink-0"
                 />
                 <span
-                    class="text-white-base whitespace-nowrap transition-opacity duration-200"
+                    class="text-text-primary whitespace-nowrap transition-opacity duration-200"
                     :class="collapsed ? 'opacity-0' : 'opacity-100'"
                 >Logout</span>
             </button>

@@ -25,13 +25,13 @@ const props = withDefaults(defineProps<InputProps>(), {
 const inputModel = defineModel<string>()
 
 const inputVariants = cva(
-    `w-full bg-input-black text-white-text
+    `w-full bg-surface-field text-text-secondary
     font-normal outline-none
-    border-1 border-white-surface rounded-lg
-    placeholder:text-white-placeholder placeholder:font-normal
+    border-1 border-border-default rounded-lg
+    placeholder:text-text-placeholder placeholder:font-normal
     disabled:pointer-events-none disabled:opacity-50
-    focus-visible:bg-dark-surface-focus focus-visible:border-white-surface-focus
-    focus-visible:placeholder:text-white-placeholder-focus
+    focus-visible:bg-surface-field-focus focus-visible:border-border-focus
+    focus-visible:placeholder:text-text-placeholder-focus
     transition-[border-color,background] duration-100 ease-in-out
     `,
     {
@@ -116,9 +116,9 @@ const togglePasswordVisibility = () => {
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
-    -webkit-text-fill-color: var(--color-white-text);
-    caret-color: var(--color-white-text);
-    box-shadow: 0 0 0 1000px var(--color-input-black) inset;
+    -webkit-text-fill-color: var(--color-text-secondary);
+    caret-color: var(--color-text-secondary);
+    box-shadow: 0 0 0 1000px var(--color-surface-field) inset;
     transition: background-color 9999s ease-out;
 }
 </style>

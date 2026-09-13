@@ -154,7 +154,7 @@ onMounted(async () => {
     <div class="box-border overflow-hidden flex flex-col min-h-0 h-full pl-2">
         <!-- KanbanControls -->
         <div>
-            <div class="flex justify-between items-center px-3 py-1 text-white-base">
+            <div class="flex justify-between items-center px-3 py-1 text-text-primary">
                 <div>
                     <span>Selected Layers</span>
                 </div>
@@ -166,7 +166,7 @@ onMounted(async () => {
                             v-model="searchQuery"
                             class="
                                 bg-gray-200 mr-6 min-w-80 p-1 rounded-lg outline-none border-none
-                                placeholder:text-dark-surface-active/60 text-accent-black pl-2 pr-8
+                                placeholder:text-text-on-light-muted/60 text-text-on-light pl-2 pr-8
                             "
                             type="text"
                             placeholder="Search tasks here..."
@@ -174,7 +174,7 @@ onMounted(async () => {
                         <Search
                             :size="22"
                             :stroke-width="1.75"
-                            color="var(--color-dark-surface-active)"
+                            color="var(--color-text-on-light-muted)"
                             class="
                                 absolute right-8 top-1/2 -translate-y-1/2 shrink-0
                                 cursor-pointer opacity-60
@@ -192,8 +192,8 @@ onMounted(async () => {
                         <li
                             v-for="option in sortOptions"
                             :key="option.value"
-                            :class="option.value === sortKey ? 'bg-dark-surface-active' : ''"
-                            class="text-white-base"
+                            :class="option.value === sortKey ? 'bg-surface-highlight' : ''"
+                            class="text-text-primary"
                         >
                             <button
                                 type="button"
@@ -236,7 +236,7 @@ onMounted(async () => {
             </div>
 
             <div
-                class="flex justify-start items-center gap-3 rounded-lg bg-zinc-900 p-3 mt-2 text-white-base"
+                class="flex justify-start items-center gap-3 rounded-lg bg-zinc-900 p-3 mt-2 text-text-primary"
             >
                 <button type="button">Layers</button>
                 <button type="button">My tasks</button>
@@ -261,7 +261,7 @@ onMounted(async () => {
                             <CirclePlus
                                 :size="20"
                                 :stroke-width="1.5"
-                                color="var(--color-white-base)"
+                                color="var(--color-text-primary)"
                                 class="shrink-0 cursor-pointer"
                             />
                         </button>
@@ -272,7 +272,7 @@ onMounted(async () => {
                             <Ellipsis
                                 :size="20"
                                 :stroke-width="1.5"
-                                color="var(--color-white-base)"
+                                color="var(--color-text-primary)"
                                 class="shrink-0 cursor-pointer"
                             />
                         </button>

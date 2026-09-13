@@ -66,7 +66,7 @@ async function handleLoginSubmit() {
         >
             <img class="mb-4 h-16 w-16" src="/mantask-logo-svg.svg" alt="Mantask" />
 
-            <h3 class="mb-5 font-sans text-2xl font-semibold tracking-normal text-white-base antialiased">
+            <h3 class="mb-5 font-sans text-2xl font-semibold tracking-normal text-text-primary antialiased">
                 Sign in to Mantask
             </h3>
 
@@ -99,7 +99,7 @@ async function handleLoginSubmit() {
 
             <div class="flex w-full justify-end">
                 <RouterLink
-                    class="mb-2 -mt-2 cursor-pointer font-sans text-[13px] leading-4.5 font-normal tracking-normal text-dark-muted antialiased transition-colors duration-200 hover:text-white-base"
+                    class="mb-2 -mt-2 cursor-pointer font-sans text-[13px] leading-4.5 font-normal tracking-normal text-text-subtle antialiased transition-colors duration-200 hover:text-text-primary"
                     to="/"
                 >
                     Forgot password?
@@ -114,7 +114,7 @@ async function handleLoginSubmit() {
                 {{isLoggingIn ? 'Logging in...' : 'Login'}}
             </Button>
 
-            <div class="flex w-full items-center gap-3 px-1 text-white-muted/35">
+            <div class="flex w-full items-center gap-3 px-1 text-text-muted/35">
                 <span class="h-px flex-1 border-t border-dashed border-current"></span>
                 <span class="text-sm leading-none">or</span>
                 <span class="h-px flex-1 border-t border-dashed border-current"></span>
@@ -135,12 +135,12 @@ async function handleLoginSubmit() {
                 <span>Sign in with Google</span>
             </Button>
 
-            <p class="mt-2 font-sans text-[13px] leading-4.5 font-normal tracking-normal text-white-muted antialiased">
+            <p class="mt-2 font-sans text-[13px] leading-4.5 font-normal tracking-normal text-text-muted antialiased">
                 Don't have an account?
                 <RouterLink
                     class="
                         cursor-pointer font-sans text-[13px] leading-4.5 font-normal tracking-normal
-                        text-dark-muted antialiased transition-colors duration-200 hover:text-white-base
+                        text-text-subtle antialiased transition-colors duration-200 hover:text-text-primary
                     "
                     to="/"
                 >

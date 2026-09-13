@@ -27,7 +27,7 @@ defineProps<Props>()
             <CalendarClock
                 :size="16"
                 :stroke-width="1.25"
-                color="var(--color-white-base)"
+                color="var(--color-text-primary)"
                 class="shrink-0"
             />
             <span>{{ task.due_date }}</span>

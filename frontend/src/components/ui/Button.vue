@@ -24,9 +24,9 @@ const buttonVariants = cva(
     {
         variants: {
             variant: {
-                glass: 'btn-glass rounded-full [--btn-shadow:0_4px_18px_2px_rgba(0,0,0,0.08)] hover:[--btn-shadow:0_8px_28px_rgba(0,0,0,0.06)] focus-visible:ring-white-base',
-                ghost: `btn-ghost cursor-pointer rounded-full gap-3 border border-white/10 bg-white/5 text-white-muted shadow-none focus-visible:ring-white-base
-                    hover:border-white/20 hover:bg-white/10 hover:text-white-base`,
+                glass: 'btn-glass rounded-full [--btn-shadow:0_4px_18px_2px_rgba(0,0,0,0.08)] hover:[--btn-shadow:0_8px_28px_rgba(0,0,0,0.06)] focus-visible:ring-text-primary',
+                ghost: `btn-ghost cursor-pointer rounded-full gap-3 border border-white/10 bg-white/5 text-text-muted shadow-none focus-visible:ring-text-primary
+                    hover:border-white/20 hover:bg-white/10 hover:text-text-primary`,
             },
             size: {
                 sm: 'w-full h-8 px-3 text-sm',

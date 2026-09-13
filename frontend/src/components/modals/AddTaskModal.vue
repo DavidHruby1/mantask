@@ -23,7 +23,7 @@ const statusOptions: Array<{ value: AllowedStatus; label: string }> = [
     { value: TaskStatus.BACKLOG, label: 'Backlog' },
     { value: TaskStatus.TODO, label: 'To do' },
     { value: TaskStatus.IN_PROGRESS, label: 'In progress' },
-]
+] as const
 
 watch(() => props.isOpen, (isOpen) => {
     if (isOpen) {
@@ -59,19 +59,15 @@ async function onCreateTask() {
 
 <template>
     <div
+        role="overlay"
         v-if="isOpen"
-        class="
-            fixed inset-0 z-50 grid place-items-center
-            bg-black/40 p-6 backdrop-blur-[1px]
-        "
+        class="fixed inset-0 z-100 grid place-items-center backdrop-blur-xs"
     >
         <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="add-task-title"
-            class="
-                h-[420px] w-[480px] bg-gray-400 p-6
-            "
+            class="h-105 w-120 bg-surface-raised border border-border-raised p-2 rounded-lg"
         >
             <form
                 class="flex h-full flex-col"
