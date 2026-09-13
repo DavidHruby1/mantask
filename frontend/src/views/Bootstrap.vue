@@ -88,15 +88,15 @@ async function handleBootstrapSubmit() {
         <div class="bootstrap-light-source"></div>
 
         <form
-            class="relative z-10 box-content flex w-[calc(100%_-_80px)] min-w-[240px] max-w-[380px] flex-col items-center gap-3 rounded-[24px] border border-white-surface bg-secondary-black p-10 [&>button]:mt-2"
+            class="relative z-10 box-content flex w-[calc(100%_-_80px)] min-w-[240px] max-w-[380px] flex-col items-center gap-3 rounded-[24px] border border-border-default bg-surface-panel p-10 [&>button]:mt-2"
             :aria-busy="isSubmitting"
             @submit.prevent="handleBootstrapSubmit"
         >
-            <h3 class="mb-0 font-sans text-2xl font-semibold tracking-normal text-white-base antialiased">
+            <h3 class="mb-0 font-sans text-2xl font-semibold tracking-normal text-text-primary antialiased">
                 Set up Mantask
             </h3>
 
-            <p class="mb-5 text-center font-sans text-sm leading-5 font-normal tracking-normal text-white-muted antialiased">
+            <p class="mb-5 text-center font-sans text-sm leading-5 font-normal tracking-normal text-text-muted antialiased">
                 Claim this Mantask instance and become owner.
             </p>
 

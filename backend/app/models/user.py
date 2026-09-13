@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     CheckConstraint,
+    Index,
     DateTime,
     Integer,
     Text,
@@ -32,12 +33,24 @@ class User(Base):
         CheckConstraint(
             "btrim(password_hash) <> ''", name="user_password_hash_not_blank"
         ),
+        Index(
+            "uq_app_users_active_email",
+            "email",
+            unique=True,
+            postgresql_where=text("is_active = TRUE")
+        ),
+        Index(
+            "uq_app_users_active_username",
+            "username_normalized",
+            unique=True,
+            postgresql_where=text("is_active = TRUE")
+        )
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     username: Mapped[str] = mapped_column(Text, nullable=False)
-    username_normalized: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
-    email: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    username_normalized: Mapped[str] = mapped_column(Text, nullable=False)
+    email: Mapped[str] = mapped_column(Text, nullable=False)
     password_hash: Mapped[str] = mapped_column(Text, nullable=False)
     is_active: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("TRUE")

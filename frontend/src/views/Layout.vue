@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { RouterView } from 'vue-router'
-import Sidebar from '@/components/layouts/Sidebar.vue'
+import Sidebar from '@/components/Sidebar.vue'
 import AddTaskModal from '@/components/modals/AddTaskModal.vue'
 import type { AllowedStatus } from '@/interfaces'
 
