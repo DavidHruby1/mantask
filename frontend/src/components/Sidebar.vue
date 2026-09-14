@@ -53,9 +53,9 @@ const navItems = [
     { id: 5, label: 'Settings', icon: Settings },
 ]
 
-function onSelectTeam(teamId: number) {
+function onSelectTeam(teamId: number): void {
     if (teamId === selectedTeamId.value) return
-    selectedTeamId.value = teamId
+    teamsStore.selectTeam(teamId)
 }
 
 async function logout() {
@@ -70,7 +70,7 @@ onMounted(async () => {
         teamsStore.getCurrentUserTeams()
     ])
     if (user && teams) {
-        teamsStore.initializeSelectedTeam(teams)
+        teamsStore.initializeSelectedTeam(user.id)
     }
 })
 

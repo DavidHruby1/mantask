@@ -1,29 +1,29 @@
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import type { TeamRead } from '@/interfaces'
 
 import { teamsApi } from '@/api/teams'
-import { useAuthStore } from '@/stores/auth'
 
 export const useTeamsStore = defineStore('teams', () => {
-    const authStore = useAuthStore()
     const currentUserTeams = ref<TeamRead[]>([])
     const selectedTeamId = ref<number | null>(null)
+    let preferenceUserId: number | null = null
     let activeRequestController: AbortController | null = null
 
-    watch(selectedTeamId, (teamId) => {
-        const userId = authStore.currentUser?.id
-        if (userId === undefined || teamId === null) return
+    function selectTeam(teamId: number | null): void {
+        selectedTeamId.value = teamId
+
+        if (preferenceUserId === null || teamId === null) return
 
         try {
             localStorage.setItem(
-                `mantask.selectedTeamId.${userId}`,
+                `mantask.selectedTeamId.${preferenceUserId}`,
                 String(teamId),
             )
         } catch (error) {
             console.warn('Could not save selected team:', error)
         }
-    })
+    }
 
     async function getCurrentUserTeams(): Promise<TeamRead[] | undefined> {
         activeRequestController?.abort()
@@ -46,9 +46,8 @@ export const useTeamsStore = defineStore('teams', () => {
         }
     }
 
-    function initializeSelectedTeam(teams: TeamRead[]): void {
-        const userId = authStore.currentUser?.id
-        if (userId === undefined) return
+    function initializeSelectedTeam(userId: number): void {
+        preferenceUserId = userId
 
         let storedTeamId: number | null = null
         try {
@@ -60,11 +59,11 @@ export const useTeamsStore = defineStore('teams', () => {
             console.warn('Could not restore selected team:', error)
         }
 
-        const activeTeams = teams.filter((team) => team.is_active)
+        const activeTeams = currentUserTeams.value.filter((team) => team.is_active)
         const storedTeam = activeTeams.find((team) => team.id === storedTeamId)
         const privateTeam = activeTeams.find((team) => team.type === 'private')
 
-        selectedTeamId.value = storedTeam?.id ?? privateTeam?.id ?? null
+        selectTeam(storedTeam?.id ?? privateTeam?.id ?? null)
     }
 
     function reset(): void {
@@ -72,6 +71,7 @@ export const useTeamsStore = defineStore('teams', () => {
         activeRequestController = null
         currentUserTeams.value = []
         selectedTeamId.value = null
+        preferenceUserId = null
     }
 
     return {
@@ -79,6 +79,7 @@ export const useTeamsStore = defineStore('teams', () => {
         selectedTeamId,
         getCurrentUserTeams,
         initializeSelectedTeam,
+        selectTeam,
         reset,
     }
 })
