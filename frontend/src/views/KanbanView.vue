@@ -84,8 +84,9 @@ const tasksToRender = computed<TaskRead[]>(() => {
                 return true
             }
             if (query.startsWith(':')) {
-                if (isNaN(Number(query.slice(1)))) return false
-                return task.id === Number(query.slice(1))
+                const idPrefix = query.slice(1)
+                if (isNaN(Number(idPrefix))) return false
+                return String(task.id).startsWith(idPrefix)
             }
             return task.title.toLowerCase().includes(searchQuery.value.toLowerCase())
         })
