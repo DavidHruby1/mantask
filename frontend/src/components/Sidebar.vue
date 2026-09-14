@@ -69,8 +69,8 @@ onMounted(async () => {
         authStore.getCurrentUser(),
         teamsStore.getCurrentUserTeams()
     ])
-    if (user) {
-        teamsStore.initializeSelectedTeam(user.id, teams)
+    if (user && teams) {
+        teamsStore.initializeSelectedTeam(teams)
     }
 })
 

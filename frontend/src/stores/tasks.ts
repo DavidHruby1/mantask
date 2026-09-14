@@ -8,8 +8,10 @@ import type {
 } from '@/interfaces'
 
 import { tasksApi } from '@/api/tasks'
+import { useTeamsStore } from '@/stores/teams'
 
 export const tasksStore = defineStore('tasks', () => {
+    const teamsStore = useTeamsStore()
     const tasks = ref<TaskRead[]>([]) // All tasks without status separation
     const isLoadingTasks = ref<boolean>(false)
     let activeGetController: AbortController | null = null
@@ -43,7 +45,7 @@ export const tasksStore = defineStore('tasks', () => {
         }
     }
 
-    function clearTasks(): void {
+    function reset(): void {
         activeGetController?.abort()
         activeGetController = null
         tasks.value = []
@@ -68,6 +70,9 @@ export const tasksStore = defineStore('tasks', () => {
     ): Promise<TaskRead | undefined> {
         try {
             const createdTask: TaskRead = await tasksApi.createTask(payload)
+            if (teamsStore.selectedTeamId === payload.team_id) {
+                tasks.value.push(createdTask)
+            }
             return createdTask
         } catch (error) {
             console.error(
@@ -131,7 +136,7 @@ export const tasksStore = defineStore('tasks', () => {
         tasks,
         isLoadingTasks,
         getTasks,
-        clearTasks,
+        reset,
         getTask,
         createTask,
         updateTask,

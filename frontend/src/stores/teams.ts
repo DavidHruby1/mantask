@@ -3,19 +3,21 @@ import { defineStore } from 'pinia'
 import type { TeamRead } from '@/interfaces'
 
 import { teamsApi } from '@/api/teams'
-
+import { useAuthStore } from '@/stores/auth'
 
 export const useTeamsStore = defineStore('teams', () => {
+    const authStore = useAuthStore()
     const currentUserTeams = ref<TeamRead[]>([])
     const selectedTeamId = ref<number | null>(null)
-    const initializedUserId = ref<number | null>(null)
+    let activeRequestController: AbortController | null = null
 
     watch(selectedTeamId, (teamId) => {
-        if (initializedUserId.value === null || teamId === null) return
+        const userId = authStore.currentUser?.id
+        if (userId === undefined || teamId === null) return
 
         try {
             localStorage.setItem(
-                `mantask.selectedTeamId.${initializedUserId.value}`,
+                `mantask.selectedTeamId.${userId}`,
                 String(teamId),
             )
         } catch (error) {
@@ -23,13 +25,31 @@ export const useTeamsStore = defineStore('teams', () => {
         }
     })
 
-    async function getCurrentUserTeams(): Promise<TeamRead[]> {
-        const currUserTeams = await teamsApi.getCurrentUsersTeams()
-        currentUserTeams.value = currUserTeams
-        return currUserTeams
+    async function getCurrentUserTeams(): Promise<TeamRead[] | undefined> {
+        activeRequestController?.abort()
+        const controller = new AbortController()
+        activeRequestController = controller
+
+        try {
+            const teams = await teamsApi.getCurrentUsersTeams(controller.signal)
+            if (controller.signal.aborted) return
+
+            currentUserTeams.value = teams
+            return teams
+        } catch (error) {
+            if (controller.signal.aborted) return
+            throw error
+        } finally {
+            if (activeRequestController === controller) {
+                activeRequestController = null
+            }
+        }
     }
 
-    function initializeSelectedTeam(userId: number, teams: TeamRead[]): void {
+    function initializeSelectedTeam(teams: TeamRead[]): void {
+        const userId = authStore.currentUser?.id
+        if (userId === undefined) return
+
         let storedTeamId: number | null = null
         try {
             const storedValue = localStorage.getItem(`mantask.selectedTeamId.${userId}`)
@@ -44,8 +64,14 @@ export const useTeamsStore = defineStore('teams', () => {
         const storedTeam = activeTeams.find((team) => team.id === storedTeamId)
         const privateTeam = activeTeams.find((team) => team.type === 'private')
 
-        initializedUserId.value = userId
         selectedTeamId.value = storedTeam?.id ?? privateTeam?.id ?? null
+    }
+
+    function reset(): void {
+        activeRequestController?.abort()
+        activeRequestController = null
+        currentUserTeams.value = []
+        selectedTeamId.value = null
     }
 
     return {
@@ -53,5 +79,6 @@ export const useTeamsStore = defineStore('teams', () => {
         selectedTeamId,
         getCurrentUserTeams,
         initializeSelectedTeam,
+        reset,
     }
 })

@@ -148,7 +148,7 @@ function addTask(status: TaskStatus): void {
 }
 
 watch(selectedTeamId, async (teamId) => {
-    taskStore.clearTasks()
+    taskStore.reset()
     if (teamId === null) return
 
     await taskStore.getTasks(teamId)

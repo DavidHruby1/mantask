@@ -3,12 +3,15 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 
 import { authApi } from '@/api/auth'
+import { useTeamsStore } from '@/stores/teams'
+import { tasksStore } from '@/stores/tasks'
 import type { BootstrapSetup, LoginInput, UserRead } from '@/interfaces'
 
 export const useAuthStore = defineStore('auth', () => {
     const bootstrapped = ref<boolean | null>(null)
     const authenticated = ref<boolean | null>(null)
     const currentUser = ref<UserRead | null>(null)
+    let activeCurrentUserController: AbortController | null = null
 
     // Refreshes the bootstrap and authentication state used for routing.
     // Values are updated together so a failed request cannot leave a partial new state.
@@ -18,7 +21,7 @@ export const useAuthStore = defineStore('auth', () => {
 
             if (!bootstrapStatus.bootstrapped) {
                 bootstrapped.value = false
-                authenticated.value = false
+                reset()
                 return
             }
         }
@@ -27,10 +30,11 @@ export const useAuthStore = defineStore('auth', () => {
             const authResult = await authApi.getAuthResult()
             bootstrapped.value = true
             authenticated.value = authResult.authenticated
+            if (!authResult.authenticated) reset()
         } catch (error) {
             if (axios.isAxiosError(error) && error.response?.status === 401) {
                 bootstrapped.value = true
-                authenticated.value = false
+                reset()
                 return
             }
             console.error(
@@ -41,15 +45,22 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
-    async function getCurrentUser(): Promise<UserRead | null> {
+    async function getCurrentUser(): Promise<UserRead | null | undefined> {
+        activeCurrentUserController?.abort()
+        const controller = new AbortController()
+        activeCurrentUserController = controller
+
         try {
-            const currUser = await authApi.getCurrentUser()
+            const currUser = await authApi.getCurrentUser(controller.signal)
+            if (controller.signal.aborted) return
+
             currentUser.value = currUser
             return currUser
         } catch (error) {
+            if (controller.signal.aborted) return
+
             if (axios.isAxiosError(error) && error.response?.status === 401) {
-                currentUser.value = null
-                authenticated.value = false
+                reset()
                 return null
             }
             console.error(
@@ -57,7 +68,20 @@ export const useAuthStore = defineStore('auth', () => {
                 error instanceof Error ? error.message : 'Unknown error',
             )
             throw error
+        } finally {
+            if (activeCurrentUserController === controller) {
+                activeCurrentUserController = null
+            }
         }
+    }
+
+    function reset(): void {
+        activeCurrentUserController?.abort()
+        activeCurrentUserController = null
+        currentUser.value = null
+        authenticated.value = false
+        useTeamsStore().reset()
+        tasksStore().reset()
     }
 
     // Submits the initial application setup and updates the auth state after the server creates a session.
@@ -96,6 +120,7 @@ export const useAuthStore = defineStore('auth', () => {
         try {
             const logoutResult = await authApi.logout()
             authenticated.value = logoutResult.authenticated
+            if (!logoutResult.authenticated) reset()
             return !logoutResult.authenticated
         } catch (error) {
             console.error(
@@ -115,5 +140,6 @@ export const useAuthStore = defineStore('auth', () => {
         bootstrap,
         login,
         logout,
+        reset,
     }
 })

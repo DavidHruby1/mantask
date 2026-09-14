@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import { TaskStatus } from '@/interfaces'
 import { tasksStore } from '@/stores/tasks'
 import { useTeamsStore } from '@/stores/teams'
@@ -11,7 +11,6 @@ const teamsStore = useTeamsStore()
 const { selectedTeamId } = storeToRefs(teamsStore)
 
 type Props = {
-    isOpen: boolean
     addTaskStatus: AllowedStatus | null
     teamId: number
 }
@@ -30,12 +29,6 @@ const statusOptions: Array<{ value: AllowedStatus; label: string }> = [
     { value: TaskStatus.IN_PROGRESS, label: 'In progress' },
 ] as const
 
-watch(() => props.isOpen, (isOpen) => {
-    if (isOpen) {
-        status.value = props.addTaskStatus ?? TaskStatus.BACKLOG
-    }
-})
-
 function getStatusLabel(status: AllowedStatus): string {
     return statusOptions.find((option) => option.value === status)?.label ?? status
 }
@@ -44,9 +37,8 @@ async function onCreateTask() {
     if (isSubmitting.value) return
 
     isSubmitting.value = true
-    const submittedTeamId = props.teamId
     const payload: TaskCreate = {
-        team_id: submittedTeamId,
+        team_id: props.teamId,
         title: title.value.trim(),
         status: status.value,
         should_review: false
@@ -54,10 +46,14 @@ async function onCreateTask() {
 
     emit('close-modal')
     const createdTask = await taskStore.createTask(payload)
-    if (!createdTask) return
 
-    if (selectedTeamId.value === submittedTeamId) {
-        await taskStore.getTasks(submittedTeamId)
+    if (!createdTask) {
+        console.error('Unable to create task. Please try again.')
+        return
+    }
+
+    if (selectedTeamId.value === payload.team_id) {
+        await taskStore.getTasks(payload.team_id)
     }
 }
 
@@ -66,7 +62,6 @@ async function onCreateTask() {
 <template>
     <div
         role="overlay"
-        v-if="isOpen"
         class="fixed inset-0 z-100 grid place-items-center backdrop-blur-xs"
     >
         <div
