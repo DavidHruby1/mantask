@@ -45,7 +45,7 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
-    async function getCurrentUser(): Promise<UserRead | null | undefined> {
+    async function getCurrentUser(): Promise<UserRead | undefined> {
         activeCurrentUserController?.abort()
         const controller = new AbortController()
         activeCurrentUserController = controller
@@ -61,7 +61,7 @@ export const useAuthStore = defineStore('auth', () => {
 
             if (axios.isAxiosError(error) && error.response?.status === 401) {
                 reset()
-                return null
+                return
             }
             console.error(
                 'Failed to load current user:',
