@@ -216,9 +216,8 @@ tlačítko v navigaci a tlačítko ve sloupci.
 Vytvoření probíhá v modalu. Kliknutí na `+` předvybere stav odpovídajícího
 sloupce. Výchozí stav z obecného `Add Task` je `Backlog`.
 
-Při otevření modal zachytí ID aktuálního týmu a odešle je jako povinné `team_id`.
-Změna týmu modal zavře; již odeslaný POST zůstává cílený na zachycený tým a jeho
-dokončení nesmí změnit nový týmový pohled ani nově otevřený modal.
+Každé otevření zobrazí čistý formulář. Dokončení požadavku nesmí změnit pohled
+jiného týmu.
 
 Formulář pro vytvoření obsahuje title, description, assignee, reviewer, layers,
 priority, review date, due date, effort a `should_review` podle pravidel
@@ -534,8 +533,11 @@ MVP, protože současný backend nemá event endpoint ani distribuci událostí.
 Načítání tasků používá globální skeleton pro karty. Ostatní lokální akce mohou
 zobrazovat vlastní loading spinner.
 
-Pokud načtení dat selže, MVP zobrazí jednoduché chybové upozornění. Prozatím je
-přijatelný `console.error` a `alert`; samostatný systém toastů není podmínkou.
+Pokud načtení dat selže, MVP chybu zaznamená přes `console.error`; uživatelské
+upozornění doplní budoucí systém toastů.
+
+Potvrzené odhlášení nebo ztráta přihlášení vyčistí uživatele, týmy, výběr týmu
+a tasky a zruší jejich probíhající načítání. Uložené týmové preference zůstávají.
 
 Přesun nebo jiná mutace používá optimistické UI. Při odmítnutí serverem se stav
 vrátí na autoritativní serverovou hodnotu a uživatel dostane varování.

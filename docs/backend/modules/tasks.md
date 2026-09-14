@@ -51,11 +51,11 @@ The repository resolves anchors only within the destination team/status while ex
 
 ### Ordering migration
 
-The persisted upgrade has two revisions because PostgreSQL 11 requires enum additions outside a transaction. The first adds `backlog` in an Alembic autocommit block. The dependent transactional revision checks integer capacity, changes the database default to `backlog`, and assigns `1000, 2000, ...` within every `(team_id, status)` partition using existing `(position, id)` order before replacing the unique constraint. Existing statuses are not rewritten. The ordering downgrade restores the `todo` default and ordinary immediate uniqueness while retaining sparse positions. The unchanged enum-removal downgrade refuses to proceed while any `BACKLOG` task exists; disposable PostgreSQL 16 validation also exposed a pre-existing cross-enum comparison failure when no backlog rows exist, recorded in `.opencode/artifacts/task-001/RISKS.md`.
+The persisted upgrade has two revisions because PostgreSQL 11 requires enum additions outside a transaction. The first adds `backlog` in an Alembic autocommit block. The dependent transactional revision checks integer capacity, changes the database default to `backlog`, and assigns `1000, 2000, ...` within every `(team_id, status)` partition using existing `(position, id)` order before replacing the unique constraint. Existing statuses are not rewritten. The ordering downgrade restores the `todo` default and ordinary immediate uniqueness while retaining sparse positions. The unchanged enum-removal downgrade refuses to proceed while any `BACKLOG` task exists.
 
 ### Schemas
 
-`TaskFilters`, `TaskQuery`, and `TaskCreate` require `team_id`. `TaskFilterFields.normalize_statuses()` collapses an empty list to `None`. `TaskMove` supplies the required destination status and optional predecessor anchor.
+`TaskFilters`, `TaskQuery`, and `TaskCreate` require `team_id`. `TaskMove` supplies the required destination status and optional predecessor anchor.
 
 ## Data Flow
 

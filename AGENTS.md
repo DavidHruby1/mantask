@@ -42,4 +42,3 @@ Mantask is a lightweight, self-hosted task and workflow management application f
 - Start with [docs/onboarding.md](docs/onboarding.md) for onboarding and documentation navigation.
 - Start with [README.md](README.md) for the project overview and bootstrap requirement.
 - Read [PRD.md](PRD.md) for product scope, workflows, roles, and expected behavior.
-- Follow [.opencode/docs/CONVENTIONS.md](.opencode/docs/CONVENTIONS.md) when editing source code.
