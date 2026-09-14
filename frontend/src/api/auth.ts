@@ -19,8 +19,8 @@ export const authApi = {
         const response = await api.get<LoginResult>('/api/auth/me')
         return response.data
     },
-    async getCurrentUser(): Promise<UserRead> {
-        const response = await api.get<UserRead>('/api/users/me')
+    async getCurrentUser(signal?: AbortSignal): Promise<UserRead> {
+        const response = await api.get<UserRead>('/api/users/me', { signal })
         return response.data
     },
     async bootstrapSetup(payload: BootstrapSetup): Promise<BootstrapResult> {

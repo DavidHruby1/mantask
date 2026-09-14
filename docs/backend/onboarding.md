@@ -25,7 +25,7 @@ app/
             bootstrap.py — GET /bootstrap/status, POST /bootstrap/setup
             tasks.py     — GET/POST/PATCH/DELETE /tasks/
     services/
-        auth.py          — LoginService, SessionAuthService, active-team resolution
+        auth.py          — LoginService and SessionAuthService
         bootstrap.py     — bootstrap_application() one-time setup
         tasks.py         — TaskService business logic
     repositories/

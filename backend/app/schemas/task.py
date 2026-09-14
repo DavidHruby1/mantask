@@ -18,6 +18,7 @@ from backend.app.models.enums import TaskEffort, TaskPriority, TaskStatus
 class TaskCreate(BaseModel):
     """Validate task creation input, defaulting new work to the backlog column."""
 
+    team_id: int
     assignee_member_id: int | None = None
     reviewer_member_id: int | None = None
 
@@ -172,7 +173,7 @@ class TaskFilterFields(BaseModel):
 
 
 class TaskQuery(TaskFilterFields):
-    team_id: int | None = None
+    team_id: int
 
 
 class TaskFilters(TaskFilterFields):

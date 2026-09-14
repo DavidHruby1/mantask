@@ -9,7 +9,6 @@ from backend.app.error import (
     ApiConflictError,
     ApiInternalServerError,
     InvalidTaskError,
-    NoActiveTeamSelectedError,
     TaskAccessDeniedError,
     TaskNotFoundError,
     TeamInactiveError,
@@ -86,41 +85,6 @@ def test_get_all_tasks_uses_explicit_team_and_filters(monkeypatch):
     assert result is tasks
 
 
-def test_get_all_tasks_uses_last_active_team(monkeypatch):
-    db = Mock(spec=Session)
-    session = SimpleNamespace(
-        user_id=10,
-        user=SimpleNamespace(last_active_team_id=20),
-    )
-    find_tasks = Mock(return_value=[])
-    monkeypatch.setattr(
-        tasks_service,
-        "get_team_by_id",
-        Mock(return_value=SimpleNamespace(is_active=True)),
-    )
-    monkeypatch.setattr(tasks_service, "is_team_member", Mock(return_value=True))
-    monkeypatch.setattr(tasks_service, "find_tasks", find_tasks)
-
-    result = TaskService().get_all_tasks(db, session, TaskQuery())
-
-    find_tasks.assert_called_once_with(
-        db,
-        TaskFilters(team_id=20, statuses=[], assignee_member_id=None),
-    )
-    assert result == []
-
-
-def test_get_all_tasks_requires_active_team_selection():
-    db = Mock(spec=Session)
-    session = SimpleNamespace(
-        user_id=10,
-        user=SimpleNamespace(last_active_team_id=None),
-    )
-
-    with pytest.raises(NoActiveTeamSelectedError):
-        TaskService().get_all_tasks(db, session, TaskQuery())
-
-
 @pytest.mark.parametrize(
     ("team", "is_member"),
     [
@@ -177,7 +141,7 @@ def test_get_all_tasks_rejects_invalid_assignee(monkeypatch):
 
 def test_create_task_assigns_first_backlog_task_to_creator(monkeypatch):
     db = Mock(spec=Session)
-    payload = TaskCreate(title="First task", should_review=False)
+    payload = TaskCreate(team_id=20, title="First task", should_review=False)
     task = SimpleNamespace(id=1)
     get_creator = Mock(return_value=SimpleNamespace(id=40))
     lock_positions = Mock()
@@ -196,7 +160,7 @@ def test_create_task_assigns_first_backlog_task_to_creator(monkeypatch):
     )
     monkeypatch.setattr(tasks_service, "insert_task", insert_task)
 
-    result = TaskService().create_task(db, 20, 10, payload)
+    result = TaskService().create_task(db, 10, payload)
 
     get_creator.assert_called_once_with(db, 20, 10)
     lock_positions.assert_called_once_with(db, 20)
@@ -236,6 +200,7 @@ def test_create_task_assigns_first_backlog_task_to_creator(monkeypatch):
 def test_create_task_validates_assignee_and_reviewer(monkeypatch):
     db = Mock(spec=Session)
     payload = TaskCreate(
+        team_id=20,
         title="Reviewed task",
         assignee_member_id=50,
         reviewer_member_id=60,
@@ -260,7 +225,7 @@ def test_create_task_validates_assignee_and_reviewer(monkeypatch):
     monkeypatch.setattr(tasks_service, "get_last_task_position", get_last_position)
     monkeypatch.setattr(tasks_service, "insert_task", insert_task)
 
-    TaskService().create_task(db, 20, 10, payload)
+    TaskService().create_task(db, 10, payload)
 
     get_member_by_id.assert_has_calls(
         [call(db, 20, 50), call(db, 20, 60)],
@@ -301,9 +266,8 @@ def test_create_task_rejects_non_member_creator(monkeypatch):
     with pytest.raises(TeamMembershipError):
         TaskService().create_task(
             db,
-            20,
             10,
-            TaskCreate(title="First task", should_review=False),
+            TaskCreate(team_id=20, title="First task", should_review=False),
         )
 
     lock_positions.assert_not_called()
@@ -329,9 +293,9 @@ def test_create_task_rejects_invalid_assignee(monkeypatch):
     with pytest.raises(TeamMembershipError, match="Invalid assignee"):
         TaskService().create_task(
             db,
-            20,
             10,
             TaskCreate(
+                team_id=20,
                 title="Assigned task",
                 assignee_member_id=50,
                 should_review=False,
@@ -362,9 +326,9 @@ def test_create_task_rejects_invalid_reviewer(monkeypatch):
     with pytest.raises(TeamMembershipError, match="Invalid reviewer"):
         TaskService().create_task(
             db,
-            20,
             10,
             TaskCreate(
+                team_id=20,
                 title="Reviewed task",
                 reviewer_member_id=60,
             ),
@@ -380,6 +344,7 @@ def test_create_in_progress_task_sets_start_time(monkeypatch):
     datetime_mock = Mock(wraps=datetime)
     datetime_mock.now.return_value = now
     payload = TaskCreate(
+        team_id=20,
         title="Started task",
         status=TaskStatus.IN_PROGRESS,
         should_review=False,
@@ -408,10 +373,11 @@ def test_create_in_progress_task_sets_start_time(monkeypatch):
     monkeypatch.setattr(tasks_service, "get_last_task_position", get_last_position)
     monkeypatch.setattr(tasks_service, "insert_task", insert_task)
 
-    result = TaskService().create_task(db, 20, 10, payload)
+    result = TaskService().create_task(db, 10, payload)
 
     lock_positions.assert_called_once_with(db, 20)
     assert ordered_calls.mock_calls == [
+        call.team(db, 20),
         call.creator(db, 20, 10),
         call.lock(db, 20),
         call.team(db, 20),
@@ -463,9 +429,9 @@ def test_create_in_progress_task_rejects_reached_limit(monkeypatch):
     with pytest.raises(ApiConflictError, match="IN_PROGRESS limit reached"):
         TaskService().create_task(
             db,
-            20,
             10,
             TaskCreate(
+                team_id=20,
                 title="Started task",
                 status=TaskStatus.IN_PROGRESS,
                 should_review=False,
@@ -476,7 +442,7 @@ def test_create_in_progress_task_rejects_reached_limit(monkeypatch):
     insert_task.assert_not_called()
 
 
-def test_create_in_progress_task_requires_active_team(monkeypatch):
+def test_create_task_rejects_inactive_team(monkeypatch):
     db = Mock(spec=Session)
     lock_positions = Mock()
     monkeypatch.setattr(
@@ -494,16 +460,31 @@ def test_create_in_progress_task_requires_active_team(monkeypatch):
     with pytest.raises(TeamInactiveError):
         TaskService().create_task(
             db,
-            20,
             10,
             TaskCreate(
-                title="Started task",
-                status=TaskStatus.IN_PROGRESS,
+                team_id=20,
+                title="Backlog task",
                 should_review=False,
             ),
         )
 
-    lock_positions.assert_called_once_with(db, 20)
+    lock_positions.assert_not_called()
+
+
+def test_create_task_rejects_missing_team(monkeypatch):
+    db = Mock(spec=Session)
+    get_creator = Mock()
+    monkeypatch.setattr(tasks_service, "get_team_by_id", Mock(return_value=None))
+    monkeypatch.setattr(tasks_service, "get_team_member", get_creator)
+
+    with pytest.raises(TeamNotFoundError):
+        TaskService().create_task(
+            db,
+            10,
+            TaskCreate(team_id=20, title="Missing team", should_review=False),
+        )
+
+    get_creator.assert_not_called()
 
 
 def test_create_in_progress_task_requires_app_configuration(monkeypatch):
@@ -525,9 +506,9 @@ def test_create_in_progress_task_requires_app_configuration(monkeypatch):
     with pytest.raises(ApiInternalServerError, match="App configuration is missing"):
         TaskService().create_task(
             db,
-            20,
             10,
             TaskCreate(
+                team_id=20,
                 title="Started task",
                 status=TaskStatus.IN_PROGRESS,
                 should_review=False,
@@ -564,9 +545,8 @@ def test_create_task_rejects_exhausted_sparse_position(monkeypatch):
     ):
         TaskService().create_task(
             db,
-            20,
             10,
-            TaskCreate(title="Overflow task", should_review=False),
+            TaskCreate(team_id=20, title="Overflow task", should_review=False),
         )
 
     lock_positions.assert_called_once_with(db, 20)

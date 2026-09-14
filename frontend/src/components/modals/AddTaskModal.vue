@@ -1,14 +1,18 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import { TaskStatus } from '@/interfaces'
 import { tasksStore } from '@/stores/tasks'
+import { useTeamsStore } from '@/stores/teams'
+import { storeToRefs } from 'pinia'
 import type { AllowedStatus, TaskCreate } from '@/interfaces'
 
 const taskStore = tasksStore()
+const teamsStore = useTeamsStore()
+const { selectedTeamId } = storeToRefs(teamsStore)
 
 type Props = {
-    isOpen: boolean
     addTaskStatus: AllowedStatus | null
+    teamId: number
 }
 const props = defineProps<Props>()
 
@@ -18,49 +22,46 @@ const emit = defineEmits<{
 
 const title = ref<string>('')
 const status = ref<AllowedStatus>(props.addTaskStatus ?? TaskStatus.BACKLOG)
-const errorMessage = ref('')
+const isSubmitting = ref<boolean>(false)
 const statusOptions: Array<{ value: AllowedStatus; label: string }> = [
     { value: TaskStatus.BACKLOG, label: 'Backlog' },
     { value: TaskStatus.TODO, label: 'To do' },
     { value: TaskStatus.IN_PROGRESS, label: 'In progress' },
 ] as const
 
-watch(() => props.isOpen, (isOpen) => {
-    if (isOpen) {
-        status.value = props.addTaskStatus ?? TaskStatus.BACKLOG
-        errorMessage.value = ''
-    }
-})
-
 function getStatusLabel(status: AllowedStatus): string {
     return statusOptions.find((option) => option.value === status)?.label ?? status
 }
 
 async function onCreateTask() {
-    errorMessage.value = ''
+    if (isSubmitting.value) return
+
+    isSubmitting.value = true
     const payload: TaskCreate = {
+        team_id: props.teamId,
         title: title.value.trim(),
         status: status.value,
         should_review: false
     }
 
+    emit('close-modal')
     const createdTask = await taskStore.createTask(payload)
+
     if (!createdTask) {
-        errorMessage.value = 'Unable to create task. Please try again.'
+        console.error('Unable to create task. Please try again.')
         return
     }
 
-    await taskStore.getTasks()
-
-    title.value = ''
-    emit('close-modal')
+    if (selectedTeamId.value === payload.team_id) {
+        await taskStore.getTasks(payload.team_id)
+    }
 }
+
 </script>
 
 <template>
     <div
         role="overlay"
-        v-if="isOpen"
         class="fixed inset-0 z-100 grid place-items-center backdrop-blur-xs"
     >
         <div
@@ -110,8 +111,6 @@ async function onCreateTask() {
                     </div>
                 </div>
 
-                <p v-if="errorMessage" role="alert">{{ errorMessage }}</p>
-
                 <div class="mt-auto">
                     <button
                         type="button"
@@ -121,6 +120,7 @@ async function onCreateTask() {
                     </button>
                     <button
                         type="submit"
+                        :disabled="isSubmitting"
                     >
                         Create task
                     </button>

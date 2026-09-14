@@ -57,9 +57,9 @@ Team switcher je umístěný pod `UserProfile`, nikoliv uvnitř `NavMenu`. Přep
 týmu načte jeho Kanban. Přepnutí zároveň zavře otevřený detail úkolu, filter
 sidebar a případné modaly.
 
-Výchozí tým po přihlášení určuje backend podle aktuálního uživatelského
-nastavení. Dashboard pouze respektuje aktivní tým, který dostane z auth/session
-kontextu.
+Výběr týmu je lokální pro uživatele a prohlížeč. Po načtení uživatele a týmů se
+obnoví z `mantask.selectedTeamId.<userId>`, pokud ID patří dostupnému aktivnímu
+týmu; jinak se vybere aktivní soukromý workspace. Backend výběr neukládá.
 
 Kanban zobrazuje všechny úkoly aktivního týmu. Výjimkou je aktivní lokální filtr
 nebo sort aktuálního uživatele.
@@ -215,6 +215,9 @@ tlačítko v navigaci a tlačítko ve sloupci.
 
 Vytvoření probíhá v modalu. Kliknutí na `+` předvybere stav odpovídajícího
 sloupce. Výchozí stav z obecného `Add Task` je `Backlog`.
+
+Každé otevření zobrazí čistý formulář. Dokončení požadavku nesmí změnit pohled
+jiného týmu.
 
 Formulář pro vytvoření obsahuje title, description, assignee, reviewer, layers,
 priority, review date, due date, effort a `should_review` podle pravidel
@@ -456,27 +459,27 @@ Blokované úkoly, blocker workflow a blocker filtry neexistují.
 Aktivní filtry, vybrané layers, `My tasks`, sort a otevřený detail úkolu patří do
 stavu konkrétního uživatele a prohlížeče.
 
-Autoritativním místem aktivního pohledu je URL. URL může obsahovat identifikátor
-aktivního týmu nebo workspace, query parametry pohledu a identifikátor otevřeného
-úkolu.
+Vybraný tým ukládá teams store do `localStorage` pod klíčem konkrétního uživatele.
+URL může obsahovat query parametry pohledu a identifikátor otevřeného úkolu.
 
 Změna lokálního pohledu aktualizuje URL pomocí náhrady aktuální historie, aby
 každé kliknutí na filtr nevytvářelo nový krok v historii prohlížeče.
 
-URL stav slouží pro obnovení stránky a navigaci zpět/vpřed. Není to náhrada za
-backendovou autorizaci. Backend vždy ověřuje aktivní tým a členství.
+URL stav slouží pro obnovení pohledu a navigaci zpět/vpřed. Není to náhrada za
+backendovou autorizaci. Backend vždy ověřuje tým z konkrétního requestu a členství.
 
 `localStorage` slouží pouze pro osobní výchozí preference, například:
 
 - výchozí sort,
 - výchozí sbalené sloupce,
+- naposledy vybraný tým konkrétního uživatele,
 - jiné drobné preference zobrazení.
 
 Tyto preference jsou lokální pro uživatele a prohlížeč, ideálně oddělené podle
 aktivního týmu. Nejsou týmovým datovým stavem.
 
-Při načtení stránky se nejprve respektuje pohled z URL. Local storage může dodat
-výchozí hodnotu jen tehdy, když ji URL neurčuje.
+Při načtení stránky teams store obnoví platný aktivní tým z local storage; jinak
+použije aktivní soukromý workspace. Výběr se mezi záložkami živě nesynchronizuje.
 
 Chování filtrů a sortu při přepnutí na jiný tým je ještě otevřené. Nový Kanban se
 načte vždy; filtry, které odkazují na členy nebo layers z původního týmu, se
@@ -499,6 +502,10 @@ Polling v MVP:
 
 Polling znovu načítá týmová data, nikoliv celou HTML stránku. Po každém načtení
 se znovu použije lokální filter, layer a sort aktuálního uživatele.
+
+Změna týmu okamžitě vyčistí staré tasky a zruší předchozí GET přes
+`AbortController`. Zrušený nebo starší request nesmí změnit data, loading ani
+chybu novějšího requestu a zrušení se nezobrazuje jako chyba.
 
 Backendová funkce `move_task` řeší souběžné přesuny a vrací konflikt, pokud je
 požadavek neplatný vůči aktuálnímu stavu. Frontend při takovém konfliktu kartu
@@ -526,8 +533,11 @@ MVP, protože současný backend nemá event endpoint ani distribuci událostí.
 Načítání tasků používá globální skeleton pro karty. Ostatní lokální akce mohou
 zobrazovat vlastní loading spinner.
 
-Pokud načtení dat selže, MVP zobrazí jednoduché chybové upozornění. Prozatím je
-přijatelný `console.error` a `alert`; samostatný systém toastů není podmínkou.
+Pokud načtení dat selže, MVP chybu zaznamená přes `console.error`; uživatelské
+upozornění doplní budoucí systém toastů.
+
+Potvrzené odhlášení nebo ztráta přihlášení vyčistí uživatele, týmy, výběr týmu
+a tasky a zruší jejich probíhající načítání. Uložené týmové preference zůstávají.
 
 Přesun nebo jiná mutace používá optimistické UI. Při odmítnutí serverem se stav
 vrátí na autoritativní serverovou hodnotu a uživatel dostane varování.
@@ -537,6 +547,8 @@ vrátí na autoritativní serverovou hodnotu a uživatel dostane varování.
 Dashboard musí respektovat aktuální backendový kontrakt:
 
 - seznam úkolů je vždy omezený na jeden aktivní tým/workspace,
+- `GET /tasks` vyžaduje query parametr `team_id`,
+- `POST /tasks` vyžaduje `team_id` v `TaskCreate`,
 - backend kontroluje členství a přístup,
 - úkoly se vracejí v týmovém pořadí podle stavu a pozice,
 - přesun používá samostatný move endpoint,
@@ -597,4 +609,3 @@ doporučuje doména s HTTPS.
 
 `localhost` je vhodný pro lokální vývoj, ne pro spolupráci uživatelů na různých
 zařízeních.
-

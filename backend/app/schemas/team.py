@@ -8,6 +8,8 @@ from pydantic import (
     field_validator,
 )
 
+from backend.app.models.enums import TeamType
+
 
 NAME_REGEX = re.compile(r"^[\w\-:,. ]+$")
 
@@ -45,6 +47,7 @@ class TeamRead(BaseModel):
 
     id: int
     name: str
+    type: TeamType
     created_at: datetime
     updated_at: datetime
     is_active: bool

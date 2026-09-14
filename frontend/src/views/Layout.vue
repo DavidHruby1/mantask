@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { RouterView } from 'vue-router'
+import { storeToRefs } from 'pinia'
+import { useTeamsStore } from '@/stores/teams'
 import Sidebar from '@/components/Sidebar.vue'
 import AddTaskModal from '@/components/modals/AddTaskModal.vue'
 import type { AllowedStatus } from '@/interfaces'
@@ -11,18 +13,27 @@ const canExpandSidebar = ref<boolean>(sidebarBreakpoint.matches)
 const isUserCollapsed = ref<boolean>(false)
 const isSidebarCollapsed = computed<boolean>(() => !canExpandSidebar.value || isUserCollapsed.value)
 
-const isAddTaskModalOpen = ref<boolean>(false)
 const addTaskStatus = ref<AllowedStatus | null>(null)
+const addTaskTeamId = ref<number | null>(null)
+const isAddTaskModalOpen = computed(() => addTaskTeamId.value !== null)
+const teamsStore = useTeamsStore()
+const { selectedTeamId } = storeToRefs(teamsStore)
 
 function onAddTask(status: AllowedStatus | null): void {
+    if (selectedTeamId.value === null) return
+
     addTaskStatus.value = status
-    isAddTaskModalOpen.value = true
+    addTaskTeamId.value = selectedTeamId.value
 }
 
 function onCloseAddTaskModal(): void {
     addTaskStatus.value = null
-    isAddTaskModalOpen.value = false
+    addTaskTeamId.value = null
 }
+
+watch(selectedTeamId, () => {
+    onCloseAddTaskModal()
+})
 
 function updateSidebarState(event: MediaQueryListEvent) {
     canExpandSidebar.value = event.matches
@@ -59,8 +70,9 @@ onBeforeUnmount(() => {
         </main>
 
         <AddTaskModal
-            :isOpen="isAddTaskModalOpen"
+            v-if="isAddTaskModalOpen"
             :addTaskStatus="addTaskStatus"
+            :teamId="addTaskTeamId!"
             @close-modal="onCloseAddTaskModal"
         />
     </div>

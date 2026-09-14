@@ -8,26 +8,48 @@ import type {
 } from '@/interfaces'
 
 import { tasksApi } from '@/api/tasks'
+import { useTeamsStore } from '@/stores/teams'
 
 export const tasksStore = defineStore('tasks', () => {
+    const teamsStore = useTeamsStore()
     const tasks = ref<TaskRead[]>([]) // All tasks without status separation
     const isLoadingTasks = ref<boolean>(false)
+    let activeGetController: AbortController | null = null
 
-    async function getTasks(): Promise<TaskRead[] | undefined> {
-        isLoadingTasks.value = true
+    async function getTasks(teamId: number): Promise<TaskRead[] | undefined> {
+        activeGetController?.abort()
+        const controller = new AbortController()
+        const signal = controller.signal
+        activeGetController = controller
+
+        if (!signal.aborted) isLoadingTasks.value = true
         try {
-            const fetchedTasks: TaskRead[] = await tasksApi.getTasks()
+            const fetchedTasks: TaskRead[] = await tasksApi.getTasks(teamId, signal)
+            if (signal.aborted) return
+
             tasks.value = fetchedTasks
             return fetchedTasks
         } catch (error) {
+            if (signal.aborted) return
+
             console.error(
                 'Fetching tasks failed:',
                 error instanceof Error ? error.message : 'Unknown error',
             )
             return
         } finally {
-            isLoadingTasks.value = false
+            if (!signal.aborted) {
+                isLoadingTasks.value = false
+                if (activeGetController === controller) activeGetController = null
+            }
         }
+    }
+
+    function reset(): void {
+        activeGetController?.abort()
+        activeGetController = null
+        tasks.value = []
+        isLoadingTasks.value = false
     }
 
     async function getTask(id: number): Promise<TaskRead | undefined> {
@@ -48,7 +70,9 @@ export const tasksStore = defineStore('tasks', () => {
     ): Promise<TaskRead | undefined> {
         try {
             const createdTask: TaskRead = await tasksApi.createTask(payload)
-            tasks.value.push(createdTask)
+            if (teamsStore.selectedTeamId === payload.team_id) {
+                tasks.value.push(createdTask)
+            }
             return createdTask
         } catch (error) {
             console.error(
@@ -112,6 +136,7 @@ export const tasksStore = defineStore('tasks', () => {
         tasks,
         isLoadingTasks,
         getTasks,
+        reset,
         getTask,
         createTask,
         updateTask,

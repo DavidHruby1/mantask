@@ -52,7 +52,6 @@ class BootstrapSetup(BaseModel):
 
 class BootstrapResult(BaseModel):
     bootstrapped: bool
-    active_team_id: int | None = None
 
 
 class BootstrapStatus(BaseModel):

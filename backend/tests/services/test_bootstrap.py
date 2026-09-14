@@ -18,7 +18,7 @@ def test_bootstrap_application_creates_initial_state(monkeypatch):
         bootstrap_secret="a" * 32,
     )
     db = Mock(spec=Session)
-    user = SimpleNamespace(id=None, last_active_team_id=None)
+    user = SimpleNamespace(id=None)
     private_team = SimpleNamespace(id=None)
     shared_team = SimpleNamespace(id=None)
     create_app_config = Mock()
@@ -69,7 +69,6 @@ def test_bootstrap_application_creates_initial_state(monkeypatch):
         any_order=True,
     )
     assert create_team_member.call_count == 2
-    assert user.last_active_team_id == private_team.id
     assert result is user
     db.commit.assert_not_called()
     db.rollback.assert_not_called()
